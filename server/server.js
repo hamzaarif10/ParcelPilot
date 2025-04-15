@@ -4,16 +4,16 @@ const session = require('express-session');
 require('dotenv').config();
 const path = require('path');
 
-const { connectToDatabase } = require('./db');
-const authRoute = require('./routes/auth');
-const userRoutes = require('./routes/user');
-const rateRoutes = require('./routes/rates');
-const fileUploadRoute = require('./routes/fileUpload');
-const pickUpRoute = require('./routes/pickups');
-const billingRoute = require('./routes/payment');
-const shopifyIntegrationRoute = require('./routes/shopifyIntegration');
-const fetchShopifyOrdersRoute = require('./routes/fetchShopifyOrders');
-const supportRoute = require('./routes/support');
+const { connectToDatabase } = require('../db');
+const authRoute = require('../routes/auth');
+const userRoutes = require('../routes/user');
+const rateRoutes = require('../routes/rates');
+const fileUploadRoute = require('../routes/fileUpload');
+const pickUpRoute = require('../routes/pickups');
+const billingRoute = require('../routes/payment');
+const shopifyIntegrationRoute = require('../routes/shopifyIntegration');
+const fetchShopifyOrdersRoute = require('../routes/fetchShopifyOrders');
+const supportRoute = require('../routes/support');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
