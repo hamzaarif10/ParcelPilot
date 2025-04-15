@@ -5,14 +5,16 @@ const path = require('path');
 const cors = require('cors');
 const { connectToDatabase } = require('./db');
 const { Redis } = require('@upstash/redis');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 dotenv.config();
 
 // Create Redis client using @upstash/redis
 const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN,
+  url: (process.env.UPSTASH_REDIS_REST_URL || '').trim(),
+  token: (process.env.UPSTASH_REDIS_REST_TOKEN || '').trim(),
 });
+console.log('Redis URL:',process.env.UPSTASH_REDIS_REST_URL);
+console.log('Redis Token:',process.env.UPSTASH_REDIS_REST_TOKEN);
+
 
 // Create a custom RedisStore class that works with upstash/redis
 class UpstashRedisStore extends session.Store {
