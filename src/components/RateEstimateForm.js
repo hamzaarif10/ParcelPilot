@@ -269,6 +269,7 @@ function RateEstimateForm(props) {
       <div className="shipping-form-container">
         {!isSubmitted ? (
           <form ref={formRef} onSubmit={handleSubmit} className="shipping-form">
+            <h3 style={{color:'white', marginLeft:"130px"}}>Quick Quote</h3>
             {/* Sender and Receiver Info */}
             <div className="sender-receiver-container">
             <div className="sender-info">

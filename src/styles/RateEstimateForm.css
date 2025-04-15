@@ -111,7 +111,7 @@ input[type="number"] {
   .shipping-form-container {
     padding: 0.75rem;
     background-color: #005160;
-    margin-top: -13px;
+    margin-top: -18px;
     margin-bottom: -2.3px;
   }
   
@@ -130,7 +130,7 @@ input[type="number"] {
     background-color: #ccfaff;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     border: 1px solid #0481ff;
-    background-color: #005160;
+    background-color: #028ca4;
   }
   
   .sender-info h3,
@@ -152,7 +152,7 @@ input[type="number"] {
   .weight-residential-group {
     flex-direction: column;
     gap: 0.75rem;
-    background-color: #005160;
+    background-color: #028ca4;
     padding: 1rem;
     border-radius: 8px;
     border: 1px solid #0481ff;
