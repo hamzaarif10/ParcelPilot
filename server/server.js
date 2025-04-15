@@ -12,10 +12,6 @@ const redis = new Redis({
   url: (process.env.UPSTASH_REDIS_REST_URL || '').trim(),
   token: (process.env.UPSTASH_REDIS_REST_TOKEN || '').trim(),
 });
-console.log('Redis URL:',process.env.UPSTASH_REDIS_REST_URL);
-console.log('Redis Token:',process.env.UPSTASH_REDIS_REST_TOKEN);
-
-
 // Create a custom RedisStore class that works with upstash/redis
 class UpstashRedisStore extends session.Store {
   constructor(options = {}) {
@@ -140,9 +136,10 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`Server running on ${process.env.REACT_APP_BACKEND_URL || `http://localhost:${PORT}`} (${isProd ? 'production' : 'development'} mode)`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on http://localhost:${PORT} (${isProd ? 'production' : 'development'} mode)`);
 });
+
 
 
 
