@@ -1,0 +1,11 @@
+{
+  "version": "1.0",
+  "apis": [
+    {
+      "identifier": "easyship",
+      "source": "@easyship/v2024.09#46pxz24m4st58lz",
+      "integrity": "sha512-dL6oP3WLa208diLCDgnhiqp1WVdlAf3icqloZkQ3SN5cWoyHZJZuy2+LuLO7eLuzBu8vlszvsziyotM6XpuDUQ==",
+      "installerVersion": "6.1.2"
+    }
+  ]
+}

@@ -1,0 +1,299 @@
+/* Benefits Section */
+.benefits-section {
+  background: linear-gradient(45deg, #4b21b0 0%, #2d3748 100%);
+  padding: 100px 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.benefits-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(57, 255, 20, 0.2) 10%, transparent 70%);
+  opacity: 0.2;
+  z-index: 0;
+}
+
+/* Container */
+.benefits-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+/* Section Header */
+.section-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.section-title {
+  font-size: 3.2rem;
+  font-weight: 800;
+  color: #2afb6c;
+  letter-spacing: -1px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.title-underline {
+  width: 100px;
+  height: 5px;
+  background: #39ff14;
+  margin: 20px auto;
+  border-radius: 3px;
+}
+
+/* Intro Paragraph */
+.section-intro {
+  text-align: center;
+  margin-bottom: 60px;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.intro-text {
+  font-size: 1.2rem;
+  color: #e2e8f0;
+  line-height: 1.7;
+  font-weight: 400;
+}
+
+/* Benefits Showcase */
+.benefits-showcase {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 80px;
+}
+
+.benefit-card {
+  background: #f0fdfc;
+  border-radius: 15px;
+  padding: 40px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  max-width: 500px;
+  transition: all 0.3s ease;
+}
+
+.benefit-card.align-left {
+  margin-right: auto;
+  margin-left: 0;
+}
+
+.benefit-card.align-right {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.benefit-icon {
+  font-size: 3.5rem;
+  color: #ff660d;
+  margin-bottom: 20px;
+}
+
+.benefit-card h3 {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 16px;
+}
+
+.benefit-card p {
+  font-size: 1.1rem;
+  color: #4a5568;
+  line-height: 1.8;
+  margin-bottom: 20px;
+}
+
+.highlight {
+  color: #39ff14;
+  font-weight: 600;
+}
+
+.learn-more {
+  display: inline-block;
+  font-size: 1rem;
+  color: #4b21b0;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 10px 20px;
+  border: 2px solid #4b21b0;
+  border-radius: 25px;
+  transition: all 0.3s ease;
+}
+
+.learn-more:hover {
+  background: #39ff14;
+  color: #2d3748;
+  border-color: #39ff14;
+}
+
+/* Courier Logos Marquee */
+.courier-logos {
+  text-align: center;
+  margin-bottom: 80px;
+  overflow: hidden;
+}
+
+.courier-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 30px;
+}
+
+.logo-marquee-wrapper {
+  overflow: hidden;
+  width: 100%;
+}
+
+.logo-marquee {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: marquee 20s linear infinite; /* Base duration, dynamically adjusted */
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); } /* Half of repeated content */
+}
+
+.courier-logo {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 15px;
+  width: 130px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+  margin-right: 30px;
+}
+
+.courier-logo img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* Features Grid */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 20px;
+  margin-bottom: 80px;
+}
+
+.feature-item {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.feature-stat {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #39ff14;
+  margin-bottom: 8px;
+}
+
+.feature-label {
+  font-size: 0.9rem;
+  color: #2d3748;
+  font-weight: 500;
+}
+
+/* CTA Banner */
+.cta-banner {
+  text-align: center;
+  background: #ffffff;
+  border-radius: 15px;
+  padding: 40px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.cta-banner h3 {
+  font-size: 1.8rem;
+  color: #2d3748;
+  margin-bottom: 16px;
+}
+
+.cta-banner p {
+  font-size: 1.1rem;
+  color: #4a5568;
+  margin-bottom: 24px;
+}
+
+.cta-button {
+  display: inline-block;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #4b21b0;
+  padding: 12px 30px;
+  border-radius: 25px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.cta-button:hover {
+  background: #39ff14;
+  color: #2d3748;
+  box-shadow: 0 6px 15px rgba(57, 255, 20, 0.4);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .benefit-card {
+    max-width: 450px;
+  }
+}
+
+@media (max-width: 768px) {
+  .benefits-section {
+    padding: 60px 15px;
+  }
+
+  .section-title {
+    font-size: 2.5rem;
+  }
+
+  .intro-text {
+    font-size: 1rem;
+  }
+
+  .benefit-card {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    max-width: 90%;
+    margin-top: 20px !important;
+  }
+
+  .courier-logo {
+    width: 110px;
+    height: 70px;
+    margin-right: 20px;
+  }
+
+  .features-grid {
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  }
+
+  .cta-banner h3 {
+    font-size: 1.5rem;
+  }
+
+  .cta-button {
+    padding: 10px 25px;
+  }
+}

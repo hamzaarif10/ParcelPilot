@@ -1,0 +1,101 @@
+/* Sidebar background and overall style */
+.sidebar {
+    background-color: #2c3e50;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    transition: width 0.3s ease-in-out;
+    padding-top: 20px;
+    padding-left: 10px;
+  }
+  
+  /* Logo styling */
+  .logo-section {
+    text-align: center;
+    margin-bottom: 20px; /* Space between logo and menu */
+  }
+  
+  .sidebar-logo {
+    width: 80%; /* Adjust the width of your logo */
+    max-width: 120px; /* Set max width for the logo */
+    height: auto;
+    transition: transform 0.3s ease;
+  }
+  
+  /* Sidebar collapse mode: Adjust logo size when collapsed */
+  .sidebar.collapsed .sidebar-logo {
+    width: 60%; /* Smaller logo when sidebar is collapsed */
+  }
+  
+  /* Button to toggle sidebar */
+  .sidebar-toggle {
+    color: white;
+    font-size: 24px;
+    position: absolute;
+    top: 20px;
+    left: 15px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    z-index: 2;
+  }
+  
+  /* Sidebar menu (list) */
+  .sidebar-menu {
+    margin-top: 40px;
+    padding-left: 0;
+  }
+  
+  /* Style for each list item */
+  .menu-item {
+    padding: 15px 20px;
+    cursor: pointer;
+    color: #ecf0f1;
+    background-color: transparent;
+    border-radius: 8px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+  }
+  
+  .menu-item:hover {
+    background-color: #16a085; /* Hover background color */
+    color: white;
+  }
+  
+  /* Icon styling */
+  .menu-icon {
+    margin-right: 15px;
+    font-size: 20px;
+    transition: transform 0.3s ease;
+  }
+  
+  /* Sidebar collapsed mode: Hide text and shrink icon */
+  .sidebar.collapsed .menu-item span {
+    display: none;
+  }
+  
+  .sidebar.collapsed .menu-icon {
+    font-size: 24px;
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  /* Active item style */
+  .menu-item.active {
+    background-color: #1abc9c; /* Active state color */
+    color: white;
+  }
+  
+  /* Main content area */
+  h1 {
+    margin-top: 50px;
+    font-size: 36px;
+    font-weight: bold;
+    color: #34495e;
+  }
+  
+  
+  
+  

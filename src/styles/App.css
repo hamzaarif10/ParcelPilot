@@ -1,0 +1,153 @@
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+/* App.css */
+
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #f3f9fd;
+  margin: 0;
+  padding: 0;
+}
+
+.app-container {
+  max-width: 600px;
+  margin: 50px auto;
+  background-color: #ffffff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+}
+
+.app-title {
+  font-size: 24px;
+  color: #2a6478;
+  margin-bottom: 20px;
+}
+
+.form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.input-group {
+  text-align: left;
+  position: relative;
+}
+
+
+.input-group label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #cce7f1;
+  border-radius: 5px;
+  font-size: 16px;
+}
+.pac-container {
+  margin-top: -95px !important; 
+  z-index: 99999 !important;
+}
+
+.calculate-btn {
+  background-color: #2a6478;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.calculate-btn:hover {
+  background-color: #1b4b5d;
+}
+
+.rate-result {
+  margin-top: 20px;
+  font-size: 18px;
+  color: #333333;
+}
+
+/* Style the dropdown */
+.input-group select {
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+  color: #333;
+  background-color: #f9f9f9;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  appearance: none; /* Hides the default arrow */
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* Add focus effect */
+.input-group select:focus {
+  border-color: #007bff; /* Highlight border on focus */
+  box-shadow: 0 0 4px rgba(0, 123, 255, 0.5); /* Subtle glow */
+}
+
+/* Optional: Add a custom arrow */
+.input-group select {
+  background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns%3D%22http%3A//www.w3.org/2000/svg%22 viewBox%3D%220 0 4 5%22%3E%3Cpath fill%3D%22%23333%22 d%3D%22M2 0L0 2h4z%22/%3E%3C/svg%3E');
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
+}
+
+/* Disabled option styling */
+.input-group select:disabled {
+  background-color: #e9ecef;
+  cursor: not-allowed;
+}
+
+/* Style placeholder option */
+.input-group select option[value=""] {
+  color: #999;
+}
