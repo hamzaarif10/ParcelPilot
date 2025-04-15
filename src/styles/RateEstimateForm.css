@@ -105,186 +105,155 @@ input[type="number"] {
   font-weight: bold;
 }
 
-/* Responsive Design for smaller screens */
-@media (max-width: 768px) {
+/* Enhanced Mobile Styles with better colors and smaller inputs */
+@media screen and (max-width: 768px) {
+  /* Make the form full width on mobile */
   .shipping-form-container {
-    padding: 1rem; /* Tighter padding */
-    margin: 0.5rem auto 1rem auto; /* Tighter margins */
-    border-radius: 8px; /* Slightly smaller radius */
-    width: 100%; /* Full width */
-    max-width: none; /* Remove desktop constraint */
-    box-sizing: border-box; /* Include padding in width */
+    padding: 0.75rem;
   }
-
-  .form-title {
-    font-size: 1.5rem; /* Smaller title */
-    margin-bottom: 0.5rem; /* Tighter margin */
-  }
-
-  .shipping-form {
-    gap: 0.5rem; /* Tighter gap between form elements */
-  }
-
+  
+  /* Stack sender and receiver sections with enhanced styling */
   .sender-receiver-container {
-    grid-template-columns: 1fr; /* Stack sender and receiver */
-    gap: 0.5rem; /* Tighter gap */
+    flex-direction: column;
+    gap: 1rem;
   }
-
+  
+  /* Enhanced styling for sender and receiver boxes */
   .sender-info,
   .receiver-info {
-    gap: 0.5rem; /* Tighter gap between inputs */
+    padding: 1rem;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
   }
-
-  .input-group {
-    margin-bottom: 0.25rem; /* Minimal spacing */
+  
+  .sender-info h3,
+  .receiver-info h3 {
+    color: #0052cc;
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 0.5rem;
   }
-
-  /* Postal code and country code on same line */
-  .input-group.postal-country-group {
-    display: flex;
-    flex-direction: row;
-    gap: 0.5rem; /* Space between fields */
-    flex-wrap: nowrap; /* Prevent wrapping */
-    align-items: flex-end; /* Align inputs at bottom */
+  
+  /* Stack postal and country inputs on mobile */
+  .postal-country-group {
+    flex-direction: column;
+    gap: 0.75rem;
   }
-
-  .input-group.postal-country-group .postal-code,
-  .input-group.postal-country-group .country-code {
-    flex: 1; /* Equal width */
-    min-width: 0; /* Prevent overflow */
+  
+  /* Stack weight and residential switch on mobile */
+  .weight-residential-group {
+    flex-direction: column;
+    gap: 0.75rem;
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
   }
-
-  .input-group.postal-country-group label {
-    font-size: 0.85rem; /* Slightly smaller to fit */
-    margin-bottom: 0.2rem;
+  
+  .residential-switch {
+    margin-top: 0;
   }
-
-  .input-group.postal-country-group input,
-  .input-group.postal-country-group select {
-    padding: 0.4rem; /* Tighter inputs */
-    font-size: 0.85rem;
+  
+  /* Smaller, better styled inputs on mobile */
+  input, select {
+    padding: 0.5rem;
+    font-size: 0.9rem;
+    height: 2.5rem;
+    border: 1px solid #ced4da;
     border-radius: 4px;
+    background-color: #fff;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
   }
-
+  
+  input:focus, select:focus {
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  }
+  
+  /* Nicer labels */
   label {
-    font-size: 0.9rem; /* Smaller label */
-    margin-bottom: 0.3rem; /* Tighter margin */
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.25rem;
   }
-
-  input,
-  select {
-    padding: 0.5rem; /* Smaller inputs */
-    font-size: 0.9rem; /* Smaller text */
-    border-radius: 4px; /* Slightly smaller radius */
-  }
-
+  
+  /* Adjust dimensions inputs for mobile with nicer styling */
   .dimensions-inputs {
-    gap: 0.3rem; /* Tighter gap */
+    gap: 0.5rem;
   }
-
+  
   .dimensions-inputs input {
-    width: 32%; /* Slightly wider to fit better */
+    text-align: center;
   }
-
+  
+  /* Full width, better styled button on mobile */
   .submit-btn {
-    padding: 0.6rem 1.2rem; /* Smaller button */
-    font-size: 1rem; /* Smaller text */
-    margin-top: 0.75rem; /* Tighter margin */
+    max-width: 100%;
+    background-color: #0052cc;
+    color: white;
     border-radius: 4px;
+    padding: 0.75rem;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
   }
-
-  .rate-display {
-    font-size: 1rem; /* Smaller text */
-    margin-top: 0.5rem; /* Tighter margin */
+  
+  .submit-btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   }
-
+  
+  /* Better error styling */
   .error-message {
-    font-size: 0.8rem; /* Smaller error text */
-    margin-top: 0.2rem; /* Tighter margin */
+    color: #dc3545;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+  }
+  
+  /* Adjust labels for edit button alignment */
+  label[for="senderPostalCode"] {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+  
+  /* Better spinner display */
+  .chakra-spinner {
+    margin: 1rem auto;
+    display: block;
   }
 }
 
-/* For very small screens */
-@media (max-width: 400px) {
+/* Smaller mobile screens */
+@media screen and (max-width: 480px) {
+  /* Stack dimensions inputs on very small screens */
+  .dimensions-inputs {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  /* Further reduce padding */
   .shipping-form-container {
-    padding: 0.75rem; /* Even tighter */
-    margin: 0.3rem auto 0.75rem auto;
-    border-radius: 6px;
+    padding: 0.5rem;
   }
-
-  .form-title {
-    font-size: 1.3rem;
-    margin-bottom: 0.4rem;
-  }
-
-  .shipping-form {
-    gap: 0.3rem;
-  }
-
-  .sender-receiver-container {
-    gap: 0.3rem;
-  }
-
-  .sender-info,
-  .receiver-info {
-    gap: 0.3rem;
-  }
-
-  .input-group {
-    margin-bottom: 0.2rem;
-  }
-
-  /* Postal code and country code on same line */
-  .input-group.postal-country-group {
-    gap: 0.3rem; /* Tighter gap */
-  }
-
-  .input-group.postal-country-group label {
+  
+  /* Make input placeholders smaller */
+  input::placeholder {
     font-size: 0.8rem;
-    margin-bottom: 0.15rem;
   }
-
-  .input-group.postal-country-group input,
-  .input-group.postal-country-group select {
-    padding: 0.35rem;
-    font-size: 0.8rem;
-    border-radius: 3px;
-  }
-
-  label {
-    font-size: 0.85rem;
-    margin-bottom: 0.2rem;
-  }
-
-  input,
-  select {
+  
+  /* Even smaller inputs for tiny screens */
+  input, select {
     padding: 0.4rem;
     font-size: 0.85rem;
-    border-radius: 3px;
-  }
-
-  .dimensions-inputs {
-    gap: 0.2rem;
-  }
-
-  .dimensions-inputs input {
-    width: 31.5%;
-  }
-
-  .submit-btn {
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
-    margin-top: 0.5rem;
-    border-radius: 3px;
-  }
-
-  .rate-display {
-    font-size: 0.9rem;
-    margin-top: 0.3rem;
-  }
-
-  .error-message {
-    font-size: 0.75rem;
-    margin-top: 0.15rem;
+    height: 2.3rem;
   }
 }
