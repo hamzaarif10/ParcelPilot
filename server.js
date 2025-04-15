@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
 require('dotenv').config();
+const path = require('path');
 
 const { connectToDatabase } = require('./db');
 const authRoute = require('./routes/auth');
@@ -53,6 +54,17 @@ app.use('/auth', shopifyIntegrationRoute);
 app.use('/fetchShopifyOrders', fetchShopifyOrdersRoute);
 app.use('/support', supportRoute);
 
+// Serve static files in production
+if (isProd) {
+  // Serve the React app from the build folder
+  app.use(express.static(path.join(__dirname, 'build')));
+
+  // Handle all other routes and send back the React index.html (for single-page app routing)
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'build', 'index.html'));
+  });
+}
+
 // Global error handler (optional but recommended)
 app.use((err, req, res, next) => {
   console.error('Server error:', err);
@@ -63,3 +75,4 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`Server running on ${process.env.REACT_APP_BACKEND_URL} (${isProd ? 'production' : 'development'} mode)`);
 });
+
