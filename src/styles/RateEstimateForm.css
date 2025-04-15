@@ -110,14 +110,16 @@ input[type="number"] {
   /* Make the form full width on mobile */
   .shipping-form-container {
     padding: 0.75rem;
-    background-color: #fcf7fc;
+    background-color: #005160;
+    margin-top: -7px;
+    margin-bottom: -2px;
   }
   
   /* Stack sender and receiver sections with enhanced styling */
   .sender-receiver-container {
     flex-direction: column;
     gap: 1rem;
-    background-color: #fdf8ed;
+    background-color: #005160;
   }
   
   /* Enhanced styling for sender and receiver boxes */
@@ -183,6 +185,9 @@ input[type="number"] {
     color: #495057;
     margin-bottom: 0.25rem;
   }
+  #dimension-label{
+    color: #FFFFFF;
+  }
   
   /* Adjust dimensions inputs for mobile with nicer styling */
   .dimensions-inputs {
@@ -191,6 +196,7 @@ input[type="number"] {
   
   .dimensions-inputs input {
     text-align: center;
+    margin-bottom: -18px;
   }
   
   /* Full width, better styled button on mobile */
