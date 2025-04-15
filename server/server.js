@@ -1,10 +1,105 @@
 const express = require('express');
-const cors = require('cors');
 const session = require('express-session');
-require('dotenv').config();
+const dotenv = require('dotenv');
 const path = require('path');
-
+const cors = require('cors');
 const { connectToDatabase } = require('./db');
+const { Redis } = require('@upstash/redis');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+dotenv.config();
+
+// Create Redis client using @upstash/redis
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN,
+});
+
+// Create a custom RedisStore class that works with upstash/redis
+class UpstashRedisStore extends session.Store {
+  constructor(options = {}) {
+    super(options);
+    this.prefix = options.prefix || 'sess:';
+    this.ttl = options.ttl || 86400; // One day in seconds
+    this.client = options.client || redis;
+  }
+
+  async get(sid, cb) {
+    try {
+      const key = this.prefix + sid;
+      const data = await this.client.get(key);
+      if (!data) return cb(null, null);
+      
+      let result;
+      try {
+        result = JSON.parse(data);
+      } catch (err) {
+        return cb(err);
+      }
+      return cb(null, result);
+    } catch (err) {
+      return cb(err);
+    }
+  }
+
+  async set(sid, session, cb) {
+    try {
+      const key = this.prefix + sid;
+      const ttl = session.cookie && session.cookie.maxAge 
+        ? Math.floor(session.cookie.maxAge / 1000) 
+        : this.ttl;
+        
+      const dataStr = JSON.stringify(session);
+      
+      await this.client.set(key, dataStr, { ex: ttl });
+      if (cb) cb(null);
+    } catch (err) {
+      if (cb) cb(err);
+    }
+  }
+
+  async destroy(sid, cb) {
+    try {
+      const key = this.prefix + sid;
+      await this.client.del(key);
+      if (cb) cb(null);
+    } catch (err) {
+      if (cb) cb(err);
+    }
+  }
+}
+
+const app = express();
+const PORT = process.env.PORT || 3001;
+const isProd = process.env.NODE_ENV === 'production';
+
+app.use(cors({
+  origin: isProd ? process.env.REACT_APP_FRONTEND_URL : 'http://localhost:3002',
+  credentials: true
+}));
+
+app.use(express.json());
+
+// Session middleware with custom Upstash Redis store
+app.use(session({
+  store: new UpstashRedisStore({
+    client: redis,
+    prefix: "session:",
+    ttl: 86400 // Session expiration time (1 day)
+  }),
+  secret: process.env.SESSION_SECRET || 'dev-secret',
+  resave: false,
+  saveUninitialized: true,
+  cookie: {
+    secure: isProd,
+    httpOnly: true,
+    sameSite: isProd ? 'strict' : 'lax',
+    maxAge: 3 * 60 * 60 * 1000 // 3 hours
+  }
+}));
+
+// Connect to the database
+connectToDatabase();
+// Routes
 const authRoute = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const rateRoutes = require('./routes/rates');
@@ -15,35 +110,6 @@ const shopifyIntegrationRoute = require('./routes/shopifyIntegration');
 const fetchShopifyOrdersRoute = require('./routes/fetchShopifyOrders');
 const supportRoute = require('./routes/support');
 
-const app = express();
-const PORT = process.env.PORT || 3001;
-const isProd = process.env.NODE_ENV === 'production';
-
-// Middleware
-app.use(cors({
-  origin: isProd ? process.env.REACT_APP_FRONTEND_URL : 'http://localhost:3002',
-  credentials: true
-}));
-
-app.use(express.json());
-
-// Session middleware
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'dev-secret',
-  resave: false,
-  saveUninitialized: true,
-  cookie: {
-    secure: isProd, // only send over HTTPS in production
-    httpOnly: true,
-    sameSite: isProd ? 'strict' : 'lax',
-    maxAge: 3 * 60 * 60 * 1000 // 3 hours
-  }
-}));
-
-// Connect to the database
-connectToDatabase();
-
-// Routes
 app.use('/user', userRoutes);
 app.use('/api', rateRoutes);
 app.use('/auth', authRoute);
@@ -54,25 +120,28 @@ app.use('/auth', shopifyIntegrationRoute);
 app.use('/fetchShopifyOrders', fetchShopifyOrdersRoute);
 app.use('/support', supportRoute);
 
-// Serve static files in production
+// Serve static files in production (React build)
 if (isProd) {
-  // Serve the React app from the build folder
-  app.use(express.static(path.join(__dirname, 'build')));
-
-  // Handle all other routes and send back the React index.html (for single-page app routing)
+  const buildPath = path.join(__dirname, 'build');
+  app.use(express.static(buildPath));
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'build', 'index.html'));
+    res.sendFile(path.join(buildPath, 'index.html'));
   });
 }
 
-// Global error handler (optional but recommended)
+// Improved global error handler to prevent multiple headers
 app.use((err, req, res, next) => {
   console.error('Server error:', err);
-  res.status(500).json({ message: 'Internal server error' });
+  if (!res.headersSent) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
 });
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`Server running on ${process.env.REACT_APP_BACKEND_URL} (${isProd ? 'production' : 'development'} mode)`);
+  console.log(`Server running on ${process.env.REACT_APP_BACKEND_URL || `http://localhost:${PORT}`} (${isProd ? 'production' : 'development'} mode)`);
 });
+
+
+
 
