@@ -25,7 +25,7 @@ function HeroSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1 }}
         >
-          <span style={{ color: 'lightgreen' }}>Save Big</span> on Shipping with GLS Rates
+          <span style={{ color: 'cyan' }}>Save Big</span> on Shipping with GLS Rates
         </motion.h1>
         <motion.p 
           className="hero-description"

@@ -467,7 +467,7 @@ function RateEstimateForm(props) {
             
             {/* Dimensions Input */}
             <div className="input-group">
-              <label id="dimension-label">Dimensions (cm)</label>
+              <label>Dimensions (cm)</label>
               <div className="dimensions-inputs">
                 <input
                   type="number"
