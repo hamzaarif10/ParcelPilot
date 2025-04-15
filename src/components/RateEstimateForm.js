@@ -271,8 +271,39 @@ function RateEstimateForm(props) {
           <form ref={formRef} onSubmit={handleSubmit} className="shipping-form">
             {/* Sender and Receiver Info */}
             <div className="sender-receiver-container">
-              <div className="sender-info">
-                <h3>Sender Info</h3>
+            <div className="sender-info">
+  <div style={{ display: "flex", alignItems: "center" }}>
+    <h3 style={{ margin: 0 }}>Sender Information</h3>
+    <button
+      type="button"
+      onClick={() => {
+        document.body.style.pointerEvents = 'auto';
+        document.body.style.overflow = 'visible';
+        onOpen();
+      }}
+      style={{
+        backgroundColor: "#007bff",
+        color: "#fff",
+        border: "none",
+        padding: "5px",
+        cursor: "pointer",
+        borderRadius: "5px",
+        height: "30px",
+        display:
+          window.location.href.includes("create-shipment") ||
+          window.location.href.includes("integration")
+            ? "flex"
+            : "none",
+        justifyContent: "center",
+        alignItems: "center",
+        marginLeft: "10px",
+      }}
+    >
+      <EditIcon color="white" />
+    </button>
+  </div>
+
+
                 <div className="input-group">
                   <div className="postal-country-group">
                     <div className="postal-code">
@@ -280,31 +311,6 @@ function RateEstimateForm(props) {
                         htmlFor="senderPostalCode"
                       >
                         Sender Postal Code
-                        <button
-                          type="button"
-                          onClick={() => {
-                            // Clean up any lingering issues before opening modal
-                            document.body.style.pointerEvents = 'auto';
-                            document.body.style.overflow = 'visible';
-                            // Now open modal
-                            onOpen();
-                          }}
-                          style={{
-                            backgroundColor: "#007bff",
-                            color: "#fff",
-                            border: "none",
-                            padding: "5px",
-                            cursor: "pointer",
-                            borderRadius: "5px",
-                            height: "30px",
-                            display: window.location.href.includes("create-shipment") || window.location.href.includes("integration") ? "flex" : "none",
-                            justifyContent: "center",
-                            alignItems: "center",
-                            marginLeft: "10px",
-                          }}
-                        >
-                          <EditIcon color="white" />
-                        </button>
                       </label>
                       <input
                         type="text"
@@ -374,7 +380,7 @@ function RateEstimateForm(props) {
               </div>
             
               <div className="receiver-info">
-                <h3>Receiver Info</h3>
+                <h3>Receiver Information</h3>
                 <div className="input-group">
                   <div className="postal-country-group">
                     <div className="postal-code">
