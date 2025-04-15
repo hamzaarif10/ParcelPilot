@@ -273,7 +273,7 @@ function RateEstimateForm(props) {
             <div className="sender-receiver-container">
             <div className="sender-info">
   <div style={{ display: "flex", alignItems: "center" }}>
-    <h3 style={{ margin: 0 }}>Sender Information</h3>
+    <h3 style={{ margin: 0 }}>Sender Info</h3>
     <button
       type="button"
       onClick={() => {
@@ -350,6 +350,7 @@ function RateEstimateForm(props) {
                         id="senderCountryCode"
                         value={senderCountryCode}
                         onChange={(e) => setSenderCountryCode(e.target.value)}
+                        style={{backgroundColor: "lightblue"}}
                       >
                         <option value="" disabled>
                           Select a Country Code
@@ -380,7 +381,7 @@ function RateEstimateForm(props) {
               </div>
             
               <div className="receiver-info">
-                <h3>Receiver Information</h3>
+                <h3>Receiver Info</h3>
                 <div className="input-group">
                   <div className="postal-country-group">
                     <div className="postal-code">
@@ -402,6 +403,7 @@ function RateEstimateForm(props) {
                         id="receiverCountryCode"
                         value={receiverCountryCode}
                         onChange={(e) => setReceiverCountryCode(e.target.value)}
+                        style={{backgroundColor: "lightblue"}}
                       >
                         <option value="" disabled>
                           Select a Country Code
