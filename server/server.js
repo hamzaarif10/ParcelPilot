@@ -12,6 +12,7 @@ const redis = new Redis({
   url: (process.env.UPSTASH_REDIS_REST_URL || '').trim(),
   token: (process.env.UPSTASH_REDIS_REST_TOKEN || '').trim(),
 });
+
 // Create a custom RedisStore class that works with upstash/redis
 class UpstashRedisStore extends session.Store {
   constructor(options = {}) {
