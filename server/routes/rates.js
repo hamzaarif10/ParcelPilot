@@ -1,10 +1,44 @@
 const express = require('express');
 const axios = require('axios');
+const { Ratelimit } = require('@upstash/ratelimit');
+const { Redis } = require('@upstash/redis');
 
 const router = express.Router();
 
+// Set up Upstash Redis
+const redis = new Redis({
+  url: (process.env.UPSTASH_REDIS_REST_URL || '').trim(),
+  token: (process.env.UPSTASH_REDIS_REST_TOKEN || '').trim(),
+});
+
+// Create the limiter
+const ratelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(100, '15 m'), // 100 requests per 15 minutes
+});
+
+// Middleware
+const rateLimitMiddleware = async (req, res, next) => {
+  const identifier = req.sessionID || req.ip;
+
+  const { success, limit, remaining, reset } = await ratelimit.limit(identifier);
+
+  res.setHeader("X-RateLimit-Limit", limit);
+  res.setHeader("X-RateLimit-Remaining", remaining);
+  res.setHeader("X-RateLimit-Reset", reset);
+
+  if (!success) {
+    return res.status(429).json({
+      message: "Too many requests — try again in a few minutes",
+      reset,
+    });
+  }
+
+  next();
+};
+
 //Fetch gls rate
-router.post('/get-gls-rate', async (req, res) => {
+router.post('/get-gls-rate', rateLimitMiddleware, async (req, res) => {
   try {
     const url = 'https://secureship.ca/ship/api/v2/carriers/rates';
 
@@ -66,7 +100,7 @@ router.get('/download-gls-label', async (req, res) => {
   }
 });
 // Fetch rate from API
-router.post('/get-rate', async (req, res) => {
+router.post('/get-rate', rateLimitMiddleware, async (req, res) => {
   try {
     const url = 'https://public-api.easyship.com/2024-09/rates';
 

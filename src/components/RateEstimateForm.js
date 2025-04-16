@@ -272,37 +272,6 @@ function RateEstimateForm(props) {
             {/* Sender and Receiver Info */}
             <div className="sender-receiver-container">
             <div className="sender-info">
-  <div style={{ display: "flex", alignItems: "center" }}>
-    <button
-      type="button"
-      onClick={() => {
-        document.body.style.pointerEvents = 'auto';
-        document.body.style.overflow = 'visible';
-        onOpen();
-      }}
-      style={{
-        backgroundColor: "#007bff",
-        color: "#fff",
-        border: "none",
-        padding: "5px",
-        cursor: "pointer",
-        borderRadius: "5px",
-        height: "30px",
-        display:
-          window.location.href.includes("create-shipment") ||
-          window.location.href.includes("integration")
-            ? "flex"
-            : "none",
-        justifyContent: "center",
-        alignItems: "center",
-        marginLeft: "10px",
-      }}
-    >
-      <EditIcon color="white" />
-    </button>
-  </div>
-
-
                 <div className="input-group">
                   <div className="postal-country-group">
                     <div className="postal-code">
@@ -312,6 +281,7 @@ function RateEstimateForm(props) {
                       >
                         Sender Postal Code
                       </label>
+                      <div style={{display: "flex"}}>
                       <input
                         type="text"
                         id="senderPostalCode"
@@ -340,6 +310,34 @@ function RateEstimateForm(props) {
                               : "text",
                         }}
                       />
+                      <button
+                          type="button"
+                          onClick={() => {
+                            document.body.style.pointerEvents = 'auto';
+                            document.body.style.overflow = 'visible';
+                            onOpen();
+                          }}
+                          style={{
+                            backgroundColor: "#007bff",
+                            color: "#fff",
+                            border: "none",
+                            padding: "5px",
+                            cursor: "pointer",
+                            borderRadius: "5px",
+                            height: "30px",
+                            display:
+                              window.location.href.includes("create-shipment") ||
+                              window.location.href.includes("integration")
+                                ? "flex"
+                                : "none",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            marginLeft: "10px",
+                          }}
+                        >
+                          <EditIcon color="white" />
+                        </button>
+                      </div>
                       {errors.senderPostalCode && (
                         <p className="error-message">{errors.senderPostalCode}</p>
                       )}

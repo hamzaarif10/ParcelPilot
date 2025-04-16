@@ -68,11 +68,11 @@ class UpstashRedisStore extends session.Store {
 }
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3002;
 const isProd = process.env.NODE_ENV === 'production';
 
 app.use(cors({
-  origin: isProd ? process.env.REACT_APP_FRONTEND_URL : 'http://localhost:3002',
+  origin: process.env.REACT_APP_FRONTEND_URL,
   credentials: true
 }));
 
