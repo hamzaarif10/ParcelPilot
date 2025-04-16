@@ -63,7 +63,7 @@ function GetRates({ senderCountryCode, receiverAddressLine1, receiverAddressLine
   };
 
   return (
-    <div className="rates-container" style={{marginTop: "-25px"}}>
+    <div className="rates-container">
       {selectedCourier ? (
         <CreateShipmentForm
           courierId={selectedCourier}
