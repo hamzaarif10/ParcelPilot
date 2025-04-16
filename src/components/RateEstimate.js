@@ -250,7 +250,7 @@ function RateEstimate({
     }, []);
 
   return (
-    <div style={{marginTop: "-6px"}}>
+    <div style={{marginTop: "-6px", backgroundColor: "#005160"}}>
       {/* Render the GetRates component once the data is available */}
       {((rate2 && rate3 && rate4)) ? (
   <GetRates
