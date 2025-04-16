@@ -269,12 +269,10 @@ function RateEstimateForm(props) {
       <div className="shipping-form-container">
         {!isSubmitted ? (
           <form ref={formRef} onSubmit={handleSubmit} className="shipping-form">
-            <h3 style={{color:'white', marginLeft:"145px"}}>Quick Quote</h3>
             {/* Sender and Receiver Info */}
             <div className="sender-receiver-container">
             <div className="sender-info">
   <div style={{ display: "flex", alignItems: "center" }}>
-    <h3 style={{ margin: 0 }}>Sender Info</h3>
     <button
       type="button"
       onClick={() => {
@@ -310,6 +308,7 @@ function RateEstimateForm(props) {
                     <div className="postal-code">
                       <label
                         htmlFor="senderPostalCode"
+                        style={{marginTop:"-15px"}}
                       >
                         Sender Postal Code
                       </label>
@@ -382,7 +381,6 @@ function RateEstimateForm(props) {
               </div>
             
               <div className="receiver-info">
-                <h3>Receiver Info</h3>
                 <div className="input-group">
                   <div className="postal-country-group">
                     <div className="postal-code">
@@ -437,37 +435,7 @@ function RateEstimateForm(props) {
             
             {/* Weight and Residential Switch Grouped */}
             <div className="input-group weight-residential-group">
-              <div className="weight-input">
-                <label htmlFor="weight">Weight (kg)</label>
-                <input
-                  type="number"
-                  id="weight"
-                  value={weight}
-                  onChange={(e) => setWeight(parseFloat(e.target.value))}
-                  placeholder="Enter weight in kg"
-                />
-                {errors.weight && (
-                  <p className="error-message">{errors.weight}</p>
-                )}
-              </div>
-              <FormControl
-                className="residential-switch"
-                display="flex"
-                alignItems="center"
-              >
-                <FormLabel htmlFor="residential-switch" mb="0">
-                  Residential?
-                </FormLabel>
-                <Switch
-                  id="residential-switch"
-                  isChecked={isResidential}
-                  onChange={() => setIsResidential(!isResidential)}
-                />
-              </FormControl>
-            </div>
-            
-            {/* Dimensions Input */}
-            <div className="input-group">
+              {/* Dimensions Input */}
               <label>Dimensions (cm)</label>
               <div className="dimensions-inputs">
                 <input
@@ -498,7 +466,35 @@ function RateEstimateForm(props) {
               {errors.dimensions && (
                 <p className="error-message">{errors.dimensions}</p>
               )}
+              <div className="weight-input">
+                <label htmlFor="weight">Weight (kg)</label>
+                <input
+                  type="number"
+                  id="weight"
+                  value={weight}
+                  onChange={(e) => setWeight(parseFloat(e.target.value))}
+                  placeholder="Enter weight in kg"
+                />
+                {errors.weight && (
+                  <p className="error-message">{errors.weight}</p>
+                )}
+              </div>
+              <FormControl
+                className="residential-switch"
+                display="flex"
+                alignItems="center"
+              >
+                <FormLabel htmlFor="residential-switch" mb="0">
+                  Residential?
+                </FormLabel>
+                <Switch
+                  id="residential-switch"
+                  isChecked={isResidential}
+                  onChange={() => setIsResidential(!isResidential)}
+                />
+              </FormControl>
             </div>
+            
             
             <button type="submit" className="submit-btn" disabled={loading}>
               Get Rates

@@ -75,6 +75,7 @@ input[type="number"] {
   display: flex;
   gap: 0.5rem;
   justify-content: space-between;
+  margin-bottom: 10px;
 }
 
 .dimensions-inputs input {
@@ -134,7 +135,7 @@ input[type="number"] {
   
   .sender-info h3,
   .receiver-info h3 {
-    color: #ffffff;
+    background-color: #faf7ec;
     font-size: 1.1rem;
     margin-bottom: 0.75rem;
     border-bottom: 1px solid #e9ecef;
@@ -155,6 +156,7 @@ input[type="number"] {
     padding: 1rem;
     border-radius: 8px;
     border: 1px solid #0481ff;
+    margin-bottom: -25px;
   }
   
   .residential-switch {
