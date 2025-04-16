@@ -58,6 +58,17 @@ function RateEstimate({
   const quantity = 1;
   const parcelType = "Box";
 
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768); // You can adjust the width as needed
+    checkMobile();
+
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+
   // rate estimate data
   const rateEstimateData = {
     origin_address: {
@@ -249,58 +260,57 @@ function RateEstimate({
         fetchGlsRate();
     }, []);
 
-  return (
-    <div style={{marginTop: "-6px", backgroundColor: "#005160"}}>
-      {/* Render the GetRates component once the data is available */}
-      {((rate2 && rate3 && rate4)) ? (
-  <GetRates
-    senderCountryCode={senderCountry}
-    receiverAddressLine1={receiverAddressLine1}
-    receiverAddressLine2={receiverAddressLine2}
-    receiverCity={receiverCity}
-    receiverCountryCode={receiverCountry}
-    receiverPostalCode={receiverPostalCode}
-    receiverProvince={receiverProvince}
-    receiverName={receiverName}
-    receiverPhoneNumber={receiverPhoneNumber}
-    receiverEmail={receiverEmail}
-    dimensions={dimensions}
-    weight={weight}
-    rate1={rate1}
-    rate2={rate2}
-    rate3={rate3}
-    rate4={rate4}
-    rate5={rate5}
-    rate6={rate6}
-    rate7={rate7}
-    rate8={rate8}
-    url1={url1}
-    url2={url2}
-    url3={url3}
-    url4={url4}
-    url5={url5}
-    url6={url6}
-    url7={url7}
-    url8={url8}
-    courier1={courier1}
-    courier2={courier2}
-    courier3={courier3}
-    courier4={courier4}
-    courier5={courier5}
-    courier6={courier6}
-    courier7={courier7}
-    courier8={courier8}
-    deliveryTimes={deliveryTimes}
-    serviceNames={serviceNames}
-    orderId={orderId}
-    lineItemId={lineItemId}
-    onShopifyOrderModalClose={onShopifyOrderModalClose}
-  />
-) : (
-  <LoadingAnimation/>
-)}
-  </div>
-);
+    return (
+      <div style={{ marginTop: isMobile ? "10px" : "-6px", backgroundColor: "#005160" }}>
+        {rate2 && rate3 && rate4 ? (
+          <GetRates
+            senderCountryCode={senderCountry}
+            receiverAddressLine1={receiverAddressLine1}
+            receiverAddressLine2={receiverAddressLine2}
+            receiverCity={receiverCity}
+            receiverCountryCode={receiverCountry}
+            receiverPostalCode={receiverPostalCode}
+            receiverProvince={receiverProvince}
+            receiverName={receiverName}
+            receiverPhoneNumber={receiverPhoneNumber}
+            receiverEmail={receiverEmail}
+            dimensions={dimensions}
+            weight={weight}
+            rate1={rate1}
+            rate2={rate2}
+            rate3={rate3}
+            rate4={rate4}
+            rate5={rate5}
+            rate6={rate6}
+            rate7={rate7}
+            rate8={rate8}
+            url1={url1}
+            url2={url2}
+            url3={url3}
+            url4={url4}
+            url5={url5}
+            url6={url6}
+            url7={url7}
+            url8={url8}
+            courier1={courier1}
+            courier2={courier2}
+            courier3={courier3}
+            courier4={courier4}
+            courier5={courier5}
+            courier6={courier6}
+            courier7={courier7}
+            courier8={courier8}
+            deliveryTimes={deliveryTimes}
+            serviceNames={serviceNames}
+            orderId={orderId}
+            lineItemId={lineItemId}
+            onShopifyOrderModalClose={onShopifyOrderModalClose}
+          />
+        ) : (
+          <LoadingAnimation />
+        )}
+      </div>
+    );
 }
 
 export default RateEstimate;
