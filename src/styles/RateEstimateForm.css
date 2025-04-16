@@ -130,7 +130,6 @@ input[type="number"] {
     background-color: #faf7ec;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     border: 1px solid #0481ff;
-    background-color: #f0f6f7;
   }
   
   .sender-info h3,
@@ -183,7 +182,7 @@ input[type="number"] {
   label {
     font-size: 0.85rem;
     font-weight: 600;
-    color: #FFFFFF;
+    color: #350441;
     margin-bottom: 0.25rem;
   }
   /* Adjust dimensions inputs for mobile with nicer styling */
