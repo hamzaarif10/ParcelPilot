@@ -261,7 +261,7 @@ function RateEstimate({
     }, []);
 
     return (
-      <div style={{ marginTop: isMobile ? "10px" : "-6px", backgroundColor: "#005160" }}>
+      <div style={{ marginTop: isMobile ? "25px" : "-6px", backgroundColor: "#005160" }}>
         {rate2 && rate3 && rate4 ? (
           <GetRates
             senderCountryCode={senderCountry}
