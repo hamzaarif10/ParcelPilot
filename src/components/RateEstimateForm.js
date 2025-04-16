@@ -382,7 +382,7 @@ function RateEstimateForm(props) {
                 <div className="input-group">
                   <div className="postal-country-group">
                     <div className="postal-code">
-                      <label htmlFor="receiverPostalCode">Receiver Postal Code</label>
+                      <label htmlFor="receiverPostalCode" style={{marginTop:"-15.5px"}}>Receiver Postal Code</label>
                       <input
                         type="text"
                         id="receiverPostalCode"
