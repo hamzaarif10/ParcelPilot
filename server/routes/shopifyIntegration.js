@@ -123,17 +123,13 @@ router.get('/auth', (req, res) => {
 router.get('/callback', async (req, res) => {
   const { shop, code, state, hmac } = req.query;
 
-  console.log("🔁 Incoming OAuth Callback:", req.query); // ✅ Log query params
-
-  // HMAC Check
   if (!verifyHmac(req.query)) {
-    console.error('❌ HMAC verification failed');
+    console.error('HMAC verification failed');
     return res.status(400).send('Invalid request');
   }
 
-  // CSRF State check (optional if not using real state validation yet)
   if (state !== req.query.state) {
-    console.error('❌ State parameter mismatch');
+    console.error('State parameter mismatch');
     return res.status(403).send('Request origin cannot be verified');
   }
 
@@ -146,28 +142,14 @@ router.get('/callback', async (req, res) => {
     };
 
     const response = await axios.post(tokenUrl, params);
-    console.log("✅ Shopify Token Exchange Response:", response.data);
-
     const { access_token } = response.data;
+
     if (!access_token) {
-      console.error('❌ No access token in response');
+      console.error('No access token received from Shopify');
       return res.status(500).send('Error receiving access token');
     }
 
-    // Encrypt token
-    const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipheriv(
-      'aes-256-cbc',
-      Buffer.from(process.env.TOKEN_ENCRYPTION_KEY),
-      iv
-    );
-    let encrypted = cipher.update(access_token);
-    encrypted = Buffer.concat([encrypted, cipher.final()]);
-    const encryptedToken = iv.toString('hex') + ':' + encrypted.toString('hex');
-
-    console.log("🔐 Encrypted Token:", encryptedToken.substring(0, 30) + "...");
-
-    // Store token in DB
+    const encryptedToken = encrypt(access_token);
     const pool = getPool();
     await pool.request()
       .input('shopify_access_token', sql.NVarChar(sql.MAX), encryptedToken)
@@ -178,13 +160,12 @@ router.get('/callback', async (req, res) => {
         WHERE shopify_domain = @shopify_domain
       `);
 
-    console.log(`✅ Token stored for ${shop}`);
+    console.log(`[ACCESS LOG] Shopify token stored for domain ${shop}`);
     res.redirect(`${process.env.REACT_APP_FRONTEND_URL}/integration`);
   } catch (error) {
-    console.error('❌ Error during OAuth:', error.response?.data || error.message || error);
+    console.error('Error during OAuth:', error);
     res.status(500).send('Error during OAuth');
   }
 });
-
 
 module.exports = router;
