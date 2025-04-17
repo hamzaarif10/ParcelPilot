@@ -27,6 +27,7 @@ import ResetPasswordRequest from './pages/ResetPasswordRequest.js';
 import ResetPassword from './pages/ResetPassword.js';
 import ViewTransactions from './pages/ViewTransactions.js';
 import RateEstimate from './components/RateEstimate.js';
+import PrivacyPolicy from './pages/PrivacyPolicy.js';
 
  // Load Stripe with your publishable key
  const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISH_KEY);
@@ -54,6 +55,7 @@ function App() {
         <Route path="/login" element={<div><Navbar/><Login/></div>}/>
         <Route path="/reset-password-request" element={<div><Navbar/><ResetPasswordRequest/></div>}/>
         <Route path="/reset-password" element={<div><Navbar/><ResetPassword/></div>}/>
+        <Route path="/privacy-policy" element={<div><Navbar/><PrivacyPolicy/></div>}/>
         <Route path="/create-shipment" element={<ProtectedRoute><DashboardNav/><CreateShipment/><ShipmentDetailsModal/></ProtectedRoute>} />
         <Route path="/view-labels" element={<ProtectedRoute><DashboardNav/><ViewLabels /></ProtectedRoute>} />
         <Route path="/integration" element={<ProtectedRoute><DashboardNav/><Integrations /></ProtectedRoute>} />

@@ -389,7 +389,7 @@ function Integrations() {
             <Box p={3} bg="blue.50" borderRadius="md" fontSize="sm">
               <Text fontWeight="medium" mb={1}>Data Access Information:</Text>
               <Text>By connecting, we'll access order information including customer names, addresses, phone numbers, and emails as well as order details solely for order fulfillment purposes. See our 
-                <Button variant="link" colorScheme="blue" onClick={() => window.open('/privacy-policy', '_blank')}>Privacy Policy</Button> for details on how we handle and protect customer data.</Text>
+                 <Button variant="link" colorScheme="blue" onClick={() => window.open('/privacy-policy', '_blank')}>Privacy Policy</Button> for details on how we handle and protect customer data.</Text>
             </Box>
           </VStack>
         </ModalBody>

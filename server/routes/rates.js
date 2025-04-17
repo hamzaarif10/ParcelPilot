@@ -40,6 +40,9 @@ const rateLimitMiddleware = async (req, res, next) => {
 //Fetch gls rate
 router.post('/get-gls-rate', rateLimitMiddleware, async (req, res) => {
   try {
+    //added logging for shopify compliance
+    console.log(`[ACCESS LOG] Rate requested for recipient postal code: ${req.body?.destination_address?.postal_code}`);
+    
     const url = 'https://secureship.ca/ship/api/v2/carriers/rates';
 
     const response = await axios.post(url, req.body, {
@@ -102,6 +105,9 @@ router.get('/download-gls-label', async (req, res) => {
 // Fetch rate from API
 router.post('/get-rate', rateLimitMiddleware, async (req, res) => {
   try {
+    //added logging for shopify compliance
+    console.log(`[ACCESS LOG] Rate requested for recipient postal code: ${req.body?.destination_address?.postal_code}`);
+
     const url = 'https://public-api.easyship.com/2024-09/rates';
 
     const response = await axios.post(url, req.body, {
