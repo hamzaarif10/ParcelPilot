@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import {
   Box,
@@ -15,11 +15,47 @@ import {
 
 const ResetPasswordRequest = () => {
   const [email, setEmail] = useState("");
+  const [disabled, setDisabled] = useState(false);
+  const [countdown, setCountdown] = useState(3);
   const toast = useToast();
 
+  const validateEmail = (email) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+  };
+
   const handleResetRequest = async () => {
+    if (!validateEmail(email)) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address.",
+        status: "warning",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    setDisabled(true);
+    setCountdown(5);
+
+    // Start countdown
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setDisabled(false);
+          return 3;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
     try {
-      const res = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/auth/reset-password-request`, { email });
+      const res = await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/auth/reset-password-request`,
+        { email }
+      );
       toast({
         title: "Success",
         description: res.data.message,
@@ -73,8 +109,9 @@ const ResetPasswordRequest = () => {
               _hover={{ bg: "blue.600", transform: "scale(1.05)" }}
               transition="0.2s"
               onClick={handleResetRequest}
+              disabled={disabled}
             >
-              Send Reset Link
+              {disabled ? `Please wait... (${countdown})` : "Send Reset Link"}
             </Button>
           </VStack>
         </Box>
@@ -84,4 +121,3 @@ const ResetPasswordRequest = () => {
 };
 
 export default ResetPasswordRequest;
-

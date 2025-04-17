@@ -21,6 +21,8 @@ function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [errorMsg, setErrorMsg] = useState('');
+    //login button state
+    const [loginDisabled, setLoginDisabled] = useState(false);
     
     //Form validation
     const handleSubmit = async (e) => {
@@ -42,8 +44,9 @@ function Login() {
             }
     // If all fields are filled, clear the error and proceed
     setErrorMsg(""); 
-    
+    setLoginDisabled(true);
     await login(email, password);
+    setTimeout(() => {setLoginDisabled(false)},"1000");  //enable login button after 3 seconds if validation is unsuccesful
     }
     return (
         <section className="h-100 gradient-form" style={{ backgroundColor: '#eee' }}>
@@ -96,6 +99,7 @@ function Login() {
                                                     data-mdb-ripple-init 
                                                     className="btn btn-primary btn-block fa-lg gradient-custom-2 mb-3" 
                                                     type="submit"
+                                                    disabled={loginDisabled}
                                                 >
                                                     Log in
                                                 </button>

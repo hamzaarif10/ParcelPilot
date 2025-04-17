@@ -31,6 +31,8 @@ const UserAddressModal = ({ isOpen, onClose, isFirstLogin, shouldReload }) => {
 
   const [errors, setErrors] = useState({});
   const toast = useToast();
+  //state to prevent Database overloading with spam
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleProvinceChange = (e) => {
     setSenderProvince(e.target.value);
@@ -139,16 +141,20 @@ const UserAddressModal = ({ isOpen, onClose, isFirstLogin, shouldReload }) => {
 
   // Handle form submission
   const handleSubmit = async () => {
+    if (isSubmitting) return;
+  
+    setIsSubmitting(true);
+    setTimeout(() => setIsSubmitting(false), 2200); // re-enable after 2.2 seconds
+  
     const provinceCode = await getProvinceCode(senderProvince);
     if (!validateForm()) {
       return;
     }
-    // Final province code check
     if (!provinceCode) {
       setErrors({ senderProvince: "Province is required or invalid." });
       return;
     }
-
+  
     const token = localStorage.getItem("authToken");
     try {
       await axios.post(
@@ -165,21 +171,20 @@ const UserAddressModal = ({ isOpen, onClose, isFirstLogin, shouldReload }) => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
   
-      // If this is the first login, mark first login as complete
       if (isFirstLogin) {
         await axios.post(`${process.env.REACT_APP_BACKEND_URL}/user/completeFirstLogon`, {}, {
           headers: { Authorization: `Bearer ${token}` },
         });
       }
+  
       setFormSubmitted(true);
       localStorage.setItem("userPostalCode", senderPostalCode);
-      
-      // Close the modal and pass the postal code back to parent
+  
       if (onClose) {
         onClose();
       }
-      if (shouldReload)  // the user opened the modal from create shipment form
-      {
+  
+      if (shouldReload) {
         toast({
           title: "Success",
           description: "Your address has been updated successfully! Redirecting to rate estimate",
@@ -187,13 +192,9 @@ const UserAddressModal = ({ isOpen, onClose, isFirstLogin, shouldReload }) => {
           duration: 2500,
           isClosable: true,
           position: "bottom",
-        });     
-        // reload window to reflect new address
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
-      }else
-      {
+        });
+        setTimeout(() => window.location.reload(), 2000);
+      } else {
         toast({
           title: "Success",
           description: "Your details have been updated successfully!",
@@ -201,7 +202,7 @@ const UserAddressModal = ({ isOpen, onClose, isFirstLogin, shouldReload }) => {
           duration: 2500,
           isClosable: true,
           position: "bottom",
-        });     
+        });
       }
     } catch (error) {
       console.error(error.response?.data || error.message);
@@ -213,8 +214,8 @@ const UserAddressModal = ({ isOpen, onClose, isFirstLogin, shouldReload }) => {
         isClosable: true,
       });
     }
-  };  
-
+  };
+  
   // Custom close handler that ensures we cleanup properly
   const handleClose = () => {
     if (onClose) {
@@ -318,15 +319,14 @@ const UserAddressModal = ({ isOpen, onClose, isFirstLogin, shouldReload }) => {
           </div>
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="blue" onClick={handleSubmit}>
-            Submit
-          </Button>
+        <Button colorScheme="blue" onClick={handleSubmit} isDisabled={isSubmitting}>
+          {isSubmitting ? "Please wait..." : "Submit"}
+        </Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
   );
 };
-
 export default UserAddressModal;
 
 

@@ -15,6 +15,12 @@ function Register() {
   const [message, setMessage] = useState("");
   //bool to manage if register page has been submitted
   const [isSubmitted, setIsSubmitted] = useState(false);
+   //states to make sure there are no button spams
+  const [registerDisabled, setRegisterDisabled] = useState(false);
+  const [resendDisabled, setResendDisabled] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
+  const [verifyDisabled, setVerifyDisabled] = useState(false);
+
     
   //password requirements
   const options = {
@@ -30,73 +36,89 @@ function Register() {
     e.preventDefault();
   
     // Check for empty fields
-    if (!name) 
-    {
+    if (!name) {
       setErrorMsg("Name is required!");
-      return; 
-    
-    } else if (!email) 
-    {
+      return;
+    } else if (!email) {
       setErrorMsg("Email is required!");
-      return; 
-    
-    } else if (!password) 
-    {
-        setErrorMsg("Password is required!");
-        return; 
-    } 
-    
-    // correct format checks
-    if(!validator.isEmail(email))
-    {
-        setErrorMsg("Email is in the wrong format");
-        return;
-    } else if (!validator.isStrongPassword(password, options))
-    {
-        setErrorMsg("Password must be at least 8 characters");
-        return;
+      return;
+    } else if (!password) {
+      setErrorMsg("Password is required!");
+      return;
     }
   
-    // If all fields are filled, clear the error and proceed
-    setErrorMsg(""); 
-    
-    //query the sql database
+    // Format validations
+    if (!validator.isEmail(email)) {
+      setErrorMsg("Email is in the wrong format");
+      return;
+    } else if (!validator.isStrongPassword(password, options)) {
+      setErrorMsg("Password must be at least 8 characters");
+      return;
+    }
+  
+    // All validations passed
+    setErrorMsg("");
+    setRegisterDisabled(true); // Immediately disable the register button
+  
     const registerUser = async () => {
       try {
         const data = { firstName: name, email: email, password: password };
-        const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/auth/register`, data);
+        await axios.post(`${process.env.REACT_APP_BACKEND_URL}/auth/register`, data);
         setIsSubmitted(true);
       } catch (error) {
         console.error(error);
         setErrorMsg('Registration failed. Please try again.');
+        setRegisterDisabled(false); // Re-enable if registration fails
       }
     };
+  
     registerUser();
   };
+  
   //Handle email verification
   const handleVerify = async () => {
+    setVerifyDisabled(true);
     try {
       const res = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/auth/verify-email`, { email, code });
       setMessage(res.data.message);
-
-      // Redirect to login page after successful verification
-      if (res.data.message === "Email verified successfully!") {
-        // Redirect to login page
+  
+      if (res.data.message === "Email verified successfully! Redirecting to Login") {
         setTimeout(() => {
-          navigate("/login"); // Adjust the route if necessary
-        }, 2000); // Wait for 2 seconds before redirecting, to show the success message
+          navigate("/login");
+        }, 2000);
+      } else {
+        setVerifyDisabled(false); // only re-enable if not successful
       }
     } catch (error) {
       setMessage("Verification failed. Please check your code and try again.");
+      setVerifyDisabled(false); // re-enable on failure
     }
   };
 //handle resend code
 const handleResendCode = async () => {
+  setResendDisabled(true);       // Immediately disable the button
+  setResendTimer(9);             // Start the countdown
+
+  // Start countdown timer right away
+  const interval = setInterval(() => {
+    setResendTimer((prev) => {
+      if (prev <= 1) {
+        clearInterval(interval);
+        setResendDisabled(false);
+        return 0;
+      }
+      return prev - 1;
+    });
+  }, 1000);
+
   try {
     await axios.post(`${process.env.REACT_APP_BACKEND_URL}/auth/resend-code`, { email });
     setMessage("A new verification code has been sent!");
   } catch (error) {
     setMessage("Failed to resend verification code.");
+    clearInterval(interval);
+    setResendDisabled(false);
+    setResendTimer(0);
   }
 };
 
@@ -166,12 +188,13 @@ const handleResendCode = async () => {
                         )}
   
                         <div className="d-flex justify-content-center">
-                          <button
-                            type="submit"
-                            className="btn btn-success btn-block btn-lg gradient-custom-4 text-body"
-                          >
-                            Register
-                          </button>
+                        <button
+                          type="submit"
+                          disabled={registerDisabled}
+                          className="btn btn-success btn-block btn-lg gradient-custom-4 text-body"
+                        >
+                          {registerDisabled ? "Registering..." : "Register"}
+                        </button>
                         </div>
   
                         <p className="text-center text-muted mt-5 mb-0">
@@ -197,8 +220,20 @@ const handleResendCode = async () => {
                             Verification Code
                           </label>
                       </div>
-                      <button onClick={handleVerify} className="btn btn-success btn-block btn-lg gradient-custom-4 text-body">Verify</button>
-                      <button onClick={handleResendCode} className="btn btn-success btn-block btn-lg gradient-custom-4 text-body">Resend Code</button>
+                      <button 
+                        onClick={handleVerify} 
+                        disabled={verifyDisabled}
+                        className="btn btn-success btn-block btn-lg gradient-custom-4 text-body"
+                      >
+                        {verifyDisabled ? "Verifying..." : "Verify"}
+                      </button>
+                      <button 
+                        onClick={handleResendCode} 
+                        disabled={resendDisabled}
+                        className="btn btn-success btn-block btn-lg gradient-custom-4 text-body"
+                      >
+                        {resendDisabled ? `Resend Code (${resendTimer}s)` : "Resend Code"}
+                      </button>
                       <p>{message}</p>
                     </>
                   )}
