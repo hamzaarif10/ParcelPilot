@@ -116,6 +116,7 @@ function Integrations() {
         params: { shopifyDomain, shopifyAccessToken },
       });
       setOrders(response.data.orders);
+       //Log the data that was accessed
       toast({
         title: "Orders Synced",
         description: `Successfully synced ${response.data.orders.length} orders from Shopify.`,
@@ -315,11 +316,15 @@ function Integrations() {
                           <Td fontSize="sm" py={4}>
                             {order.customer.phone && (
                               <Text color="gray.700">
-                                {order.customer.phone}
+                                {/* Mask phone number, showing only last 4 digits */}
+                                {order.customer.phone.replace(/^(.*)(\d{4})$/, '••••••$2')}
                               </Text>
                             )}
                             <Text color="blue.600">
-                              {order.customer.email || "N/A"}
+                              {/* Mask email, showing only first part and domain */}
+                              {order.customer.email ? 
+                                `${order.customer.email.split('@')[0].substring(0, 3)}•••@${order.customer.email.split('@')[1]}` : 
+                                "N/A"}
                             </Text>
                           </Td>
                           <Td textAlign="center" py={4}>
@@ -366,22 +371,28 @@ function Integrations() {
           </ModalHeader>
           <ModalCloseButton />
           <ModalBody py={6} px={6}>
-            <VStack spacing={4} align="stretch">
-              <Text>Please enter your Shopify domain:</Text>
-              <Input
-                value={shopifyDomain}
-                onChange={(e) => setShopifyDomain(e.target.value)}
-                placeholder="your-store.myshopify.com"
-                size="lg"
-                borderRadius="md"
-                borderColor="gray.300"
-                _focus={{ borderColor: "blue.500", boxShadow: "0 0 0 1px #3182ce" }}
-              />
-              <Text fontSize="sm" color="gray.500">
-                Your domain should end with .myshopify.com
-              </Text>
-            </VStack>
-          </ModalBody>
+          <VStack spacing={4} align="stretch">
+            <Text>Please enter your Shopify domain:</Text>
+            <Input
+              value={shopifyDomain}
+              onChange={(e) => setShopifyDomain(e.target.value)}
+              placeholder="your-store.myshopify.com"
+              size="lg"
+              borderRadius="md"
+              borderColor="gray.300"
+              _focus={{ borderColor: "blue.500", boxShadow: "0 0 0 1px #3182ce" }}
+            />
+            <Text fontSize="sm" color="gray.500">
+              Your domain should end with .myshopify.com
+            </Text>
+            {/* Add privacy disclosure */}
+            <Box p={3} bg="blue.50" borderRadius="md" fontSize="sm">
+              <Text fontWeight="medium" mb={1}>Data Access Information:</Text>
+              <Text>By connecting, we'll access order information including customer names, addresses, phone numbers, and emails as well as order details solely for order fulfillment purposes. See our 
+                <Button variant="link" colorScheme="blue" onClick={() => window.open('/privacy-policy', '_blank')}>Privacy Policy</Button> for details on how we handle and protect customer data.</Text>
+            </Box>
+          </VStack>
+        </ModalBody>
           <ModalFooter bg="gray.50" borderTopWidth="1px" borderColor="gray.100" borderBottomRadius="xl" px={6} py={4}>
             <HStack spacing={3}>
               <Button 
@@ -418,5 +429,4 @@ function Integrations() {
     </Box>
   );
 }
-
 export default Integrations;
