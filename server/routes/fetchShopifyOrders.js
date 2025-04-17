@@ -4,6 +4,16 @@ const authenticateToken = require('../middleware/authenticateToken');
 
 const router = express.Router();
 
+const rateLimit = require('express-rate-limit');
+
+// Apply to all customer-data routes
+const shopifyRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 mins
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Shopify GraphQL query to fetch unfulfilled orders
 const getUnfulfilledOrdersQuery = `
   query getUnfulfilledOrders($first: Int!) {
@@ -32,37 +42,39 @@ const getUnfulfilledOrdersQuery = `
   }
 }
 `;
+router.get("/orders/sync", shopifyRateLimit, async (req, res) => {
+  const { shopifyDomain, shopifyAccessToken } = req.query;
+  if (!shopifyDomain || !shopifyAccessToken) {
+    return res.status(400).json({ error: "Missing Shopify domain or access token." });
+  }
 
-
-router.get("/orders/sync", async (req, res) => {
-    const { shopifyDomain, shopifyAccessToken } = req.query; // Get these from query params
-  
-    if (!shopifyDomain || !shopifyAccessToken) {
-      return res.status(400).json({ error: "Missing Shopify domain or access token." });
-    }
-    const url = `https://${shopifyDomain}/admin/api/2025-01/graphql.json`;
-    try {
-        const response = await axios.post(
-          url,
-          {
-            query: getUnfulfilledOrdersQuery,
-            variables: { first: 10 },
-          },
-          {
-            headers: {
-              'X-Shopify-Access-Token': shopifyAccessToken,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-      
-        const orders = response.data.data.orders.edges.map((order) => order.node);
-        res.json({ orders });
-      } catch (error) {
-        console.error("Error fetching unfulfilled orders:", error.response || error.message);
-        res.status(500).json({ error: "Failed to fetch orders from Shopify." });
+  const url = `https://${shopifyDomain}/admin/api/2025-01/graphql.json`;
+  try {
+    const response = await axios.post(
+      url,
+      {
+        query: getUnfulfilledOrdersQuery,
+        variables: { first: 10 },
+      },
+      {
+        headers: {
+          'X-Shopify-Access-Token': shopifyAccessToken,
+          "Content-Type": "application/json",
+        },
       }
-  });
+    );
+
+    const orders = response.data.data.orders.edges.map((order) => order.node);
+
+    // ✅ ACCESS LOG
+    console.log(`[ACCESS LOG] User fetched unfulfilled orders from ${shopifyDomain}`);
+
+    res.json({ orders });
+  } catch (error) {
+    console.error("Error fetching unfulfilled orders:", error.response || error.message);
+    res.status(500).json({ error: "Failed to fetch orders from Shopify." });
+  }
+});
 
 //Get Shopify order id for fullfillment later
 router.get('/get-fulfillment-orders', async (req, res) => {
@@ -185,7 +197,8 @@ router.get('/get-fulfillment-orders', async (req, res) => {
     // Check if the response contains the order
     if (response.data?.data?.order) {
       const order = response.data.data.order;
-
+      
+      console.log(`[ACCESS LOG] User accessed detailed order ${order.name} from ${shopifyDomain}`);
       // Transform the data for easier consumption
       const transformedOrder = {
         id: order.id,
@@ -438,6 +451,8 @@ router.post('/fulfill-order', async (req, res) => {
 
     // Return the fulfillment data
     const fulfillmentData = data.fulfillmentCreateV2.fulfillment;
+    //added log for shopify compliance
+    console.log(`[ACCESS LOG] User fulfilled lineItem ${lineItemId} in order ${orderId} on ${shopifyDomain}`);
     res.json(fulfillmentData);
   } catch (error) {
     console.error('Error fulfilling Shopify order:', error);
