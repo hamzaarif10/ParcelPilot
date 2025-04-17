@@ -14,7 +14,7 @@ const redis = new Redis({
 // Create the limiter
 const ratelimit = new Ratelimit({
   redis,
-  limiter: Ratelimit.slidingWindow(100, '15 m'), // 100 requests per 15 minutes
+  limiter: Ratelimit.slidingWindow(6, '15 m'), // 100 requests per 15 minutes
 });
 
 // Middleware

@@ -4,6 +4,7 @@ import axios from 'axios';
 import { calculateRateWithMargin } from '../functions/calculateRate';
 import getProvinceCode from "../functions/getProvinceCode";
 import LoadingAnimation from "../LoadingAnimations/LoadingAnimation1";
+import { useToast } from '@chakra-ui/react';
 
 function RateEstimate({
   senderPostalCode,
@@ -59,6 +60,7 @@ function RateEstimate({
   const parcelType = "Box";
 
   const [isMobile, setIsMobile] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth <= 768); // You can adjust the width as needed
@@ -173,24 +175,39 @@ function RateEstimate({
   //Fetch gls Rate
   const fetchGlsRate = async () => {
     try {
-    const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/get-gls-rate`, glsData);
-      
-      // Ensure that the 'rates' array is not empty
+      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/get-gls-rate`, glsData);
+  
       if (response.data.rates && response.data.rates.length > 0) {
         const firstRate = response.data.rates.find(rate => rate.selectedService === "GlsDicomExpressGround");
-        if (firstRate){
-           //Update the rates with calculated margins
-           setRate1(calculateRateWithMargin(firstRate.total,0,false, labelsPrinted));  // Assuming 'total' is the correct value for your calculation
-           setUrl1("https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/GLS_Logo_2021.svg/640px-GLS_Logo_2021.svg.png");
-           setCourier1(firstRate.selectedService);
+        if (firstRate  && firstRate.total) {
+          setRate1(calculateRateWithMargin(firstRate.total, 0, false, labelsPrinted));
+          setUrl1("https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/GLS_Logo_2021.svg/640px-GLS_Logo_2021.svg.png");
+          setCourier1(firstRate.selectedService);
         }
-     } else {
-       console.error('No rates available in the response');
       }
     } catch (error) {
       console.error('Error fetching GLS rate:', error);
+      if (error.response?.status === 429) {
+        toast({
+          title: "Rate limit exceeded",
+          description: "Too many requests. Please try again shortly.",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+      } else {
+        toast({
+          title: "Error fetching rates",
+          description: error.response?.data?.message || error.message,
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+        
+      }
     }
-  }
+  };
+  
   
   
   // Fetch rates
@@ -198,62 +215,92 @@ function RateEstimate({
     try {
       const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/get-rate`, rateEstimateData);
       if (response.data.rates && response.data.rates.length > 0) {
-        const filteredRates = response.data.rates.filter(
-          (rate) => rate.cost_rank >= 1 && rate.cost_rank <= 7
-        );
-      
-        const sortedRates = filteredRates.sort((a, b) => a.cost_rank - b.cost_rank);
+        const filteredRates = response.data.rates
+        .filter(
+          (rate) =>
+            rate.cost_rank >= 1 &&
+            rate.cost_rank <= 7 &&
+            rate.total_charge !== undefined &&
+            rate.total_charge !== null &&
+            rate.courier_service !== undefined &&
+            rate.courier_service !== null
+        )
+        .sort((a, b) => a.cost_rank - b.cost_rank);
 
-        setRate2(calculateRateWithMargin(sortedRates[0].total_charge, sortedRates[0].residential_full_fee, isResidential, labelsPrinted));
-        setUrl2(sortedRates[0].courier_service.logo);
-        setCourier2(sortedRates[0].courier_service.id);
-      
-        setRate3(calculateRateWithMargin(sortedRates[1].total_charge, sortedRates[1].residential_full_fee, isResidential, labelsPrinted));
-        setUrl3(sortedRates[1].courier_service.logo);
-        setCourier3(sortedRates[1].courier_service.id);
-      
-        setRate4(calculateRateWithMargin(sortedRates[2].total_charge, sortedRates[2].residential_full_fee, isResidential,  labelsPrinted));
-        setUrl4(sortedRates[2].courier_service.logo);
-        setCourier4(sortedRates[2].courier_service.id);
-    
-          setRate5(calculateRateWithMargin(sortedRates[3].total_charge, sortedRates[3].residential_full_fee, isResidential,  labelsPrinted));
-          setUrl5(sortedRates[3].courier_service.logo);
-          setCourier5(sortedRates[3].courier_service.id);
-        
-        
-          setRate6(calculateRateWithMargin(sortedRates[4].total_charge, sortedRates[4].residential_full_fee, isResidential,  labelsPrinted));
-          setUrl6(sortedRates[4].courier_service.logo);
-          setCourier6(sortedRates[4].courier_service.id);
-
-          setRate7(calculateRateWithMargin(sortedRates[5].total_charge, sortedRates[5].residential_full_fee, isResidential,  labelsPrinted));
-          setUrl7(sortedRates[5].courier_service.logo);
-          setCourier7(sortedRates[5].courier_service.id);
-
-          setRate8(calculateRateWithMargin(sortedRates[6].total_charge, sortedRates[6].residential_full_fee, isResidential,  labelsPrinted));
-          setUrl8(sortedRates[6].courier_service.logo);
-          setCourier8(sortedRates[6].courier_service.id);
-
-          //Set delivery times
-          const newDeliveryTimes = [];
-          const newServiceNames = [];
-
-           for (let i = 0; i < sortedRates.length; i++) {
-             if ((sortedRates[i].max_delivery_time - sortedRates[i].min_delivery_time) === 0) {
-                newDeliveryTimes.push(sortedRates[i].max_delivery_time + " business days");
-                newServiceNames.push(sortedRates[i].courier_service.name);
-              } else {
-                newDeliveryTimes.push(sortedRates[i].min_delivery_time + "-" + sortedRates[i].max_delivery_time + " business days");
-                newServiceNames.push(sortedRates[i].courier_service.name);
-              }
-            }
-
-          setDeliveryTimes(newDeliveryTimes);
-          setServiceNames(newServiceNames);
-      } 
+  
+        if (filteredRates[0]) {
+          setRate2(calculateRateWithMargin(filteredRates[0]?.total_charge, filteredRates[0]?.residential_full_fee, isResidential, labelsPrinted));
+          setUrl2(filteredRates[0]?.courier_service.logo);
+          setCourier2(filteredRates[0]?.courier_service.id);
+        }
+        if (filteredRates[1]) {
+          setRate3(calculateRateWithMargin(filteredRates[1]?.total_charge, filteredRates[1]?.residential_full_fee, isResidential, labelsPrinted));
+          setUrl3(filteredRates[1]?.courier_service.logo);
+          setCourier3(filteredRates[1]?.courier_service.id);
+        }
+        if (filteredRates[2]) {
+          setRate4(calculateRateWithMargin(filteredRates[2]?.total_charge, filteredRates[2]?.residential_full_fee, isResidential, labelsPrinted));
+          setUrl4(filteredRates[2]?.courier_service.logo);
+          setCourier4(filteredRates[2]?.courier_service.id);
+        }
+        if (filteredRates[3]) {
+          setRate5(calculateRateWithMargin(filteredRates[3]?.total_charge, filteredRates[3]?.residential_full_fee, isResidential, labelsPrinted));
+          setUrl5(filteredRates[3]?.courier_service.logo);
+          setCourier5(filteredRates[3]?.courier_service.id);
+        }
+        if (filteredRates[4]) {
+          setRate6(calculateRateWithMargin(filteredRates[4]?.total_charge, filteredRates[4]?.residential_full_fee, isResidential, labelsPrinted));
+          setUrl6(filteredRates[4]?.courier_service.logo);
+          setCourier6(filteredRates[4]?.courier_service.id);
+        }
+        if (filteredRates[5]) {
+          setRate7(calculateRateWithMargin(filteredRates[5]?.total_charge, filteredRates[5]?.residential_full_fee, isResidential, labelsPrinted));
+          setUrl7(filteredRates[5]?.courier_service.logo);
+          setCourier7(filteredRates[5]?.courier_service.id);
+        }
+        if (filteredRates[6]) {
+          setRate8(calculateRateWithMargin(filteredRates[6]?.total_charge, filteredRates[6]?.residential_full_fee, isResidential, labelsPrinted));
+          setUrl8(filteredRates[6]?.courier_service.logo);
+          setCourier8(filteredRates[6]?.courier_service.id);
+        }
+  
+        const newDeliveryTimes = [];
+        const newServiceNames = [];
+  
+        filteredRates.forEach(rate => {
+          const timeRange = rate.max_delivery_time === rate.min_delivery_time
+            ? `${rate.max_delivery_time} business days`
+            : `${rate.min_delivery_time}-${rate.max_delivery_time} business days`;
+  
+          newDeliveryTimes.push(timeRange);
+          newServiceNames.push(rate.courier_service.name);
+        });
+  
+        setDeliveryTimes(newDeliveryTimes);
+        setServiceNames(newServiceNames);
+      }
     } catch (error) {
-      console.error('Error fetching rate:', error);
-    } 
+      console.error('Error fetching rates:', error);
+      if (error.response?.status === 429) {
+        toast({
+          title: "Rate limit exceeded",
+          description: "Too many requests. Please try again shortly.",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+      } else {
+        toast({
+          title: "Error fetching rates",
+          description: error.response?.data?.message || error.message,
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    }
   };
+  
     //core fetching rate logic
     useEffect(() => {
         fetchRates();
@@ -262,53 +309,53 @@ function RateEstimate({
 
     return (
       <div style={{ marginTop: isMobile ? "25px" : "-6px", backgroundColor: "#005160" }}>
-        {rate2 && rate3 && rate4 ? (
-          <GetRates
-            senderCountryCode={senderCountry}
-            receiverAddressLine1={receiverAddressLine1}
-            receiverAddressLine2={receiverAddressLine2}
-            receiverCity={receiverCity}
-            receiverCountryCode={receiverCountry}
-            receiverPostalCode={receiverPostalCode}
-            receiverProvince={receiverProvince}
-            receiverName={receiverName}
-            receiverPhoneNumber={receiverPhoneNumber}
-            receiverEmail={receiverEmail}
-            dimensions={dimensions}
-            weight={weight}
-            rate1={rate1}
-            rate2={rate2}
-            rate3={rate3}
-            rate4={rate4}
-            rate5={rate5}
-            rate6={rate6}
-            rate7={rate7}
-            rate8={rate8}
-            url1={url1}
-            url2={url2}
-            url3={url3}
-            url4={url4}
-            url5={url5}
-            url6={url6}
-            url7={url7}
-            url8={url8}
-            courier1={courier1}
-            courier2={courier2}
-            courier3={courier3}
-            courier4={courier4}
-            courier5={courier5}
-            courier6={courier6}
-            courier7={courier7}
-            courier8={courier8}
-            deliveryTimes={deliveryTimes}
-            serviceNames={serviceNames}
-            orderId={orderId}
-            lineItemId={lineItemId}
-            onShopifyOrderModalClose={onShopifyOrderModalClose}
-          />
-        ) : (
-          <LoadingAnimation />
-        )}
+        {(rate2 || rate3 || rate4 || rate5 || rate6 || rate7 || rate8) ? (
+  <GetRates
+    senderCountryCode={senderCountry}
+    receiverAddressLine1={receiverAddressLine1}
+    receiverAddressLine2={receiverAddressLine2}
+    receiverCity={receiverCity}
+    receiverCountryCode={receiverCountry}
+    receiverPostalCode={receiverPostalCode}
+    receiverProvince={receiverProvince}
+    receiverName={receiverName}
+    receiverPhoneNumber={receiverPhoneNumber}
+    receiverEmail={receiverEmail}
+    dimensions={dimensions}
+    weight={weight}
+    rate1={rate1}
+    rate2={rate2}
+    rate3={rate3}
+    rate4={rate4}
+    rate5={rate5}
+    rate6={rate6}
+    rate7={rate7}
+    rate8={rate8}
+    url1={url1}
+    url2={url2}
+    url3={url3}
+    url4={url4}
+    url5={url5}
+    url6={url6}
+    url7={url7}
+    url8={url8}
+    courier1={courier1}
+    courier2={courier2}
+    courier3={courier3}
+    courier4={courier4}
+    courier5={courier5}
+    courier6={courier6}
+    courier7={courier7}
+    courier8={courier8}
+    deliveryTimes={deliveryTimes}
+    serviceNames={serviceNames}
+    orderId={orderId}
+    lineItemId={lineItemId}
+    onShopifyOrderModalClose={onShopifyOrderModalClose}
+  />
+) : (
+  <LoadingAnimation />
+)}
       </div>
     );
 }
