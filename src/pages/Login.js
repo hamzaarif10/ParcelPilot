@@ -3,26 +3,78 @@ import '../styles/Login.css';
 import axios from 'axios';
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@chakra-ui/react";
 
-const login = async (email, password) => {
-    try {
-      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/auth/login`, { email, password });
-      const token = response.data.token;
-      localStorage.setItem('authToken', token);  // Store the token
-      window.location.href = "/create-shipment"; // Redirect to the protected page
-    } catch (error) {
-      console.error('Error logging in:', error.response?.data || error.message);
-      alert(`Failed to log in: ${error.response?.data || error.message}`);
-    }
-};
-function Login() {
+const Login = () => {
     const navigate = useNavigate();
+    const toast = useToast(); // Initialize Chakra toast
+    
     //State variables
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [errorMsg, setErrorMsg] = useState('');
     //login button state
     const [loginDisabled, setLoginDisabled] = useState(false);
+    
+    const login = async (email, password) => {
+        try {
+          const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/auth/login`, { email, password });
+          const token = response.data.token;
+          localStorage.setItem('authToken', token);  // Store the token
+          
+          // Show success toast
+          toast({
+            title: "Login successful",
+            description: "Redirecting to create shipment page...",
+            status: "success",
+            duration: 3000,
+            isClosable: true,
+            position: "top"
+          });
+          
+          window.location.href = "/create-shipment"; // Redirect to the protected page
+        } catch (error) {
+          console.error('Error logging in:', error.response?.data || error.message);
+          
+          // Check specific error conditions based on the response
+          const errorResponse = error.response?.data;
+          let errorTitle = "Login failed";
+          let errorMessage = "An unexpected error occurred. Please try again.";
+          
+          // Handle different error scenarios based on the error response
+          if (errorResponse) {
+            // Check for user not found error
+            if (errorResponse.code === "USER_NOT_FOUND" || 
+                errorResponse.message?.includes("user not found") || 
+                errorResponse.error?.includes("user not found")) {
+              errorMessage = "User not found. Please check your email address.";
+            } 
+            // Check for wrong password error
+            else if (errorResponse.code === "INVALID_PASSWORD" || 
+                    errorResponse.message?.includes("incorrect password") || 
+                    errorResponse.message?.includes("wrong password") || 
+                    errorResponse.error?.includes("password")) {
+              errorMessage = "Wrong password. Please try again.";
+            }
+            // Fallback to any message from the server
+            else if (errorResponse.message) {
+              errorMessage = errorResponse.message;
+            }
+          }
+          
+          // Show the appropriate error toast
+          toast({
+            title: errorTitle,
+            description: errorMessage,
+            status: "error",
+            duration: 5000,
+            isClosable: true,
+            position: "top"
+          });
+          
+          setLoginDisabled(false); // Enable login button immediately on error
+        }
+    };
     
     //Form validation
     const handleSubmit = async (e) => {
@@ -46,8 +98,10 @@ function Login() {
     setErrorMsg(""); 
     setLoginDisabled(true);
     await login(email, password);
-    setTimeout(() => {setLoginDisabled(false)},"1000");  //enable login button after 3 seconds if validation is unsuccesful
+    // Note: We don't need the setTimeout here anymore as the login function will handle enabling the button on error
+    // Success case redirects, so we don't need to re-enable the button
     }
+    
     return (
         <section className="h-100 gradient-form" style={{ backgroundColor: '#eee' }}>
             <div className="container py-5 h-100">
@@ -87,7 +141,7 @@ function Login() {
                                                 <label className="form-label" htmlFor="form2Example22">Password</label>
                                             </div>
 
-                                             {/* Render error message conditionally */}
+                                             {/* Render error message conditionally for form validation errors */}
                                                 {errorMsg && (
                                                 <div id="passwordError" className="text-danger mt-1">
                                                     {errorMsg}
@@ -101,7 +155,7 @@ function Login() {
                                                     type="submit"
                                                     disabled={loginDisabled}
                                                 >
-                                                    Log in
+                                                    {loginDisabled ? "Logging in..." : "Log in"}
                                                 </button>
                                                 <Link className="text-muted" to="/reset-password-request">
                                                     Forgot password?
@@ -127,7 +181,7 @@ function Login() {
                                     <div className="text-white px-3 py-4 p-md-5 mx-md-4">
                                         <h4 className="mb-4">Canada Wide Shipping</h4>
                                         <p className="small mb-0">
-                                        ParcelPilot makes it easy to ship anywhere across Canada. From major urban centres to small towns coast-to-coast, you’ll always get a great rate on your domestic shipping.
+                                        ParcelPilot makes it easy to ship anywhere across Canada. From major urban centres to small towns coast-to-coast, you'll always get a great rate on your domestic shipping.
                                         </p>
                                     </div>
                                 </div>
