@@ -76,6 +76,12 @@ app.use(cors({
   credentials: true
 }));
 
+const webHooksRoute = require('./routes/webhooks');
+// ✨ Add raw body parser BEFORE webhooks
+app.use('/webhooks', express.raw({ type: 'application/json' }));
+app.use("/webhooks", webHooksRoute);
+
+// ✅ Now apply express.json() for all other routes
 app.use(express.json());
 
 // Session middleware with custom Upstash Redis store
@@ -118,6 +124,7 @@ app.use('/payment', billingRoute);
 app.use('/auth', shopifyIntegrationRoute);
 app.use('/fetchShopifyOrders', fetchShopifyOrdersRoute);
 app.use('/support', supportRoute);
+app.use("/webhooks", webHooksRoute);
 
 // Serve static files in production (React build)
 if (isProd) {
