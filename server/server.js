@@ -124,7 +124,6 @@ app.use('/payment', billingRoute);
 app.use('/auth', shopifyIntegrationRoute);
 app.use('/fetchShopifyOrders', fetchShopifyOrdersRoute);
 app.use('/support', supportRoute);
-app.use("/webhooks", webHooksRoute);
 
 // Serve static files in production (React build)
 if (isProd) {
