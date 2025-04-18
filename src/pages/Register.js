@@ -82,7 +82,7 @@ function Register() {
       const res = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/auth/verify-email`, { email, code });
       setMessage(res.data.message);
   
-      if (res.data.message === "Email verified successfully! Redirecting to Login") {
+      if (res.data.message === "Email verified successfully!") {
         setTimeout(() => {
           navigate("/login");
         }, 2000);
