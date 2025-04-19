@@ -5,7 +5,7 @@ import {
   ModalCloseButton, useDisclosure, Table, Thead, Tbody, Tr, Th, Td, Spinner,
   Flex, Heading, Badge, useToast, HStack, Divider, Tooltip
 } from "@chakra-ui/react";
-import { FaShopify, FaSync, FaShippingFast, FaStore, FaBoxOpen } from "react-icons/fa";
+import { FaStore, FaSync, FaShippingFast, FaLink, FaBoxOpen, FaPlug } from "react-icons/fa";
 import SideBar from "../components/SideBar.js";
 import axios from 'axios';
 import ShipShopifyOrderModal from "../modals/ShipShopifyOrderModal.js";
@@ -39,7 +39,7 @@ function Integrations() {
         console.error("Error fetching Shopify token:", error);
         toast({
           title: "Connection Error",
-          description: "Unable to verify Shopify integration status.",
+          description: "Unable to verify integration status.",
           status: "error",
           duration: 5000,
           isClosable: true,
@@ -56,7 +56,7 @@ function Integrations() {
     if (!shopifyDomain.includes('.myshopify.com')) {
       toast({
         title: "Invalid Domain",
-        description: "Please enter a valid Shopify domain ending with .myshopify.com",
+        description: "Please enter a valid store domain ending with .myshopify.com",
         status: "warning",
         duration: 5000,
         isClosable: true,
@@ -78,7 +78,7 @@ function Integrations() {
       console.error("Error connecting to Shopify:", error);
       toast({
         title: "Connection Failed",
-        description: "Unable to connect to Shopify. Please try again.",
+        description: "Unable to connect to your store. Please try again.",
         status: "error",
         duration: 5000,
         isClosable: true,
@@ -103,7 +103,7 @@ function Integrations() {
       console.error("Error retrieving Shopify domain name or access token:", error);
       toast({
         title: "Authentication Error",
-        description: "Unable to retrieve Shopify credentials.",
+        description: "Unable to retrieve store credentials.",
         status: "error",
         duration: 5000,
         isClosable: true,
@@ -116,10 +116,9 @@ function Integrations() {
         params: { shopifyDomain, shopifyAccessToken },
       });
       setOrders(response.data.orders);
-       //Log the data that was accessed
       toast({
         title: "Orders Synced",
-        description: `Successfully synced ${response.data.orders.length} orders from Shopify.`,
+        description: `Successfully synced ${response.data.orders.length} orders from your store.`,
         status: "success",
         duration: 3000,
         isClosable: true,
@@ -129,7 +128,7 @@ function Integrations() {
       console.error("Error syncing orders:", error);
       toast({
         title: "Sync Failed",
-        description: "Unable to sync orders from Shopify.",
+        description: "Unable to sync orders from your store.",
         status: "error",
         duration: 5000,
         isClosable: true,
@@ -169,7 +168,7 @@ function Integrations() {
                 <Badge colorScheme="green" px={3} py={2} borderRadius="md" fontSize="sm">
                   <Flex align="center">
                     <Icon as={FaStore} mr={2} />
-                    Shopify Connected
+                    Store Connected
                   </Flex>
                 </Badge>
                 <Tooltip label="Sync latest orders">
@@ -192,7 +191,7 @@ function Integrations() {
             <VStack justify="center" align="center" flex="1" spacing={6}>
               <Spinner size="xl" thickness="4px" color="blue.500" emptyColor="gray.200" />
               <Text mt={4} color="gray.600" fontSize="lg">
-                Syncing with Shopify...
+                Syncing with your store...
               </Text>
             </VStack>
           ) : !isShopifyIntegrated ? (
@@ -217,14 +216,14 @@ function Integrations() {
                   h={20} 
                   borderRadius="full"
                 >
-                  <Icon as={FaShopify} boxSize={10} color="blue.500" />
+                  <Icon as={FaPlug} boxSize={10} color="blue.500" />
                 </Flex>
                 <Box>
                   <Heading size="md" fontWeight="bold" color="gray.800">
-                    Connect Your Shopify Store
+                    Connect Your Store
                   </Heading>
                   <Text fontSize="md" color="gray.600" mt={2} lineHeight="tall">
-                    Import your Shopify orders seamlessly and automate your shipping process.
+                    Import your store orders seamlessly and automate your shipping process.
                     Manage all your orders in one place.
                   </Text>
                 </Box>
@@ -233,14 +232,14 @@ function Integrations() {
                   colorScheme="blue" 
                   size="lg" 
                   onClick={onShopifyModalOpen}
-                  rightIcon={<FaShopify />}
+                  rightIcon={<FaLink />}
                   px={8}
                   py={6}
                   fontWeight="bold"
                   _hover={{ transform: "translateY(-2px)", boxShadow: "lg" }}
                   transition="all 0.2s"
                 >
-                  Connect with Shopify
+                  Connect My Store
                 </Button>
               </VStack>
             </Flex>
@@ -250,7 +249,7 @@ function Integrations() {
                 <Heading size="md" color="blue.800">
                   <Flex align="center">
                     <Icon as={FaBoxOpen} mr={2} />
-                    Shopify Orders
+                    Store Orders
                   </Flex>
                 </Heading>
               </Box>
@@ -351,7 +350,7 @@ function Integrations() {
         </Flex>
       </Box>
 
-      {/* Connect Shopify Modal */}
+      {/* Connect Store Modal */}
       <Modal 
         isOpen={isShopifyModalOpen} 
         onClose={() => {
@@ -365,14 +364,14 @@ function Integrations() {
         <ModalContent borderRadius="xl" shadow="2xl">
           <ModalHeader borderBottomWidth="1px" borderColor="gray.100" py={4} px={6}>
             <Flex align="center">
-              <Icon as={FaShopify} mr={3} color="blue.500" />
-              <Text>Connect Your Shopify Store</Text>
+              <Icon as={FaStore} mr={3} color="blue.500" />
+              <Text>Connect Your Store</Text>
             </Flex>
           </ModalHeader>
           <ModalCloseButton />
           <ModalBody py={6} px={6}>
           <VStack spacing={4} align="stretch">
-            <Text>Please enter your Shopify domain:</Text>
+            <Text>Please enter your store domain:</Text>
             <Input
               value={shopifyDomain}
               onChange={(e) => setShopifyDomain(e.target.value)}
@@ -405,7 +404,7 @@ function Integrations() {
                 colorScheme="blue"
                 onClick={() => handleConnectShopify(shopifyDomain)}
                 disabled={!shopifyDomain}
-                leftIcon={<FaShopify />}
+                leftIcon={<FaLink />}
                 px={6}
               >
                 Connect Now
