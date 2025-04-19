@@ -1,3 +1,5 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
 name = "ParcelPilot"
 client_id = "3213dab65821e57efe779dbf6da6e612"
 application_url = "https://parcelpilot.ca"
@@ -6,21 +8,23 @@ webhooks_path = "/webhooks"
 api_version = "2024-07"
 
 [auth]
-redirect_urls = ["https://parcelpilot.ca/auth/callback"]
+redirect_urls = [ "https://parcelpilot.ca/auth/callback" ]
 logout_redirect_url = "https://parcelpilot.ca"
 
 [webhooks]
 api_version = "2024-07"
 
-[[webhooks.subscriptions]]
-compliance_topics = ["customers/data_request"]
-uri = "https://parcelpilot.ca/webhooks/customers_data_request"
+  [[webhooks.subscriptions]]
+  compliance_topics = [ "customers/data_request" ]
+  uri = "https://parcelpilot.ca/webhooks/customers_data_request"
 
-[[webhooks.subscriptions]]
-compliance_topics = ["customers/redact"]
-uri = "https://parcelpilot.ca/webhooks/customers_redact"
+  [[webhooks.subscriptions]]
+  compliance_topics = [ "customers/redact" ]
+  uri = "https://parcelpilot.ca/webhooks/customers_redact"
 
-[[webhooks.subscriptions]]
-compliance_topics = ["shop/redact"]
-uri = "https://parcelpilot.ca/webhooks/shop_redact"
+  [[webhooks.subscriptions]]
+  compliance_topics = [ "shop/redact" ]
+  uri = "https://parcelpilot.ca/webhooks/shop_redact"
 
+[build]
+include_config_on_deploy = true
