@@ -15,11 +15,10 @@ router.post('/customers_redact', verifyShopifyWebhook, (req, res) => {
 });
 
 router.post('/shop_redact', verifyShopifyWebhook, (req, res) => {
-  const data = JSON.parse(req.body.toString('utf8'));
-  console.log('Shop Redact:', data);
-  res.status(200).send('OK');
-});
-
+    const data = JSON.parse(req.body.toString('utf8'));
+    console.log('Shop Redact:', data);
+    res.status(200).send('OK');
+  });
 module.exports = router;
 
   
