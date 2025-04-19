@@ -352,7 +352,7 @@ function ViewLabels() {
 
                                       <AlertDialogBody>
                                           Are you sure you want to cancel this shipment?
-                                          Refunds will be processed within 10 business days.
+                                          This action cannot be undone.
                                       </AlertDialogBody>
 
                                       <AlertDialogFooter>

@@ -10,13 +10,19 @@ const crypto = require('crypto');
 // Generate a 6-digit verification code
 const generateVerificationCode = () => Math.floor(100000 + Math.random() * 900000);
 
-// Setup Nodemailer Transporter
+// Setup Nodemailer Transporter for GoDaddy/Outlook
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.office365.com', // For Outlook/Microsoft 365
+  port: 587,
+  secure: false, // Use TLS
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: process.env.EMAIL_USER, // Should be support@parcelpilot.ca
+    pass: process.env.EMAIL_PASS, // Your email password
   },
+  tls: {
+    ciphers: 'SSLv3',
+    rejectUnauthorized: false // Only use in development; remove in production
+  }
 });
 
 // Register Route with Email Verification

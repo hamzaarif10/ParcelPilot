@@ -249,3 +249,4 @@ const handleResendCode = async () => {
 
 export default Register;
 
+

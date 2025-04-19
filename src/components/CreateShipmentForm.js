@@ -8,7 +8,7 @@ import { getGlsCreateShipmentData } from '../data/glsData';
 import { canadianProvinces, usStates, ukCountries, australianStates, newZealandRegions, germanStates, frenchRegions, 
   italianRegions, spanishAutonomousCommunities, swedishCounties, norwegianCounties,  
   danishRegions, finnishRegions, swissCantons, japanesePrefectures, singaporeRegions} from '../data/locationData';
-import { Button, useDisclosure, Spinner, Input } from '@chakra-ui/react'; 
+import { Button, useDisclosure, Spinner, Input, useToast } from '@chakra-ui/react'; 
 import loadGoogleMapsAPI from "../functions/loadGoogleMapsApi";
 import initAutocomplete from "../functions/initAutoComplete";
 import { Elements } from "@stripe/react-stripe-js";
@@ -57,6 +57,19 @@ function CreateShipmentForm({courierId, courierUrl, courierCost, senderCountry, 
   const [isLoading, setIsLoading] = useState(false);
 
   const [trackingNumber, setTrackingNumber] = useState("");
+
+  const toast = useToast();
+  const showToast = (title, description, status = 'error') => {
+    toast({
+      title,
+      description,
+      status,
+      duration: 5000,
+      isClosable: true,
+      position: 'bottom-right',
+    });
+  };
+  
 
   // Load Stripe with your publishable key
    const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISH_KEY);
@@ -183,8 +196,10 @@ const handleSubmit = async (e) => {
   }
 
   // If form is valid, proceed with the rest of the logic
-  if (!formIsValid) return;
-
+  if (!formIsValid) {
+    showToast('Validation Error', 'Please check all required fields', 'warning');
+    return;
+  }
   setReceiverCountryCode(receiverCountry);
   // Check to see if there is a payment method on file, if not open add payment method modal
   try {
@@ -210,7 +225,7 @@ const handleSubmit = async (e) => {
     const { success: isAuthorized, paymentIntentId, error } = await authorizePayment(courierCost);
 
     if (!isAuthorized) {
-      alert(`Payment authorization failed: ${error}`);
+      showToast('Payment Failed', `Payment authorization failed: ${error}`, 'error');
       return;
     }
     paymentId = paymentIntentId; // Assign paymentIntentId here
@@ -261,7 +276,7 @@ const handleSubmit = async (e) => {
       const isCaptured = await capturePayment(paymentId);
 
       if (!isCaptured) {
-        alert("Payment capture failed. Please contact support.");
+        showToast('Payment Error', 'Payment capture failed. Please contact support.', 'error');
         return;
       }
       
@@ -273,6 +288,7 @@ const handleSubmit = async (e) => {
           await generatePdfLink(response.data.base64String, trackingNumber, setPdfLink);
         } catch (error) {
           console.error("Error fetching GLS label:", error);
+          showToast('Error', 'Failed to fetch GLS label. Please try again.', 'error');
         }
       }else{
         // Generate the PDF label
@@ -289,7 +305,7 @@ const handleSubmit = async (e) => {
       onOpen();
     } else {
       console.error("Base64 encoded string for label not found.");
-      alert("Shipment label generation failed.");
+      showToast('Error', 'Shipment label generation failed. Please try again.', 'error');
     }
   } catch (error) {
     console.error("Error in shipment creation:", error);
@@ -301,7 +317,7 @@ const handleSubmit = async (e) => {
         console.error("Failed to void payment:", voidError.message);
       }
     }
-    alert("Failed to create shipment.");
+    showToast('Shipment Error', 'Failed to create shipment. Please try again or reach out to support.', 'error');
   } 
 }finally {
   //Mark the order as fulfilled in shopify if this is a shopify store order
