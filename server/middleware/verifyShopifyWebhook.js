@@ -4,28 +4,20 @@ function verifyShopifyWebhook(req, res, next) {
   const hmacHeader = req.get('X-Shopify-Hmac-Sha256');
 
   if (!hmacHeader) {
-    return res.status(401).send('Unauthorized - Missing HMAC header');
+    return res.status(401).send('Unauthorized - Missing HMAC');
   }
 
-  let rawBody;
-  try {
-    rawBody = Buffer.isBuffer(req.body)
-      ? req.body.toString('utf8')
-      : JSON.stringify(req.body); // fallback in case body is parsed
-  } catch (err) {
-    console.error('Failed to read raw body:', err);
-    return res.status(401).send('Unauthorized - Unable to read body');
-  }
+  const rawBuffer = req.body;
 
   try {
     const generatedHmac = crypto
       .createHmac('sha256', process.env.SHOPIFY_API_SECRET)
-      .update(rawBody, 'utf8')
+      .update(rawBuffer) // ✅ Use raw Buffer, not toString()
       .digest('base64');
 
     const isValid = crypto.timingSafeEqual(
-      Buffer.from(hmacHeader, 'utf8'),
-      Buffer.from(generatedHmac, 'utf8')
+      Buffer.from(generatedHmac, 'utf8'),
+      Buffer.from(hmacHeader, 'utf8')
     );
 
     if (isValid) {
@@ -34,8 +26,8 @@ function verifyShopifyWebhook(req, res, next) {
       return res.status(401).send('Unauthorized - Invalid HMAC');
     }
   } catch (err) {
-    console.error('Webhook verification error:', err);
-    return res.status(401).send('Unauthorized - Exception thrown');
+    console.error('HMAC verification error:', err);
+    return res.status(401).send('Unauthorized - Error');
   }
 }
 
