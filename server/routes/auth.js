@@ -33,7 +33,14 @@ router.post("/register", async (req, res) => {
     const pool = getPool();
     const hashedPassword = await bcrypt.hash(password, 10);
     const verificationCode = generateVerificationCode();
-
+    // Send email with the verification code
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Verify Your Email",
+      text: `Your verification code is: ${verificationCode}`,
+    });
+    
     // Store user details in the database
     await pool
       .request()
@@ -45,15 +52,6 @@ router.post("/register", async (req, res) => {
       .query(
         "INSERT INTO Users (firstName, email, password, verificationToken, isVerified) VALUES (@firstName, @email, @password, @verificationToken, @isVerified)"
       );
-
-    // Send email with the verification code
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: "Verify Your Email",
-      text: `Your verification code is: ${verificationCode}`,
-    });
-
     res.status(201).json({ message: "User registered. Check your email for the verification code." });
   } catch (error) {
     console.error("SQL error:", error);
