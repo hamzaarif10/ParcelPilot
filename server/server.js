@@ -33,12 +33,22 @@ class UpstashRedisStore extends session.Store {
       
       let result;
       try {
-        result = JSON.parse(data);
+        // Check if data is already an object or if it's a string that needs parsing
+        if (typeof data === 'string') {
+          result = JSON.parse(data);
+        } else if (typeof data === 'object' && data !== null) {
+          // Data is already an object, use it directly
+          result = data;
+        } else {
+          return cb(null, null);
+        }
       } catch (err) {
+        console.error('Error parsing session data:', err, 'Data type:', typeof data, 'Data:', data);
         return cb(err);
       }
       return cb(null, result);
     } catch (err) {
+      console.error('Error getting session from Redis:', err);
       return cb(err);
     }
   }
@@ -55,6 +65,7 @@ class UpstashRedisStore extends session.Store {
       await this.client.set(key, dataStr, { ex: ttl });
       if (cb) cb(null);
     } catch (err) {
+      console.error('Error setting session in Redis:', err);
       if (cb) cb(err);
     }
   }
@@ -65,6 +76,7 @@ class UpstashRedisStore extends session.Store {
       await this.client.del(key);
       if (cb) cb(null);
     } catch (err) {
+      console.error('Error destroying session in Redis:', err);
       if (cb) cb(err);
     }
   }
