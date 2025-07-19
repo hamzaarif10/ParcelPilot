@@ -64,57 +64,55 @@ const ShopifyVerification = () => {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8 text-center">
-        <div className="mb-6">
-          <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-            {status === 'verifying' && (
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            )}
-            {status === 'success' && (
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-              </svg>
-            )}
-            {status === 'error' && (
-              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
-            )}
-          </div>
-          
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            {status === 'verifying' && 'Authenticating with Shopify'}
-            {status === 'success' && 'Authentication Complete'}
-            {status === 'error' && 'Authentication Failed'}
-          </h2>
-          
-          <p className="text-gray-600">{message}</p>
+ return (
+  <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8 text-center">
+      <div className="mb-6">
+        <div className="mx-auto w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+          {status === 'verifying' && (
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+          )}
+          {status === 'success' && (
+            <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+          )}
+          {status === 'error' && (
+            <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          )}
         </div>
-
-        {status === 'verifying' && (
-          <div className="space-y-2">
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div className="bg-blue-600 h-2 rounded-full animate-pulse" style={{width: '70%'}}></div>
-            </div>
-            <p className="text-sm text-gray-500">This may take a few seconds...</p>
-          </div>
-        )}
-
-        {status === 'error' && (
-          <div className="mt-4">
-            <button 
-              onClick={() => window.location.reload()}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
-            >
-              Try Again
-            </button>
-          </div>
-        )}
+       
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          {status === 'verifying' && 'Authenticating with Shopify'}
+          {status === 'success' && 'Authentication Complete'}
+          {status === 'error' && 'Authentication Failed'}
+        </h2>
+       
+        <p className="text-gray-600">{message}</p>
       </div>
+      {status === 'verifying' && (
+        <div className="space-y-2">
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="bg-blue-600 h-2 rounded-full animate-pulse" style={{width: '70%'}}></div>
+          </div>
+          <p className="text-sm text-gray-500">This may take a few seconds...</p>
+        </div>
+      )}
+      {status === 'error' && (
+        <div className="mt-4">
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      )}
     </div>
-  );
+  </div>
+);
 };
 
 export default ShopifyVerification;
