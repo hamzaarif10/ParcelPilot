@@ -217,38 +217,6 @@ app.use('/auth', shopifyIntegrationRoute);
 app.use('/fetchShopifyOrders', fetchShopifyOrdersRoute);
 app.use('/support', supportRoute);
 
-//SHOPIFY OAUTH HANDLING
-const { getPool } = require('./db');
-const sql = require('mssql');
-const crypto = require('crypto');
-
-function verifyHmac(queryParams) {
-  const { hmac, ...params } = queryParams;
-  const sortedParams = Object.keys(params)
-    .sort()
-    .map((key) => `${key}=${params[key]}`)
-    .join('&');
-  const calculatedHmac = crypto
-    .createHmac('sha256', process.env.SHOPIFY_API_SECRET)
-    .update(sortedParams)
-    .digest('hex');
-  return hmac === calculatedHmac;
-}
-
-app.get('/', async (req, res) => {
-  const { shop, host } = req.query;
-
-  // If opened from Shopify admin
-  if (shop && host) {
-    // Always redirect to OAuth, no HMAC or token check here
-    return res.redirect(`/auth?shop=${shop}&host=${host}`);
-  }
-
-  // Opened directly (public visitor) → show homepage
-  return res.redirect(`${process.env.REACT_APP_FRONTEND_URL}/`);
-});
-
-
 // Serve static files in production (React build)
 if (isProd) {
   const buildPath = path.join(__dirname, 'build');

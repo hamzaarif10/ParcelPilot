@@ -111,13 +111,12 @@ router.get('/get-shopify-auth-details', authenticateToken, async (req, res) => {
   }
 });
 
-// Get OAuth URL
-router.get('/auth', (req, res) => {
+// Get OAuth URL - FIXED: Changed from '/auth' to '/' since this router is mounted at '/auth'
+router.get('/', (req, res) => {
   const shop = req.query.shop;
-  const host = req.query.host;
 
-  if (!shop || !host) {
-    return res.status(400).send('Missing shop or host parameter');
+  if (!shop) {
+    return res.status(400).send('Missing shop parameter');
   }
 
   const redirectUri = `${process.env.BACKEND_URL}/auth/callback`;
@@ -125,32 +124,17 @@ router.get('/auth', (req, res) => {
 
   const oauthUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=${scopes}&redirect_uri=${redirectUri}&state=nonce123&grant_options[]=per-user`;
 
-  // Serve an HTML page that does a top-level redirect
-  res.send(`
-    <html>
-      <head>
-        <title>Redirecting...</title>
-      </head>
-      <body>
-        <script type="text/javascript">
-          if (window.top === window.self) {
-            // Not in iframe
-            window.location.href = "${oauthUrl}";
-          } else {
-            // In iframe - redirect the parent window
-            window.top.location.href = "${oauthUrl}";
-          }
-        </script>
-      </body>
-    </html>
-  `);
+  console.log(`[SHOPIFY AUTH] Redirecting to OAuth for shop: ${shop}`);
+  console.log(`[SHOPIFY AUTH] OAuth URL: ${oauthUrl}`);
+  
+  res.redirect(oauthUrl); // ✅ This is what Shopify expects
 });
-
-
 
 // Shopify callback route
 router.get('/callback', async (req, res) => {
   const { shop, code, state, hmac } = req.query;
+
+  console.log(`[SHOPIFY CALLBACK] Received callback for shop: ${shop}`);
 
   if (!verifyHmac(req.query)) {
     console.error('HMAC verification failed');
