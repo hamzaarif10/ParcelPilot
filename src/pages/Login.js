@@ -15,6 +15,8 @@ const Login = () => {
     const [errorMsg, setErrorMsg] = useState('');
     //login button state
     const [loginDisabled, setLoginDisabled] = useState(false);
+
+    axios.defaults.withCredentials = true;
     
     const login = async (email, password) => {
         try {

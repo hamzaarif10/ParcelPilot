@@ -156,9 +156,15 @@ router.post('/login', async (req, res) => {
 
     const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '3h' });
 
-    req.session.token = token;
-    res.json({ token });
+    res.cookie('authToken', token, {
+      httpOnly: true,
+      secure: true, // Only send cookie over HTTPS
+      sameSite: 'lax', // Or 'none' if you embed it in Shopify iframe (see note below)
+      maxAge: 3 * 60 * 60 * 1000 // 3 hours
+    });
 
+    res.json({ message: 'Login successful', token });
+    
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ message: 'Error logging in' });
