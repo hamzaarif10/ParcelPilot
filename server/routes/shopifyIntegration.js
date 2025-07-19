@@ -125,16 +125,19 @@ router.get('/auth', (req, res) => {
 
   const oauthUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=${scopes}&redirect_uri=${redirectUri}&state=nonce123&grant_options[]=per-user`;
 
-  // Serve redirect script to break out of iframe
+  // Serve an HTML page that does a top-level redirect
   res.send(`
     <html>
+      <head>
+        <title>Redirecting...</title>
+      </head>
       <body>
         <script type="text/javascript">
           if (window.top === window.self) {
             // Not in iframe
             window.location.href = "${oauthUrl}";
           } else {
-            // In iframe, redirect the top window
+            // In iframe - redirect the parent window
             window.top.location.href = "${oauthUrl}";
           }
         </script>
@@ -142,6 +145,7 @@ router.get('/auth', (req, res) => {
     </html>
   `);
 });
+
 
 
 // Shopify callback route
