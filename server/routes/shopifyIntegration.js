@@ -151,12 +151,16 @@ router.get('/', async (req, res) => {
   }
 
   // ALWAYS initiate OAuth - this satisfies Shopify's requirement
-  const redirectUri = `${process.env.BACKEND_URL}/auth/callback`;
-  const scopes = process.env.REACT_APP_SHOPIFY_SCOPE;
+  // Backend cannot access REACT_APP_ variables, so use BACKEND_URL or SERVER_URL
+  const backendUrl = process.env.BACKEND_URL || process.env.SERVER_URL || 'https://parcelpilot.onrender.com';
+  const redirectUri = `${backendUrl}/auth/callback`;
+  const scopes = process.env.REACT_APP_SHOPIFY_SCOPE || process.env.SHOPIFY_SCOPE;
 
   const oauthUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=${scopes}&redirect_uri=${redirectUri}&state=nonce123&grant_options[]=per-user`;
 
   console.log(`[SHOPIFY AUTH] Starting OAuth for shop: ${shop}`);
+  console.log(`[SHOPIFY AUTH] Backend URL: ${backendUrl}`);
+  console.log(`[SHOPIFY AUTH] Redirect URI: ${redirectUri}`);
   console.log(`[SHOPIFY AUTH] OAuth URL: ${oauthUrl}`);
   
   res.redirect(oauthUrl);
@@ -164,7 +168,7 @@ router.get('/', async (req, res) => {
 
 // Shopify callback route
 router.get('/callback', async (req, res) => {
-  const { shop, code, state, hmac } = req.query;
+  const { shop, code, state, hmac, host } = req.query;
 
   console.log(`[SHOPIFY CALLBACK] Received callback for shop: ${shop}`);
 
@@ -206,6 +210,16 @@ router.get('/callback', async (req, res) => {
       `);
 
     console.log(`[ACCESS LOG] Shopify token stored for domain ${shop}`);
+    
+    // For Shopify-launched apps, redirect back to the app in Shopify admin
+    // This satisfies the OAuth requirement and keeps the user in the Shopify context
+    if (host) {
+      // Redirect back to your app URL which will be loaded within Shopify admin
+      const appUrl = `${process.env.BACKEND_URL}/shopify-app?shop=${shop}&host=${host}`;
+      return res.redirect(appUrl);
+    }
+    
+    // Fallback for non-Shopify OAuth (direct website installs)
     res.redirect(`${process.env.REACT_APP_FRONTEND_URL}/integration`);
   } catch (error) {
     console.error('Error during OAuth:', error);
