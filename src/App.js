@@ -28,7 +28,7 @@ import ResetPassword from './pages/ResetPassword.js';
 import ViewTransactions from './pages/ViewTransactions.js';
 import RateEstimate from './components/RateEstimate.js';
 import PrivacyPolicy from './pages/PrivacyPolicy.js';
-import ShopifyRedirectHandler from './componentsShopifyRedirectHandler';
+import ShopifyRedirectHandler from './components/ShopifyRedirectHandler';
 
  // Load Stripe with your publishable key
  const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISH_KEY);
