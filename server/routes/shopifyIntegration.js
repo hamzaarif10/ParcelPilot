@@ -114,9 +114,10 @@ router.get('/get-shopify-auth-details', authenticateToken, async (req, res) => {
 // Get OAuth URL
 router.get('/auth', (req, res) => {
   const shop = req.query.shop;
+  const host = req.query.host;
 
-  if (!shop) {
-    return res.status(400).send('Missing shop parameter');
+  if (!shop || !host) {
+    return res.status(400).send('Missing shop or host parameter');
   }
 
   const redirectUri = `${process.env.BACKEND_URL}/auth/callback`;
@@ -124,8 +125,24 @@ router.get('/auth', (req, res) => {
 
   const oauthUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=${scopes}&redirect_uri=${redirectUri}&state=nonce123&grant_options[]=per-user`;
 
-  res.redirect(oauthUrl); // ✅ This is what Shopify expects
+  // Serve redirect script to break out of iframe
+  res.send(`
+    <html>
+      <body>
+        <script type="text/javascript">
+          if (window.top === window.self) {
+            // Not in iframe
+            window.location.href = "${oauthUrl}";
+          } else {
+            // In iframe, redirect the top window
+            window.top.location.href = "${oauthUrl}";
+          }
+        </script>
+      </body>
+    </html>
+  `);
 });
+
 
 // Shopify callback route
 router.get('/callback', async (req, res) => {
