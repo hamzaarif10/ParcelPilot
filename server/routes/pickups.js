@@ -12,22 +12,22 @@ const { DateTime } = require('luxon');
 //Make api call to eashship api and schedule pickup
 router.post('/schedule-pickup', async (req, res) => {
   try {
-    const { user_time_zone, selected_date, selected_from_time, selected_to_time, courier_service_id, easyship_shipment_ids } = req.body;
+    const {
+      selected_date,
+      selected_from_time,
+      selected_to_time,
+      courier_service_id,
+      easyship_shipment_ids
+    } = req.body;
 
-    // Convert the selected date and times from user’s local time zone to UTC
-    const fromTimeUTC = DateTime.fromFormat(`${selected_date} ${selected_from_time}`, 'yyyy-MM-dd HH:mm', { zone: user_time_zone }).setZone('UTC').toISO();
-    const toTimeUTC = DateTime.fromFormat(`${selected_date} ${selected_to_time}`, 'yyyy-MM-dd HH:mm', { zone: user_time_zone }).setZone('UTC').toISO();
-
-    // Prepare the request data to send to Easyship (in UTC)
     const easyshipRequestData = {
       courier_service_id,
-      selected_date: fromTimeUTC.split('T')[0],           // e.g., "2025-04-09"
-      selected_from_time: fromTimeUTC.split('T')[1].slice(0, 5), // e.g., "12:00"
-      selected_to_time: toTimeUTC.split('T')[1].slice(0, 5),     // e.g., "14:00"
+      selected_date,                 // e.g. "2025-06-20"
+      selected_from_time,           // e.g. "14:00"
+      selected_to_time,             // e.g. "18:00"
       easyship_shipment_ids
     };
 
-    // Send to Easyship
     const url = 'https://public-api.easyship.com/2024-09/pickups';
     const response = await axios.post(url, easyshipRequestData, {
       headers: {
@@ -36,8 +36,8 @@ router.post('/schedule-pickup', async (req, res) => {
         authorization: `${process.env.ES_KEY}`
       }
     });
-    res.json(response.data);
 
+    res.json(response.data);
   } catch (error) {
     console.error('Error scheduling pickup:', error);
     if (error.response?.data) {
@@ -88,26 +88,25 @@ router.get('/get-time-slots', async (req, res) => {
   }
 });
 //mark shipment status as scheduled in db
+//mark shipment status as scheduled in db
 router.post('/updatePickupDetails', authenticateToken, async (req, res) => {
   const { shipment_id, pickup_date, time_slot, pickup_id } = req.body;
   const userId = req.user.id;
-
   if (!shipment_id) {
        return res.status(400).json({ error: 'Missing shipment ID' });
   }
-
-  try { 
+  try {
     //Update shipment status in Label DB table
       const pool = getPool();
       await pool.request()
         .input('shipment_id', sql.NVarChar(255), shipment_id)
         .input('user_id', sql.Int, userId)
-        .input('pickup_date', sql.Date, pickup_date) 
-        .input('time_slot', sql.VarChar(20), time_slot) 
-        .input('pickup_id', sql.NVarChar(11), String(pickup_id)) 
+        .input('pickup_date', sql.Date, pickup_date)
+        .input('time_slot', sql.VarChar(20), time_slot)
+        .input('pickup_id', sql.NVarChar(11), String(pickup_id))
         .query(`
           UPDATE Labels
-          SET 
+          SET
               status = 'pickup_scheduled',
               pickup_date = @pickup_date,
               time_slot = @time_slot,
@@ -115,23 +114,62 @@ router.post('/updatePickupDetails', authenticateToken, async (req, res) => {
           WHERE shipment_id = @shipment_id
           AND user_id = @user_id
         `);
+      
+      // After updating the database, get the complete label details
+      // to send WebSocket notification
+      const labelResult = await pool.request()
+        .input('shipment_id', sql.NVarChar(255), shipment_id)
+        .input('user_id', sql.Int, userId)
+        .query(`
+          SELECT 
+            shipment_id, 
+            tracking_number, 
+            pdf_url, 
+            status, 
+            recipient_name, 
+            recipient_address, 
+            courier_name, 
+            courier_service_id,
+            pickup_id,
+            pickup_date,
+            time_slot
+          FROM Labels 
+          WHERE shipment_id = @shipment_id 
+          AND user_id = @user_id
+        `);
+      
+      // If we found the label and the global WebSocket function exists
+      if (labelResult.recordset.length > 0 && global.sendLabelUpdate) {
+        const updatedLabel = labelResult.recordset[0];
+        
+        // Send the real-time update
+        global.sendLabelUpdate(userId, {
+          type: 'label_update',
+          label: updatedLabel
+        });
+        
+        console.log(`WebSocket notification sent to user ${userId} for scheduled pickup on shipment ${shipment_id}`);
+      } else {
+        console.log(`Either no label found or WebSocket function not available for shipment ${shipment_id}`);
+      }
+        
       // Send a success response after both operations succeed
     res.status(200).json({ message: 'Pickup status updated successfully!' });
-  }catch(error){
+  } catch(error) {
     console.error('Failed to update shipment status:', error);
     // Catch errors from both API request and database update
     res.status(500).json({ error: 'Failed to update shipment status' });
   }
 });
 //PickUp cancellation route
+//PickUp cancellation route
 router.post('/cancelPickup', authenticateToken, async (req, res) => {
   const {pickup_id, shipment_id} = req.body;
   const userId = req.user.id;
-  
+ 
   if (!pickup_id) {
     return res.status(400).json({ error: 'Invalid pickup ID' });
   }
-
   try {
         let url;
         let headers = {
@@ -139,34 +177,72 @@ router.post('/cancelPickup', authenticateToken, async (req, res) => {
           'content-type': 'application/json',
         };
         let axiosMethod = 'post';
-    
+   
         if (shipment_id.startsWith('ESCA')) {
           url = `https://public-api.easyship.com/2024-09/pickups/${pickup_id}/cancel`;
           headers.authorization = `${process.env.ES_KEY}`;
         } else {
-          const id = parseInt(pickup_id, 10); 
+          const id = parseInt(pickup_id, 10);
           url = `https://secureship.ca/ship/api/v1/pickups/cancel/${id}`;
           headers['X-API-KEY'] = `${process.env.SS_KEY}`;
           axiosMethod = 'delete';
         }
-    
+   
         await axios({method: axiosMethod, url: url, headers: headers, data: {}});
-
+     
      //update shipment status to cancelled pickup
     const pool = getPool();
-      await pool.request()
-        .input('shipment_id', sql.NVarChar(255), shipment_id)
-        .input('user_id', sql.Int, userId)
-        .query(`
-          UPDATE Labels
-          SET 
-              status = 'pickup_cancelled'
-          WHERE shipment_id = @shipment_id
-          AND user_id = @user_id
-        `);
-
+    await pool.request()
+      .input('shipment_id', sql.NVarChar(255), shipment_id)
+      .input('user_id', sql.Int, userId)
+      .query(`
+        UPDATE Labels
+        SET
+            status = 'pickup_cancelled'
+        WHERE shipment_id = @shipment_id
+        AND user_id = @user_id
+      `);
+      
+    // After updating the database, get the complete label details
+    // to send WebSocket notification
+    const labelResult = await pool.request()
+      .input('shipment_id', sql.NVarChar(255), shipment_id)
+      .input('user_id', sql.Int, userId)
+      .query(`
+        SELECT 
+          shipment_id, 
+          tracking_number, 
+          pdf_url, 
+          status, 
+          recipient_name, 
+          recipient_address, 
+          courier_name, 
+          courier_service_id,
+          pickup_id,
+          pickup_date,
+          time_slot
+        FROM Labels 
+        WHERE shipment_id = @shipment_id 
+        AND user_id = @user_id
+      `);
+    
+    // If we found the label and the global WebSocket function exists
+    if (labelResult.recordset.length > 0 && global.sendLabelUpdate) {
+      const updatedLabel = labelResult.recordset[0];
+      
+      // Send the real-time update
+      global.sendLabelUpdate(userId, {
+        type: 'label_update',
+        label: updatedLabel
+      });
+      
+      console.log(`WebSocket notification sent to user ${userId} for cancelled pickup on shipment ${shipment_id}`);
+    } else {
+      console.log(`Either no label found or WebSocket function not available for shipment ${shipment_id}`);
+    }
+    
     res.status(200).json({ message: 'Pickup cancelled successfully!' });
-  }catch(error){
+  } catch(error) {
     console.error('Error cancelling pickup:', error);
     res.status(500).json({ error: 'Failed to cancel pickup' });
   }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Box,
   Text,
@@ -73,6 +73,9 @@ function ViewLabels() {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  
+  // WebSocket reference
+  const wsRef = useRef(null);
 
   useEffect(() => {
     const fetchShippingLabels = async () => {
@@ -86,7 +89,7 @@ function ViewLabels() {
           }
         );
         setShippingLabels(response.data.shippingLabelDetails || []);
-        setTotalCount(response.data.totalCount || 0);  // Set the total count from the response
+        setTotalCount(response.data.totalCount || 0);
       } catch (error) {
         console.error("Error fetching shipping labels:", error);
       } finally {
@@ -95,7 +98,64 @@ function ViewLabels() {
     };
   
     fetchShippingLabels();
-  }, [currentPage]); 
+    
+    // Set up WebSocket connection
+    const wsUrl = `${process.env.REACT_APP_WEBSOCKET_URL || 'ws://localhost:3002'}/ws/shipping-labels`;
+    wsRef.current = new WebSocket(wsUrl);
+    
+    wsRef.current.onopen = () => {
+      console.log('WebSocket connection established');
+      
+      // Send authentication message
+      if (token) {
+        wsRef.current.send(JSON.stringify({
+          type: 'auth',
+          token: token
+        }));
+      }
+    };
+    
+    wsRef.current.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        
+        // Handle label update
+        if (data.type === 'label_update' && data.label) {
+          setShippingLabels(prevLabels => 
+            prevLabels.map(label => 
+              label.shipment_id === data.label.shipment_id ? data.label : label
+            )
+          );
+          
+          // Optionally show a toast notification
+          toast({
+            title: "Status Updated",
+            description: `Shipment status has been updated`,
+            status: "info",
+            duration: 3000,
+            isClosable: true,
+          });
+        }
+      } catch (error) {
+        console.error('Error processing WebSocket message:', error);
+      }
+    };
+    
+    wsRef.current.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+    
+    wsRef.current.onclose = () => {
+      console.log('WebSocket connection closed');
+    };
+    
+    // Clean up WebSocket connection on unmount
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+  }, [currentPage, token]); 
 
   const currentLabels = shippingLabels; 
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
@@ -104,28 +164,30 @@ function ViewLabels() {
     setSelectedLabel(label);
     onDetailsOpen();
   }
-//schedule pickup function
+
   function handlePickupClick(label) {
-    setSelectedLabel(label); // Optional: Store the label info if needed
+    setSelectedLabel(label);
     onPickupOpen();
   }
-//view pickup details function
+
   function handlePickupDetailsClick(label) {
     setSelectedLabel(label);
     onPickupDetailsOpen();
   }
+  
   function handleCancelShipment(label) {
-    setSelectedLabel(label); // Store the label info for cancel
+    setSelectedLabel(label);
     onCancelOpen();
   }
+  
   const handleConfirmCancel = async () => {
     const token = localStorage.getItem("authToken");
-    setIsLoading(true); // Start spinner
+    setIsLoading(true);
 
     try {
         const response = await axios.post(
             `${process.env.REACT_APP_BACKEND_URL}/user/cancelShipment`,
-            { shipment_id: selectedLabel.shipment_id }, // Send in body
+            { shipment_id: selectedLabel.shipment_id },
             {
                 headers: {
                     Authorization: `Bearer ${token}`
@@ -133,7 +195,6 @@ function ViewLabels() {
             }
         );
 
-        // If successful show success message
         if (response.status === 200) {
             toast({
                 title: "Shipment Cancelled",
@@ -143,8 +204,17 @@ function ViewLabels() {
                 isClosable: true,
             });
 
-            onCancelClose(); // Close modal
-            window.location.reload(); 
+            onCancelClose();
+            
+            // Optional: Update local state immediately for a faster UI response
+            // The WebSocket will eventually synchronize the state
+            setShippingLabels(prevLabels =>
+              prevLabels.map(label =>
+                label.shipment_id === selectedLabel.shipment_id
+                  ? { ...label, status: 'cancelled' }
+                  : label
+              )
+            );
         }
     } catch (error) {
         console.error('Error cancelling shipment:', error.response?.data || error.message);
@@ -157,11 +227,11 @@ function ViewLabels() {
             isClosable: true,
         });
     } finally {
-        setIsLoading(false); // Stop spinner
-
+        setIsLoading(false);
     }
-};
+  };
 
+  // Rest of your component remains the same
   return (
     <Box
       display="flex"
@@ -243,132 +313,205 @@ function ViewLabels() {
                     <Td>{label.courier_name}</Td>
                     <Td>{label.tracking_number}</Td>
                     <Td>
-                  {label.status === 'cancelled' ? (
-                    <Flex align="center">
-                      <AiOutlineExclamationCircle color="red" size={17} />
-                      <Text color="red.500" fontWeight="bold"> Shipment Cancelled</Text>
-                    </Flex>
-                  ) : (
-                      <Flex gap={4}>
+                      {label.status === 'cancelled' ? (
+                        <Flex align="center">
+                          <AiOutlineExclamationCircle color="red" size={17} />
+                          <Text color="red.500" fontWeight="bold"> Shipment Cancelled</Text>
+                        </Flex>
+                      ) : label.status === 'pending' ? (
+                        <Flex align="center">
+                          <AiOutlineExclamationCircle color="orange" size={17} />
+                          <Text color="orange.500" fontWeight="bold"> Shipment Pending</Text>
+                        </Flex>
+                      ) : label.status === 'ready' ? (
+                        <Flex gap={4}>
                           <Button
-                              flex="1"
-                              size="md"
-                              leftIcon={<FiEye />}
-                              colorScheme="blue"
-                              onClick={() => handleDetailsClick(label)}
-                              _hover={{
-                                  boxShadow: "0px 4px 12px rgba(0, 0, 255, 0.4)",
-                                  transform: "scale(1.05)",
-                              }}
-                              transition="all 0.2s ease-in-out"
+                            flex="1"
+                            size="md"
+                            leftIcon={<FiEye />}
+                            colorScheme="blue"
+                            onClick={() => handleDetailsClick(label)}
+                            _hover={{
+                              boxShadow: "0px 4px 12px rgba(0, 0, 255, 0.4)",
+                              transform: "scale(1.05)",
+                            }}
+                            transition="all 0.2s ease-in-out"
                           >
-                              View Details
+                            View Details
                           </Button>
 
-                          {label.status === 'pickup_scheduled' ? (
-                                  <Flex
-                                  align="center"
-                                  justify="center"
-                                  bg="green.100"
-                                  color="green.700"
-                                  p={2}
-                                  borderRadius="md"
-                                  width="fit-content"
-                                >
-                                  <Text mr={3}>✅ Scheduled</Text>
-                                  <Box
-                                    as="button"
-                                    color="blue.500" 
-                                    textAlign="center"
-                                    onClick={() => handlePickupDetailsClick(label)}
-                                    _hover={{ color: "blue.700", textDecoration: "underline" }}
-                                    display="flex"
-                                    flexDirection="column"
-                                    lineHeight="tight"
-                                  >
-                                    <Text m={0} p={0}>View</Text>
-                                    
-                                  </Box>
-                                </Flex>
-                                ) : label.status === 'pickup_cancelled' ? (
-                                  <Flex
-                                    align="center"
-                                    justify="center"
-                                    bg="red.100"
-                                    color="red.700"
-                                    p={2}
-                                    borderRadius="md"
-                                    width="fit-content"
-                                  >
-                                    <Text mr={3}>Pickup Cancelled</Text>
-                                    <Box
-                                      as="button"
-                                      color="gray.500"
-                                      textAlign="center"
-                                      _hover={{ color: "gray.700", textDecoration: "underline" }}
-                                      display="flex"
-                                      flexDirection="column"
-                                      lineHeight="tight"
-                                    >
-                                    </Box>
-                                  </Flex>
-                            ) : (
-                                <Button
-                                    flex="1"
-                                    size="md"
-                                    colorScheme="orange"
-                                    onClick={() => handlePickupClick(label)}
-                                    _hover={{
-                                        boxShadow: "0px 4px 12px rgba(255, 165, 0, 0.4)",
-                                        transform: "scale(1.05)",
-                                    }}
-                                    transition="all 0.2s ease-in-out"
-                                >
-                                    Schedule Pickup
-                                </Button>
-                            )}
-
                           <Button
-                              flex="1"
-                              size="md"
-                              colorScheme="red"
-                              leftIcon={<MdClose />}
-                              onClick={() => handleCancelShipment(label)}
-                              _hover={{
-                                  boxShadow: "0px 4px 12px rgba(255, 0, 0, 0.4)",
-                                  transform: "scale(1.05)",
-                              }}
-                              transition="all 0.2s ease-in-out"
+                            flex="1"
+                            size="md"
+                            colorScheme="orange"
+                            onClick={() => handlePickupClick(label)}
+                            _hover={{
+                              boxShadow: "0px 4px 12px rgba(255, 165, 0, 0.4)",
+                              transform: "scale(1.05)",
+                            }}
+                            transition="all 0.2s ease-in-out"
                           >
-                              Cancel
+                            Schedule Pickup
                           </Button>
 
-                          <AlertDialog isOpen={isCancelOpen} leastDestructiveRef={cancelRef} onClose={onCancelClose}>
-                              <AlertDialogOverlay>
-                                  <AlertDialogContent>
-                                      <AlertDialogHeader fontSize="lg" fontWeight="bold">
-                                          Cancel Shipment
-                                      </AlertDialogHeader>
+                          <Button
+                            flex="1"
+                            size="md"
+                            colorScheme="red"
+                            leftIcon={<MdClose />}
+                            onClick={() => handleCancelShipment(label)}
+                            _hover={{
+                              boxShadow: "0px 4px 12px rgba(255, 0, 0, 0.4)",
+                              transform: "scale(1.05)",
+                            }}
+                            transition="all 0.2s ease-in-out"
+                          >
+                            Cancel
+                          </Button>
+                        </Flex>
+                      ) : label.status === 'pickup_scheduled' ? (
+                        <Flex gap={4}>
+                          <Button
+                            flex="1"
+                            size="md"
+                            leftIcon={<FiEye />}
+                            colorScheme="blue"
+                            onClick={() => handleDetailsClick(label)}
+                            _hover={{
+                              boxShadow: "0px 4px 12px rgba(0, 0, 255, 0.4)",
+                              transform: "scale(1.05)",
+                            }}
+                            transition="all 0.2s ease-in-out"
+                          >
+                            View Details
+                          </Button>
 
-                                      <AlertDialogBody>
-                                          Are you sure you want to cancel this shipment?
-                                          This action cannot be undone.
-                                      </AlertDialogBody>
+                          <Flex
+                            align="center"
+                            justify="center"
+                            bg="green.100"
+                            color="green.700"
+                            p={2}
+                            borderRadius="md"
+                            width="fit-content"
+                          >
+                            <Text mr={3}>✅ Scheduled</Text>
+                            <Box
+                              as="button"
+                              color="blue.500" 
+                              textAlign="center"
+                              onClick={() => handlePickupDetailsClick(label)}
+                              _hover={{ color: "blue.700", textDecoration: "underline" }}
+                              display="flex"
+                              flexDirection="column"
+                              lineHeight="tight"
+                            >
+                              <Text m={0} p={0}>View</Text>
+                            </Box>
+                          </Flex>
 
-                                      <AlertDialogFooter>
-                                          <ChakraButton ref={cancelRef} onClick={onCancelClose}>
-                                              Cancel
-                                          </ChakraButton>
-                                          <ChakraButton colorScheme="red" onClick={handleConfirmCancel} ml={3}>
-                                              Confirm
-                                          </ChakraButton>
-                                      </AlertDialogFooter>
-                                  </AlertDialogContent>
-                              </AlertDialogOverlay>
-                          </AlertDialog>
-                      </Flex>
-                  )}
-              </Td>
+                          <Button
+                            flex="1"
+                            size="md"
+                            colorScheme="red"
+                            leftIcon={<MdClose />}
+                            onClick={() => handleCancelShipment(label)}
+                            _hover={{
+                              boxShadow: "0px 4px 12px rgba(255, 0, 0, 0.4)",
+                              transform: "scale(1.05)",
+                            }}
+                            transition="all 0.2s ease-in-out"
+                          >
+                            Cancel
+                          </Button>
+                        </Flex>
+                      ) : label.status === 'pickup_cancelled' ? (
+                        <Flex gap={4}>
+                          <Button
+                            flex="1"
+                            size="md"
+                            leftIcon={<FiEye />}
+                            colorScheme="blue"
+                            onClick={() => handleDetailsClick(label)}
+                            _hover={{
+                              boxShadow: "0px 4px 12px rgba(0, 0, 255, 0.4)",
+                              transform: "scale(1.05)",
+                            }}
+                            transition="all 0.2s ease-in-out"
+                          >
+                            View Details
+                          </Button>
+
+                          <Flex
+                            align="center"
+                            justify="center"
+                            bg="red.100"
+                            color="red.700"
+                            p={2}
+                            borderRadius="md"
+                            width="fit-content"
+                          >
+                            <Text mr={3}>Pickup Cancelled</Text>
+                          </Flex>
+
+                          <Button
+                            flex="1"
+                            size="md"
+                            colorScheme="red"
+                            leftIcon={<MdClose />}
+                            onClick={() => handleCancelShipment(label)}
+                            _hover={{
+                              boxShadow: "0px 4px 12px rgba(255, 0, 0, 0.4)",
+                              transform: "scale(1.05)",
+                            }}
+                            transition="all 0.2s ease-in-out"
+                          >
+                            Cancel
+                          </Button>
+                        </Flex>
+                      ) : (
+                        <Flex gap={4}>
+                          <Button
+                            flex="1"
+                            size="md"
+                            leftIcon={<FiEye />}
+                            colorScheme="blue"
+                            onClick={() => handleDetailsClick(label)}
+                            _hover={{
+                              boxShadow: "0px 4px 12px rgba(0, 0, 255, 0.4)",
+                              transform: "scale(1.05)",
+                            }}
+                            transition="all 0.2s ease-in-out"
+                          >
+                            View Details
+                          </Button>
+                        </Flex>
+                      )}
+                      
+                      <AlertDialog isOpen={isCancelOpen} leastDestructiveRef={cancelRef} onClose={onCancelClose}>
+                        <AlertDialogOverlay>
+                          <AlertDialogContent>
+                            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+                              Cancel Shipment
+                            </AlertDialogHeader>
+
+                            <AlertDialogBody>
+                              Are you sure you want to cancel this shipment?
+                              This action cannot be undone.
+                            </AlertDialogBody>
+
+                            <AlertDialogFooter>
+                              <ChakraButton ref={cancelRef} onClick={onCancelClose}>
+                                Cancel
+                              </ChakraButton>
+                              <ChakraButton colorScheme="red" onClick={handleConfirmCancel} ml={3}>
+                                Confirm
+                              </ChakraButton>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialogOverlay>
+                      </AlertDialog>
+                    </Td>
                   </Tr>
                 ))}
               </Tbody>
@@ -388,7 +531,7 @@ function ViewLabels() {
             </Flex>
           </Box>
         )}
-        {/* Shipment Details Modal */}
+        {/* Modals remain the same */}
         {selectedLabel && (
           <ShipmentDetailsModal
             recipientName={selectedLabel.recipient_name}
@@ -398,12 +541,11 @@ function ViewLabels() {
             pdfLink={selectedLabel.pdf_url}
             isOpen={isDetailsOpen}
             onClose={() => {
-              onDetailsClose(); // Ensure state updates correctly
-              setSelectedLabel(null); // Reset selected label to avoid lingering state
+              onDetailsClose();
+              setSelectedLabel(null);
             }}
           />
         )}
-        {/* Schedule Pickup Modal */}
         {selectedLabel && (
           <SchedulePickupModal
             shipmentId={selectedLabel.shipment_id}
@@ -411,12 +553,11 @@ function ViewLabels() {
             courierId={selectedLabel.courier_service_id}
             isOpen={isPickupOpen}
             onClose={() => {
-              onPickupClose(); // Ensure state updates correctly
-              setSelectedLabel(null); // Reset selected label to avoid lingering state
+              onPickupClose();
+              setSelectedLabel(null);
             }}
           />
         )}
-        {/* Pickup Details Modal */}
         {selectedLabel && (
           <PickupDetailsModal
             shipmentId={selectedLabel.shipment_id}
@@ -426,8 +567,8 @@ function ViewLabels() {
             pickupTime={selectedLabel.time_slot}
             isOpen={isPickupDetailsOpen}
             onClose={() => {
-              onPickupDetailsClose(); // Ensure state updates correctly
-              setSelectedLabel(null); // Reset selected label to avoid lingering state
+              onPickupDetailsClose();
+              setSelectedLabel(null);
             }}
           />
         )}
@@ -437,7 +578,6 @@ function ViewLabels() {
 }
 
 export default ViewLabels;
-
 
 
 

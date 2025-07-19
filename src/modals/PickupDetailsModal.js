@@ -36,7 +36,6 @@ const PickupDetailsModal = ({ shipmentId, courierName, pickupId, pickupDate, pic
                   icon: "success",
                   confirmButtonText: "OK",
                 }).then(() => {
-                  window.location.reload();
                 });
        } catch(error)
        {

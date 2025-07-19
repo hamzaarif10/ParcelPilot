@@ -61,7 +61,7 @@ export const getCreateShipmentData = ({
         dimensions: "cm",
       },
       buy_label: true,
-      buy_label_synchronous: true,
+      buy_label_synchronous: false,
       printing_options: {
         format: "pdf",
         label: "4x6",

@@ -8,7 +8,7 @@ import { getGlsCreateShipmentData } from '../data/glsData';
 import { canadianProvinces, usStates, ukCountries, australianStates, newZealandRegions, germanStates, frenchRegions, 
   italianRegions, spanishAutonomousCommunities, swedishCounties, norwegianCounties,  
   danishRegions, finnishRegions, swissCantons, japanesePrefectures, singaporeRegions} from '../data/locationData';
-import { Button, useDisclosure, Spinner, Input, useToast } from '@chakra-ui/react'; 
+import { Button, useDisclosure, Spinner, Input, useToast, AbsoluteCenter } from '@chakra-ui/react'; 
 import loadGoogleMapsAPI from "../functions/loadGoogleMapsApi";
 import initAutocomplete from "../functions/initAutoComplete";
 import { Elements } from "@stripe/react-stripe-js";
@@ -47,7 +47,6 @@ function CreateShipmentForm({courierId, courierUrl, courierCost, senderCountry, 
   const [dimensions, setDimensions] = useState({ length: measurements.length, width: measurements.width, depth: measurements.depth });
 
   const [pdfLink, setPdfLink] = useState(null);
-  const [shipmentDetails, setShipmentDetails] = useState(null);
 
   const [userAddressDetails, setUserAddressDetails] = useState(null);
   
@@ -57,6 +56,9 @@ function CreateShipmentForm({courierId, courierUrl, courierCost, senderCountry, 
   const [isLoading, setIsLoading] = useState(false);
 
   const [trackingNumber, setTrackingNumber] = useState("");
+  const [shipmentId, setShipmentId] = useState("");
+  const [courierName, setCourierName] = useState("");
+  const [labelState, setLabelState] = useState("");
 
   const toast = useToast();
   const showToast = (title, description, status = 'error') => {
@@ -110,20 +112,21 @@ useEffect(() => {
   const handleSubmit = async () => {
   if (modalType === "shipmentDetails" && isOpen) {
       await submitLabel({
-        shipment_id: shipmentDetails.shipment_id,
+        shipment_id: shipmentId,
         name: receiverContactName,
         addressLine1: receiverAddressLine1,
         city: receiverCity,
         postalCode: receiverPostalCode,
         countryCode: receiverCountryCode,
-        courierName: shipmentDetails.courierName,
+        courierName: courierName,
         courierId: courierId,
-        trackingNum: shipmentDetails.trackingNumber,
-        pdfLink: pdfLink
+        trackingNum: trackingNumber,
+        pdfLink: pdfLink,
+        labelState: labelState
       });
       //Submit transaction details to DB
       submitTransaction({
-        description: "Shipment for " + receiverContactName + " shipped via " + shipmentDetails.courierName,
+        description: "Shipment for " + receiverContactName + " shipped via " + courierName,
         amount: courierCost
       });      
   }
@@ -139,12 +142,11 @@ useEffect(() => {
 const handleSubmit = async (e) => {
   e.preventDefault();
   setIsLoading(true);
-  //Initialize variables to store shipment details
-  let courierName = "";
-  let trackingNumber = "";
-  let shipment_id = "";
-  let labelBase64 = "";
 
+  let newTrackingNumber = "";
+  let newShipmentId = "";
+  let newCourierName = "";
+  let newLabelState = "";
   try {
    // Clear previous errors
    setErrors({
@@ -200,6 +202,7 @@ const handleSubmit = async (e) => {
     showToast('Validation Error', 'Please check all required fields', 'warning');
     return;
   }
+  //ACTUAL LOGIC!!!
   setReceiverCountryCode(receiverCountry);
   // Check to see if there is a payment method on file, if not open add payment method modal
   try {
@@ -247,12 +250,12 @@ const handleSubmit = async (e) => {
         `${process.env.REACT_APP_BACKEND_URL}/api/get-gls-label`,
         glsShipmentData
       );
-      shipment_id = response.data.trackingNumber;
-      courierName = "GLS Canada";
-      trackingNumber = response.data.carrierTrackingNos[0];
-      
-      
+      newShipmentId = response.data.trackingNumber;
+      newCourierName="GLS Canada";
+      newTrackingNumber = response.data.carrierTrackingNos[0];
+      newLabelState = "ready";
     }else{
+      //state of the label (pending / generated)
       const shipmentData = getCreateShipmentData({
         senderAddressLine1, senderAddressLine2, senderProvince, senderCity, senderPostalCode,
         senderCompanyName, senderContactName, senderPhone, senderEmail,
@@ -265,13 +268,13 @@ const handleSubmit = async (e) => {
         shipmentData
       );
       // Extract shipment details
-      shipment_id = response.data.shipment.easyship_shipment_id;
-      courierName = response.data.shipment.courier_service.name;
-      trackingNumber = response.data.shipment.trackings[0].tracking_number;
-      labelBase64 = response.data.shipment.shipping_documents?.[0]?.base64_encoded_strings?.[0];
+      newShipmentId = response.data.shipment.easyship_shipment_id;
+      newCourierName=response.data.shipment.courier_service.name;
+      newLabelState="pending";
+      //trackingNumber = response.data.shipment.trackings[0].tracking_number;
+      //labelBase64 = response.data.shipment.shipping_documents?.[0]?.base64_encoded_strings?.[0];
     }
-
-    if (trackingNumber) {
+    if (newShipmentId) {
       // Step 3: Capture the payment
       const isCaptured = await capturePayment(paymentId);
 
@@ -279,30 +282,53 @@ const handleSubmit = async (e) => {
         showToast('Payment Error', 'Payment capture failed. Please contact support.', 'error');
         return;
       }
-      
+      //DOWNLOAD SHIPPING LABELS AND OPEN SHIPMENT DETAILS MODAL
       if (courierId == "GlsDicomExpressGround"){
         try {
           const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/download-gls-label`, {
-            params: { shipment_id, documentSize: 'Thermal'}
+            params: { shipment_id: newShipmentId, documentSize: 'Thermal'}
           });
-          await generatePdfLink(response.data.base64String, trackingNumber, setPdfLink);
+          setPdfLink(await generatePdfLink(response.data.base64String, newTrackingNumber));
+          //setting label values in state
+          setShipmentId(newShipmentId);
+          setCourierName(newCourierName);
+          setTrackingNumber(newTrackingNumber);
+          setLabelState(newLabelState);
+          setIsLoading(false);
+          // set modal type
+          setModalType("shipmentDetails");
+          // Open the modal
+          onOpen();
         } catch (error) {
           console.error("Error fetching GLS label:", error);
           showToast('Error', 'Failed to fetch GLS label. Please try again.', 'error');
         }
-      }else{
-        // Generate the PDF label
-        await generatePdfLink(labelBase64, trackingNumber, setPdfLink);
+      }else{//POLL the NON gls label route until there is a response and update label in db with tracking and pdf url
+        //setting label values in state
+        setShipmentId(newShipmentId);
+        setCourierName(newCourierName);
+        setLabelState(newLabelState); 
+        setIsLoading(false);
+        // set modal type
+        setModalType("shipmentDetails");
+        // Open the modal
+        onOpen();
+          try {
+            await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/download-label`, {
+              params: {
+                shipment_id: newShipmentId,
+                format: 'PDF',
+                label: 'A4',
+                commercial_invoice: 'A4',
+                packing_slip: 'none'
+              }
+            });
+            // You can handle the response here if needed
+          } catch (error) {
+            console.error("Error fetching label:", error);
+            showToast('Error', 'Failed to fetch label. Please try again.', 'error');
+          }
       }
-      // Set shipment details for the modal
-      setShipmentDetails({
-        shipment_id: shipment_id,
-        courierName: courierName,
-        trackingNumber: trackingNumber,
-      });
-      setModalType("shipmentDetails");
-      // Open the modal
-      onOpen();
     } else {
       console.error("Base64 encoded string for label not found.");
       showToast('Error', 'Shipment label generation failed. Please try again.', 'error');
@@ -321,9 +347,9 @@ const handleSubmit = async (e) => {
   } 
 }finally {
   //Mark the order as fulfilled in shopify if this is a shopify store order
-    if(trackingNumber && orderId)
+    if(newShipmentId && orderId)
     {
-      fulfillShopifyOrder(orderId, lineItemId, trackingNumber, courierName);
+      fulfillShopifyOrder(orderId, lineItemId, newTrackingNumber, newCourierName);
     }
     // Ensure loading state is turned off
     setIsLoading(false);
@@ -1073,16 +1099,17 @@ return (
         Create Shipment
       </button>
     </form>
-    {shipmentDetails && modalType === 'shipmentDetails' && (
+    {modalType === 'shipmentDetails' && (
       <ShipmentDetailsModal
         recipientName={receiverContactName}
         recipientAddress={receiverAddressLine1}
-        courierName={shipmentDetails.courierName}
-        trackingNumber={shipmentDetails.trackingNumber}
+        courierName={courierName}
+        trackingNumber={trackingNumber}
         pdfLink={pdfLink}
         isOpen={isOpen}
         onClose={() => {
           onClose();
+          setModalType(null);
           if (orderId) {
             onShopifyOrderModalClose();
           }

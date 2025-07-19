@@ -6,7 +6,7 @@ const axios = require('axios');
 const router = express.Router();
 //Submit label to database route
 router.post('/submitLabel', authenticateToken, async (req, res) => {
-  const { shipment_id, recipientName, recipientAddress, courierName, courierServiceId, trackingNumber, pdf_url } = req.body;
+  const { shipment_id, recipientName, recipientAddress, courierName, courierServiceId, trackingNumber, pdf_url, status } = req.body;
   const userId = req.user.id;
 
   try {
@@ -26,16 +26,17 @@ router.post('/submitLabel', authenticateToken, async (req, res) => {
       .input('courier_service_id', sql.NVarChar(255), courierServiceId)
       .input('tracking_number', sql.NVarChar(255), trackingNumber)
       .input('pdf_url', sql.NVarChar(sql.MAX), pdf_url)
+      .input('status', sql.VarChar(20), status)
       .query(`
         INSERT INTO Labels (
           user_id, shipment_id, recipient_name, 
           recipient_address, courier_name, courier_service_id, 
-          tracking_number, pdf_url
+          tracking_number, pdf_url, status
         ) 
         VALUES (
           @user_id, @shipment_id, @recipient_name, 
           @recipient_address, @courier_name, @courier_service_id, 
-          @tracking_number, @pdf_url
+          @tracking_number, @pdf_url, @status
         )
       `);
 

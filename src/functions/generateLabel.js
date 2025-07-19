@@ -20,7 +20,7 @@ async function uploadFileToStorage(file) {
       throw new Error("File upload failed");
     }
   }
-export async function generatePdfLink(base64String, tracking, setPdfLink) {
+export async function generatePdfLink(base64String, tracking) {
     try {
       let blob = null;
 
@@ -42,7 +42,7 @@ export async function generatePdfLink(base64String, tracking, setPdfLink) {
       const permanentUrl = await uploadFileToStorage(file);
   
       // Set the URL in state for immediate use
-      setPdfLink(permanentUrl);
+      return permanentUrl;
     } catch (error) {
       console.error("Error generating PDF link:", error);
     }
@@ -57,7 +57,8 @@ export async function generatePdfLink(base64String, tracking, setPdfLink) {
     courierName, 
     courierId, 
     trackingNum, 
-    pdfLink}) {
+    pdfLink,
+    labelState}) {
     const token = localStorage.getItem("authToken");
     try {
       await axios.post(
@@ -69,7 +70,8 @@ export async function generatePdfLink(base64String, tracking, setPdfLink) {
           courierName: courierName,
           courierServiceId: courierId,
           trackingNumber: trackingNum,
-          pdf_url: pdfLink
+          pdf_url: pdfLink,
+          status: labelState
         },
         {
           headers: { Authorization: `Bearer ${token}` },

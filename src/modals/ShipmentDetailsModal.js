@@ -40,8 +40,12 @@ const ShipmentDetailsModal = ({ recipientName, recipientAddress, courierName, tr
             </Box>
 
             <Box mb={3}>
-              <Text fontWeight="bold">Tracking Number:</Text>
-              <Text>{trackingNumber}</Text>
+              {trackingNumber && (
+              <>
+                <Text fontWeight="bold">Tracking Number:</Text>
+                <Text>{trackingNumber}</Text>
+              </>
+              )}
             </Box>
 
             <Box mb={3}>

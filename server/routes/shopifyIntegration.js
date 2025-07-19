@@ -113,10 +113,18 @@ router.get('/get-shopify-auth-details', authenticateToken, async (req, res) => {
 
 // Get OAuth URL
 router.get('/auth', (req, res) => {
-  const shopifyDomain = req.query.shop;
+  const shop = req.query.shop;
 
-  const oauthUrl = `https://${shopifyDomain}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=${process.env.REACT_APP_SHOPIFY_SCOPE}&redirect_uri=${process.env.REACT_APP_SHOPIFY_REDIRECT_URI}`;
-  res.json({ oauthUrl });
+  if (!shop) {
+    return res.status(400).send('Missing shop parameter');
+  }
+
+  const redirectUri = `${process.env.BACKEND_URL}/auth/callback`;
+  const scopes = process.env.REACT_APP_SHOPIFY_SCOPE;
+
+  const oauthUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=${scopes}&redirect_uri=${redirectUri}&state=nonce123&grant_options[]=per-user`;
+
+  res.redirect(oauthUrl); // ✅ This is what Shopify expects
 });
 
 // Shopify callback route

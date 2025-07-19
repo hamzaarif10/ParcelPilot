@@ -2,6 +2,9 @@ const express = require('express');
 const axios = require('axios');
 const { Ratelimit } = require('@upstash/ratelimit');
 const { Redis } = require('@upstash/redis');
+const {generatePdfLink} = require("../functions/generateLabel.js");
+const { getPool } = require('../db');
+const sql = require('mssql');
 
 const router = express.Router();
 
@@ -141,7 +144,138 @@ router.post('/get-label', async (req, res) => {
     res.status(500).json({ error: 'Failed to create shipping label from eashyship api' });
   }
 });
-
+router.get('/download-label', async (req, res) => {
+  console.log("Query Params:", req.query);
+ 
+  try {
+    const { shipment_id, format, label, commercial_invoice, packing_slip } = req.query;
+    const url = `https://public-api.easyship.com/2024-09/shipments/${shipment_id}`;
+   
+    // Maximum number of polling attempts (10 attempts * 3 seconds = 30 seconds max wait time)
+    const MAX_ATTEMPTS = 10;
+    let attempts = 0;
+    let success = false;
+    let response;
+   
+    // Add polling logic
+    while (!success && attempts < MAX_ATTEMPTS) {
+      try {
+        response = await axios.get(url, {
+          headers: {
+            accept: 'application/json',
+            'content-type': 'application/json',
+            authorization: `${process.env.ES_KEY}`
+          },
+          params: {
+            format,
+            label,
+            commercial_invoice,
+            packing_slip
+          }
+        });
+       
+        // Check if the response has the required data
+        if (response.data?.shipment?.trackings?.[0]?.tracking_number &&
+            response.data?.shipment?.shipping_documents?.[0]?.base64_encoded_strings?.[0]) {
+          success = true;
+        } else {
+          // If not successful, increment attempts and wait 3 seconds before retrying
+          attempts++;
+          if (attempts < MAX_ATTEMPTS) {
+            await new Promise(resolve => setTimeout(resolve, 3000));
+          }
+        }
+      } catch (error) {
+        // If the request fails, increment attempts and wait 3 seconds before retrying
+        console.error(`Polling attempt ${attempts + 1} failed:`, error.message);
+        attempts++;
+        if (attempts < MAX_ATTEMPTS) {
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        }
+      }
+    }
+   
+    // If we've reached max attempts without success, return an error response
+    if (!success) {
+      return res.status(408).json({
+        error: 'Timeout waiting for label data from EasyShip API'
+      });
+    }
+   
+    // Process the successful response
+    const trackingNumber = response.data.shipment.trackings[0].tracking_number;
+    const labelBase64 = response.data.shipment.shipping_documents[0].base64_encoded_strings[0];
+    const labelUrl = await generatePdfLink(labelBase64, trackingNumber);
+   
+    // Update DB label with the tracking number and amazon aws pdf link url
+    try {
+      const pool = getPool();
+      await pool.request()
+        .input('shipment_id', sql.NVarChar(255), shipment_id)
+        .input('tracking_number', sql.NVarChar(255), trackingNumber)
+        .input('pdf_url', sql.NVarChar(sql.MAX), labelUrl)
+        .input('status', sql.VarChar(20), "ready")
+        .query(`
+          UPDATE Labels
+          SET
+            tracking_number = @tracking_number,
+            pdf_url = @pdf_url,
+            status = @status
+          WHERE shipment_id = @shipment_id
+        `);
+      
+      // After successfully updating the database, get the user ID associated with this shipment
+      // to send WebSocket notification
+      const userResult = await pool.request()
+        .input('shipment_id', sql.NVarChar(255), shipment_id)
+        .query(`
+          SELECT user_id, recipient_name, recipient_address, courier_name, courier_service_id 
+          FROM Labels 
+          WHERE shipment_id = @shipment_id
+        `);
+      
+      // If we found the user and the global WebSocket function exists
+      if (userResult.recordset.length > 0 && global.sendLabelUpdate) {
+        const userId = userResult.recordset[0].user_id;
+        
+        // Construct the complete label object to send to the client
+        const updatedLabel = {
+          shipment_id: shipment_id,
+          tracking_number: trackingNumber,
+          pdf_url: labelUrl,
+          status: "ready",
+          recipient_name: userResult.recordset[0].recipient_name,
+          recipient_address: userResult.recordset[0].recipient_address,
+          courier_name: userResult.recordset[0].courier_name,
+          courier_service_id: userResult.recordset[0].courier_service_id
+          // Add any other fields that your front-end expects
+        };
+        
+        // Send the real-time update
+        global.sendLabelUpdate(userId, {
+          type: 'label_update',
+          label: updatedLabel
+        });
+        
+        console.log(`WebSocket notification sent to user ${userId} for shipment ${shipment_id}`);
+      }
+       
+      // Return success response with the label URL and tracking number
+      return res.status(200).json({
+        success: true,
+        tracking_number: trackingNumber,
+        label_url: labelUrl
+      });
+     
+    } catch (error) {
+      console.error('SQL update label error:', error);
+      return res.status(500).json({ error: 'Failed to update label in database' });
+    }
+  } catch (error) {
+    console.error('Error updating the shipping label:', error);
+    return res.status(500).json({ error: 'Failed to process shipping label' });
+  }
+});
 // //Fetch rate from GLS api
 // router.post('/get-gls-rate', async (req, res) => {
 //   try {

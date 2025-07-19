@@ -123,7 +123,7 @@ function SchedulePickupModal({ shipmentId, trackingNumber, courierId, isOpen, on
         icon: "success",
         confirmButtonText: "OK",
       }).then(() => {
-        window.location.reload();
+        
       });
     } catch (error) {
       Swal.fire({
@@ -148,6 +148,8 @@ function SchedulePickupModal({ shipmentId, trackingNumber, courierId, isOpen, on
         selected_date: date,
         easyship_shipment_ids: [shipmentId]
       };
+      console.log("from time: " + fromTime);
+      console.log("to time: " + toTime);
       //continue with payment
       let paymentId = "";
       try {
@@ -202,7 +204,7 @@ function SchedulePickupModal({ shipmentId, trackingNumber, courierId, isOpen, on
           icon: "success",
           confirmButtonText: "OK",
         }).then(() => {
-          window.location.reload();
+          
         });
       } catch (error) {
         // Step 4: Void the payment if shipment creation fails

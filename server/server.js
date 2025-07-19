@@ -3,6 +3,9 @@ const session = require('express-session');
 const dotenv = require('dotenv');
 const path = require('path');
 const cors = require('cors');
+const http = require('http');  // Added for WebSocket support
+const WebSocket = require('ws'); // You'll need to install this: npm install ws
+const jwt = require('jsonwebtoken'); // Make sure this is installed: npm install jsonwebtoken
 const { connectToDatabase } = require('./db');
 const { Redis } = require('@upstash/redis');
 dotenv.config();
@@ -68,6 +71,95 @@ class UpstashRedisStore extends session.Store {
 }
 
 const app = express();
+
+// Create HTTP server by attaching the Express app
+const server = http.createServer(app);
+
+// Create WebSocket server
+const wss = new WebSocket.Server({ 
+  server, 
+  path: '/ws/shipping-labels' 
+});
+
+// Track active WebSocket connections by user ID
+const activeConnections = new Map();
+
+// Set up WebSocket connection handling
+wss.on('connection', (ws) => {
+  console.log('New WebSocket connection established');
+  
+  // Initialize connection properties
+  ws.isAuthenticated = false;
+  ws.userId = null;
+  
+  ws.on('message', (message) => {
+    try {
+      const data = JSON.parse(message.toString());
+      
+      // Handle authentication
+      if (data.type === 'auth' && data.token) {
+        try {
+          // Verify JWT token
+          const decoded = jwt.verify(data.token, process.env.JWT_SECRET);
+          ws.isAuthenticated = true;
+          ws.userId = decoded.userId || decoded.id; // Adjust based on your token structure
+          
+          console.log(`WebSocket client authenticated: User ${ws.userId}`);
+          
+          // Store connection for this user
+          if (!activeConnections.has(ws.userId)) {
+            activeConnections.set(ws.userId, new Set());
+          }
+          activeConnections.get(ws.userId).add(ws);
+          
+          // Send confirmation to client
+          ws.send(JSON.stringify({
+            type: 'auth_success',
+            message: 'Authentication successful'
+          }));
+        } catch (error) {
+          console.error('WebSocket authentication error:', error);
+          ws.send(JSON.stringify({
+            type: 'auth_error',
+            message: 'Authentication failed'
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error processing WebSocket message:', error);
+    }
+  });
+  
+  // Handle disconnection
+  ws.on('close', () => {
+    console.log('WebSocket connection closed');
+    
+    if (ws.userId && activeConnections.has(ws.userId)) {
+      // Remove this connection from the user's set
+      activeConnections.get(ws.userId).delete(ws);
+      
+      // If no more connections for this user, remove the user entry
+      if (activeConnections.get(ws.userId).size === 0) {
+        activeConnections.delete(ws.userId);
+      }
+    }
+  });
+});
+
+// Create global function to send updates to specific users
+global.sendLabelUpdate = function(userId, data) {
+  if (activeConnections.has(userId)) {
+    const connections = activeConnections.get(userId);
+    const message = JSON.stringify(data);
+    
+    connections.forEach(connection => {
+      if (connection.readyState === WebSocket.OPEN) {
+        connection.send(message);
+      }
+    });
+  }
+};
+
 const PORT = process.env.PORT || 3002;
 const isProd = process.env.NODE_ENV === 'production';
 
@@ -142,12 +234,8 @@ app.use((err, req, res, next) => {
   }
 });
 
-// Start server
-app.listen(PORT, '0.0.0.0', () => {
+// Start server using the HTTP server that wraps Express
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://localhost:${PORT} (${isProd ? 'production' : 'development'} mode)`);
+  console.log(`WebSocket server available at ws://localhost:${PORT}/ws/shipping-labels`);
 });
-
-
-
-
-
