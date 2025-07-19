@@ -111,42 +111,33 @@ router.get('/get-shopify-auth-details', authenticateToken, async (req, res) => {
   }
 });
 
-// Shopify OAuth entry point
+// Get OAuth URL
 router.get('/auth', (req, res) => {
-  const { shop, host } = req.query;
+  const shop = req.query.shop;
 
-  if (!shop || !host) {
-    return res.status(400).send('Missing required parameters');
+  if (!shop) {
+    return res.status(400).send('Missing shop parameter');
   }
-
-  const state = uuidv4();
-  res.cookie('shopify_oauth_state', state, {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'strict',
-    maxAge: 5 * 60 * 1000 // 5 minutes
-  });
 
   const redirectUri = `${process.env.BACKEND_URL}/auth/callback`;
   const scopes = process.env.REACT_APP_SHOPIFY_SCOPE;
 
-  const oauthUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=${scopes}&redirect_uri=${redirectUri}&state=${state}&grant_options[]=per-user&host=${host}`;
+  const oauthUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=${scopes}&redirect_uri=${redirectUri}&state=nonce123&grant_options[]=per-user`;
 
-  return res.redirect(oauthUrl);
+  res.redirect(oauthUrl); // ✅ This is what Shopify expects
 });
 
-// Shopify OAuth callback
+// Shopify callback route
 router.get('/callback', async (req, res) => {
-  const { shop, code, state, hmac, host } = req.query;
-  const storedState = req.cookies.shopify_oauth_state;
+  const { shop, code, state, hmac } = req.query;
 
   if (!verifyHmac(req.query)) {
-    console.error('❌ Invalid HMAC');
-    return res.status(400).send('Invalid HMAC');
+    console.error('HMAC verification failed');
+    return res.status(400).send('Invalid request');
   }
 
-  if (!state || state !== storedState) {
-    console.error('❌ State mismatch');
+  if (state !== req.query.state) {
+    console.error('State parameter mismatch');
     return res.status(403).send('Request origin cannot be verified');
   }
 
@@ -162,7 +153,8 @@ router.get('/callback', async (req, res) => {
     const { access_token } = response.data;
 
     if (!access_token) {
-      return res.status(500).send('No access token received');
+      console.error('No access token received from Shopify');
+      return res.status(500).send('Error receiving access token');
     }
 
     const encryptedToken = encrypt(access_token);
@@ -176,14 +168,12 @@ router.get('/callback', async (req, res) => {
         WHERE shopify_domain = @shopify_domain
       `);
 
-    console.log(`[ACCESS LOG] Stored token for ${shop}`);
-    res.clearCookie('shopify_oauth_state');
-    res.redirect(`${process.env.REACT_APP_FRONTEND_URL}/integration?shop=${shop}&host=${host}`);
+    console.log(`[ACCESS LOG] Shopify token stored for domain ${shop}`);
+    res.redirect(`${process.env.REACT_APP_FRONTEND_URL}/integration`);
   } catch (error) {
-    console.error('Error during token exchange:', error);
+    console.error('Error during OAuth:', error);
     res.status(500).send('Error during OAuth');
   }
 });
-
 
 module.exports = router;
