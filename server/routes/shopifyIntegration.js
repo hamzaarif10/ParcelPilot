@@ -72,6 +72,37 @@ router.post('/save-shopify-domain', authenticateToken, async (req, res) => {
   }
 });
 
+// Check if shop has valid Shopify OAuth
+router.post('/check-shopify-oauth', authenticateToken, async (req, res) => {
+  const { shop } = req.body;
+  
+  if (!shop) {
+    return res.json({ isAuthenticated: false });
+  }
+
+  try {
+    const pool = getPool();
+    const result = await pool.request()
+      .input('shopify_domain', sql.NVarChar(255), shop)
+      .input('user_id', sql.Int, req.user.id)
+      .query(`
+        SELECT shopify_access_token 
+        FROM Users 
+        WHERE shopify_domain = @shopify_domain 
+        AND id = @user_id 
+        AND shopify_access_token IS NOT NULL
+      `);
+
+    const isAuthenticated = result.recordset.length > 0;
+    console.log(`[SHOPIFY CHECK] Shop ${shop} OAuth status for user ${req.user.id}: ${isAuthenticated}`);
+    
+    res.json({ isAuthenticated });
+  } catch (error) {
+    console.error('Error checking Shopify OAuth status:', error);
+    res.json({ isAuthenticated: false });
+  }
+});
+
 // Get Shopify auth details
 router.get('/get-shopify-auth-details', authenticateToken, async (req, res) => {
   try {
@@ -111,23 +142,24 @@ router.get('/get-shopify-auth-details', authenticateToken, async (req, res) => {
   }
 });
 
-// Get OAuth URL - FIXED: Changed from '/auth' to '/' since this router is mounted at '/auth'
-router.get('/', (req, res) => {
+// Get OAuth URL - ALWAYS redirect to OAuth when accessed from Shopify
+router.get('/', async (req, res) => {
   const shop = req.query.shop;
 
   if (!shop) {
     return res.status(400).send('Missing shop parameter');
   }
 
+  // ALWAYS initiate OAuth - this satisfies Shopify's requirement
   const redirectUri = `${process.env.BACKEND_URL}/auth/callback`;
   const scopes = process.env.REACT_APP_SHOPIFY_SCOPE;
 
   const oauthUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=${scopes}&redirect_uri=${redirectUri}&state=nonce123&grant_options[]=per-user`;
 
-  console.log(`[SHOPIFY AUTH] Redirecting to OAuth for shop: ${shop}`);
+  console.log(`[SHOPIFY AUTH] Starting OAuth for shop: ${shop}`);
   console.log(`[SHOPIFY AUTH] OAuth URL: ${oauthUrl}`);
   
-  res.redirect(oauthUrl); // ✅ This is what Shopify expects
+  res.redirect(oauthUrl);
 });
 
 // Shopify callback route
