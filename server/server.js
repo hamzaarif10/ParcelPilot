@@ -216,6 +216,10 @@ app.use('/payment', billingRoute);
 app.use('/auth', shopifyIntegrationRoute);
 app.use('/fetchShopifyOrders', fetchShopifyOrdersRoute);
 app.use('/support', supportRoute);
+//for shopify
+const cookieParser = require('cookie-parser');
+app.use(cookieParser());
+
 //SHOPIFY OAUTH HANDLING
 const { getPool } = require('./db');
 const sql = require('mssql');
@@ -235,35 +239,15 @@ function verifyHmac(queryParams) {
 }
 
 app.get('/', async (req, res) => {
-  const { shop, hmac, host } = req.query;
+  const { shop, host } = req.query;
 
-  if (shop && hmac && host) {
-    if (!verifyHmac(req.query)) {
-      return res.status(400).send('Invalid HMAC');
-    }
-
-    try {
-      const pool = getPool();
-      const result = await pool.request()
-        .input('shopify_domain', sql.VarChar(255), shop)
-        .query(`SELECT shopify_access_token FROM Users WHERE shopify_domain = @shopify_domain`);
-
-      const token = result.recordset[0]?.shopify_access_token;
-
-      if (!token) {
-        // Immediately redirect to OAuth if no token — no UI, no homepage first
-        return res.redirect(`/auth?shop=${shop}&host=${host}`);
-      }
-
-      // Token exists → show your app UI
-      return res.redirect(`${process.env.REACT_APP_FRONTEND_URL}/integration?shop=${shop}&host=${host}`);
-    } catch (err) {
-      console.error('DB lookup error:', err);
-      return res.status(500).send('Internal server error');
-    }
+  // If opened from Shopify admin
+  if (shop && host) {
+    // Always redirect to OAuth, no HMAC or token check here
+    return res.redirect(`/auth?shop=${shop}&host=${host}`);
   }
 
-  // NO Shopify params → safe to serve your public homepage
+  // Opened directly (public visitor) → show homepage
   return res.redirect(`${process.env.REACT_APP_FRONTEND_URL}/`);
 });
 
