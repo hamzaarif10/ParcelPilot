@@ -29,6 +29,7 @@ import ViewTransactions from './pages/ViewTransactions.js';
 import RateEstimate from './components/RateEstimate.js';
 import PrivacyPolicy from './pages/PrivacyPolicy.js';
 import ShopifyRedirectHandler from './components/ShopifyRedirectHandler';
+import ShopifyVerification from "./components/ShopifyVerification.js";
 
  // Load Stripe with your publishable key
  const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISH_KEY);
@@ -51,6 +52,7 @@ function App() {
             </>
           }
         />
+        <Route path="/shopify-verify" element={<ShopifyVerification />} />
         <Route path="/how-it-works" element={<div><Navbar/><HowItWorks/><Footer/></div>}/>
         <Route path="/about-us" element={<div><Navbar/><AboutUs/><Footer/></div>}/>
         <Route path="/register" element={<div><Navbar/><Register/></div>}/>
