@@ -216,9 +216,6 @@ app.use('/payment', billingRoute);
 app.use('/auth', shopifyIntegrationRoute);
 app.use('/fetchShopifyOrders', fetchShopifyOrdersRoute);
 app.use('/support', supportRoute);
-//for shopify
-const cookieParser = require('cookie-parser');
-app.use(cookieParser());
 
 //SHOPIFY OAUTH HANDLING
 const { getPool } = require('./db');
