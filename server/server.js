@@ -226,9 +226,9 @@ app.get('/shopify-app', async (req, res) => {
 //   
 //   // OAuth is complete - now show the app interface
 //   // This happens AFTER OAuth, so it satisfies Shopify's requirement
-  res.redirect(`${process.env.REACT_APP_FRONTEND_URL}/integration?shop=${shop}&host=${host}`);
+   res.redirect(`${process.env.REACT_APP_FRONTEND_URL}/integration?shop=${shop}&host=${host}`);
  });
- 
+
 // Serve static files in production (React build)
 if (isProd) {
   const buildPath = path.join(__dirname, 'build');

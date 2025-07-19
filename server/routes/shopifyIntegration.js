@@ -211,12 +211,11 @@ router.get('/callback', async (req, res) => {
 
     console.log(`[ACCESS LOG] Shopify token stored for domain ${shop}`);
     
-    // For Shopify-launched apps, redirect back to the app in Shopify admin
-    // This satisfies the OAuth requirement and keeps the user in the Shopify context
+    // For Shopify-launched apps, redirect to verification page first
+    // This ensures OAuth is completely done before showing any app UI
     if (host) {
-      // Redirect back to your app URL which will be loaded within Shopify admin
-      const appUrl = `${process.env.BACKEND_URL}/shopify-app?shop=${shop}&host=${host}`;
-      return res.redirect(appUrl);
+      const verifyUrl = `${process.env.REACT_APP_FRONTEND_URL}/shopify-verify?shop=${shop}&host=${host}`;
+      return res.redirect(verifyUrl);
     }
     
     // Fallback for non-Shopify OAuth (direct website installs)
@@ -228,3 +227,4 @@ router.get('/callback', async (req, res) => {
 });
 
 module.exports = router;
+
