@@ -63,7 +63,7 @@ export const getCreateShipmentData = ({
       buy_label: true,
       buy_label_synchronous: false,
       printing_options: {
-        format: "pdf",
+        format: "png",
         label: "4x6",
         commercial_invoice: "A4",
         packing_slip: "4x6",
