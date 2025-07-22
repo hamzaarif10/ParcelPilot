@@ -110,42 +110,29 @@ function CreateShipmentForm({courierId, courierUrl, courierCost, senderCountry, 
 //USE EFFECT HOOKS
 useEffect(() => {
   const handleSubmit = async () => {
-    if (modalType === "shipmentDetails" && isOpen) {
-      try {
-        // Only submit label for GLS couriers
-        if (courierId === "GlsDicomExpressGround" && pdfLink) {
-          await submitLabel({
-            shipment_id: shipmentId,
-            name: receiverContactName,
-            addressLine1: receiverAddressLine1,
-            city: receiverCity,
-            postalCode: receiverPostalCode,
-            countryCode: receiverCountryCode,
-            courierName: courierName,
-            courierId: courierId,
-            trackingNum: trackingNumber,
-            pdfLink: pdfLink,
-            labelState: labelState
-          });
-         
-          console.log('submitLabel completed successfully');
-        }
-     
-        // Submit transaction for ALL couriers (GLS and non-GLS)
-        await submitTransaction({
-          description: "Shipment for " + receiverContactName + " shipped via " + courierName,
-          amount: courierCost
-        });
-     
-        console.log('submitTransaction completed successfully');
-      } catch (error) {
-        console.error('Error in useEffect handleSubmit:', error);
-      }
-    }
-  };
-  
-  handleSubmit();
-}, [modalType, isOpen, pdfLink, shipmentId, trackingNumber, courierName, labelState]);
+  if (modalType === "shipmentDetails" && isOpen) {
+      await submitLabel({
+        shipment_id: shipmentId,
+        name: receiverContactName,
+        addressLine1: receiverAddressLine1,
+        city: receiverCity,
+        postalCode: receiverPostalCode,
+        countryCode: receiverCountryCode,
+        courierName: courierName,
+        courierId: courierId,
+        trackingNum: trackingNumber,
+        pdfLink: pdfLink,
+        labelState: labelState
+      });
+      //Submit transaction details to DB
+      submitTransaction({
+        description: "Shipment for " + receiverContactName + " shipped via " + courierName,
+        amount: courierCost
+      });      
+  }
+}
+handleSubmit();
+}, [modalType, isOpen]);
 
 useEffect(() => {
   fetchUserAddress({setUserAddressDetails, setSenderAddressLine1, setSenderAddressLine2, setSenderProvince,
@@ -284,6 +271,8 @@ const handleSubmit = async (e) => {
       newShipmentId = response.data.shipment.easyship_shipment_id;
       newCourierName=response.data.shipment.courier_service.name;
       newLabelState="pending";
+      //trackingNumber = response.data.shipment.trackings[0].tracking_number;
+      //labelBase64 = response.data.shipment.shipping_documents?.[0]?.base64_encoded_strings?.[0];
     }
     if (newShipmentId) {
       // Step 3: Capture the payment
