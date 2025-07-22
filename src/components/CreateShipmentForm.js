@@ -108,54 +108,141 @@ function CreateShipmentForm({courierId, courierUrl, courierCost, senderCountry, 
   // Inside your component
   const provinceOptions = getProvincesOrStates(receiverCountryCode);
 //USE EFFECT HOOKS
+// REPLACE your GLS section in handleSubmit with this heavily logged version:
+
+if (courierId == "GlsDicomExpressGround"){
+  try {
+    console.log('=== GLS LABEL DOWNLOAD START ===');
+    console.log('Environment:', process.env.NODE_ENV);
+    console.log('Backend URL:', process.env.REACT_APP_BACKEND_URL);
+    console.log('Shipment ID:', newShipmentId);
+    console.log('Tracking Number:', newTrackingNumber);
+    
+    const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/download-gls-label`, {
+      params: { shipment_id: newShipmentId, documentSize: 'Thermal'}
+    });
+    
+    console.log('GLS API Response received:', {
+      status: response.status,
+      hasBase64: !!response.data.base64String,
+      base64Length: response.data.base64String?.length || 0
+    });
+    
+    const generatedPdfLink = await generatePdfLink(response.data.base64String, newTrackingNumber);
+    console.log('Generated PDF Link:', generatedPdfLink);
+    console.log('PDF Link type:', typeof generatedPdfLink);
+    console.log('PDF Link length:', generatedPdfLink?.length || 0);
+    
+    setPdfLink(generatedPdfLink);
+    console.log('setPdfLink called with:', generatedPdfLink);
+    
+    // Setting label values in state
+    setShipmentId(newShipmentId);
+    setCourierName(newCourierName);
+    setTrackingNumber(newTrackingNumber);
+    setLabelState(newLabelState);
+    setIsLoading(false);
+    
+    console.log('All state variables set:', {
+      shipmentId: newShipmentId,
+      courierName: newCourierName,
+      trackingNumber: newTrackingNumber,
+      labelState: newLabelState
+    });
+    
+    // set modal type
+    setModalType("shipmentDetails");
+    console.log('Modal type set to shipmentDetails');
+    
+    // Open the modal
+    onOpen();
+    console.log('Modal opened');
+    console.log('=== GLS LABEL DOWNLOAD END ===');
+    
+  } catch (error) {
+    console.error("=== GLS LABEL DOWNLOAD ERROR ===");
+    console.error("Error fetching GLS label:", error);
+    console.error("Error response:", error.response?.data);
+    console.error("Error status:", error.response?.status);
+    showToast('Error', 'Failed to fetch GLS label. Please try again.', 'error');
+  }
+}
+
+// ALSO UPDATE your useEffect with even more logging:
+
 useEffect(() => {
   const handleSubmit = async () => {
-    // Add logging to debug the issue
-    console.log('useEffect triggered:', { 
-      modalType, 
-      isOpen, 
-      pdfLink, 
-      shipmentId, 
-      trackingNumber,
-      courierName,
-      labelState 
-    });
+    console.log('=== USEEFFECT TRIGGERED ===');
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('modalType:', modalType);
+    console.log('isOpen:', isOpen);
+    console.log('pdfLink value:', pdfLink);
+    console.log('pdfLink type:', typeof pdfLink);
+    console.log('shipmentId:', shipmentId);
+    console.log('trackingNumber:', trackingNumber);
+    console.log('courierName:', courierName);
+    console.log('labelState:', labelState);
+    console.log('courierId:', courierId);
 
     if (modalType === "shipmentDetails" && isOpen) {
-      console.log('About to submit label with PDF link:', pdfLink);
+      console.log('=== SUBMITTING LABEL TO DB ===');
+      
+      const labelData = {
+        shipment_id: shipmentId,
+        name: receiverContactName,
+        addressLine1: receiverAddressLine1,
+        city: receiverCity,
+        postalCode: receiverPostalCode,
+        countryCode: receiverCountryCode,
+        courierName: courierName,
+        courierId: courierId,
+        trackingNum: trackingNumber,
+        pdfLink: pdfLink,
+        labelState: labelState
+      };
+      
+      console.log('Label data being submitted:', labelData);
       
       try {
-        await submitLabel({
-          shipment_id: shipmentId,
-          name: receiverContactName,
-          addressLine1: receiverAddressLine1,
-          city: receiverCity,
-          postalCode: receiverPostalCode,
-          countryCode: receiverCountryCode,
-          courierName: courierName,
-          courierId: courierId,
-          trackingNum: trackingNumber,
-          pdfLink: pdfLink, // This should now have the correct value
-          labelState: labelState
-        });
-        
-        console.log('submitLabel completed successfully');
+        const submitResult = await submitLabel(labelData);
+        console.log('submitLabel result:', submitResult);
+        console.log('=== LABEL SUBMITTED SUCCESSFULLY ===');
         
         // Submit transaction details to DB
-        await submitTransaction({
+        const transactionData = {
           description: "Shipment for " + receiverContactName + " shipped via " + courierName,
           amount: courierCost
-        });
+        };
+        console.log('Transaction data:', transactionData);
         
-        console.log('submitTransaction completed successfully');
+        const transactionResult = await submitTransaction(transactionData);
+        console.log('submitTransaction result:', transactionResult);
+        console.log('=== TRANSACTION SUBMITTED SUCCESSFULLY ===');
+        
       } catch (error) {
-        console.error('Error in useEffect handleSubmit:', error);
+        console.error('=== ERROR IN USEEFFECT ===');
+        console.error('submitLabel/submitTransaction error:', error);
+        console.error('Error response:', error.response?.data);
+        console.error('Error status:', error.response?.status);
       }
+    } else {
+      console.log('=== USEEFFECT CONDITIONS NOT MET ===');
+      console.log('Will not submit to DB because:');
+      console.log('- modalType === "shipmentDetails":', modalType === "shipmentDetails");
+      console.log('- isOpen:', isOpen);
     }
   };
   
   handleSubmit();
 }, [modalType, isOpen, pdfLink, shipmentId, trackingNumber, courierName, labelState]);
+
+// ALSO ADD this effect to monitor pdfLink changes specifically:
+useEffect(() => {
+  console.log('=== PDF LINK CHANGED ===');
+  console.log('New pdfLink value:', pdfLink);
+  console.log('pdfLink type:', typeof pdfLink);
+  console.log('Timestamp:', new Date().toISOString());
+}, [pdfLink]);
 
 useEffect(() => {
   fetchUserAddress({setUserAddressDetails, setSenderAddressLine1, setSenderAddressLine2, setSenderProvince,
