@@ -110,43 +110,33 @@ function CreateShipmentForm({courierId, courierUrl, courierCost, senderCountry, 
 //USE EFFECT HOOKS
 useEffect(() => {
   const handleSubmit = async () => {
-    // Add logging to debug the issue
-    console.log('useEffect triggered:', { 
-      modalType, 
-      isOpen, 
-      pdfLink, 
-      shipmentId, 
-      trackingNumber,
-      courierName,
-      labelState 
-    });
-
     if (modalType === "shipmentDetails" && isOpen) {
-      console.log('About to submit label with PDF link:', pdfLink);
-      
       try {
-        await submitLabel({
-          shipment_id: shipmentId,
-          name: receiverContactName,
-          addressLine1: receiverAddressLine1,
-          city: receiverCity,
-          postalCode: receiverPostalCode,
-          countryCode: receiverCountryCode,
-          courierName: courierName,
-          courierId: courierId,
-          trackingNum: trackingNumber,
-          pdfLink: pdfLink, // This should now have the correct value
-          labelState: labelState
-        });
-        
-        console.log('submitLabel completed successfully');
-        
-        // Submit transaction details to DB
+        // Only submit label for GLS couriers
+        if (courierId === "GlsDicomExpressGround" && pdfLink) {
+          await submitLabel({
+            shipment_id: shipmentId,
+            name: receiverContactName,
+            addressLine1: receiverAddressLine1,
+            city: receiverCity,
+            postalCode: receiverPostalCode,
+            countryCode: receiverCountryCode,
+            courierName: courierName,
+            courierId: courierId,
+            trackingNum: trackingNumber,
+            pdfLink: pdfLink,
+            labelState: labelState
+          });
+         
+          console.log('submitLabel completed successfully');
+        }
+     
+        // Submit transaction for ALL couriers (GLS and non-GLS)
         await submitTransaction({
           description: "Shipment for " + receiverContactName + " shipped via " + courierName,
           amount: courierCost
         });
-        
+     
         console.log('submitTransaction completed successfully');
       } catch (error) {
         console.error('Error in useEffect handleSubmit:', error);
