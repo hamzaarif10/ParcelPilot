@@ -23,10 +23,12 @@ import {
   AlertDialogBody,
   AlertDialogFooter,
   Menu, MenuButton, MenuList, MenuItem,
-  Button as ChakraButton
+  Button as ChakraButton,
+  Checkbox,
+  HStack
 } from "@chakra-ui/react";
 import { ChevronDownIcon } from '@chakra-ui/icons';
-import { MdPerson, MdLocationOn, MdLocalShipping, MdClose } from "react-icons/md"; // MdClose for the "X" icon
+import { MdPerson, MdLocationOn, MdLocalShipping, MdClose, MdPrint } from "react-icons/md";
 import { AiOutlineExclamationCircle } from "react-icons/ai";
 import { FiEye } from "react-icons/fi";
 import { FaBarcode } from "react-icons/fa";
@@ -67,6 +69,8 @@ function ViewLabels() {
   const [shippingLabels, setShippingLabels] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedLabel, setSelectedLabel] = useState(null);
+  const [selectedForPrint, setSelectedForPrint] = useState(new Set());
+  const [isBulkPrinting, setIsBulkPrinting] = useState(false);
   const token = localStorage.getItem("authToken");
   const cancelRef = React.useRef();
   const toast = useToast();
@@ -155,7 +159,12 @@ function ViewLabels() {
         wsRef.current.close();
       }
     };
-  }, [currentPage, token]); 
+  }, [currentPage, token]);
+
+  // Clear selections when page changes
+  useEffect(() => {
+    setSelectedForPrint(new Set());
+  }, [currentPage]);
 
   const currentLabels = shippingLabels; 
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
@@ -178,6 +187,111 @@ function ViewLabels() {
   function handleCancelShipment(label) {
     setSelectedLabel(label);
     onCancelOpen();
+  }
+
+  function handleCheckboxChange(shipmentId) {
+    const newSelected = new Set(selectedForPrint);
+    if (newSelected.has(shipmentId)) {
+      newSelected.delete(shipmentId);
+    } else {
+      newSelected.add(shipmentId);
+    }
+    setSelectedForPrint(newSelected);
+  }
+
+  function handleSelectAll(isChecked) {
+    if (isChecked) {
+      // Select all labels that have pdf_url and are not cancelled
+      const selectableLabels = currentLabels.filter(
+        label => label.pdf_url && label.status !== 'cancelled' && label.status !== 'pending'
+      );
+      setSelectedForPrint(new Set(selectableLabels.map(label => label.shipment_id)));
+    } else {
+      setSelectedForPrint(new Set());
+    }
+  }
+
+  async function handleBulkPrint() {
+    if (selectedForPrint.size === 0) return;
+
+    setIsBulkPrinting(true);
+    
+    try {
+      // Get the selected labels with their PDF URLs
+      const selectedLabels = currentLabels.filter(
+        label => selectedForPrint.has(label.shipment_id) && label.pdf_url
+      );
+
+      if (selectedLabels.length === 0) {
+        toast({
+          title: "No PDFs Available",
+          description: "Selected labels don't have PDF files available.",
+          status: "warning",
+          duration: 3000,
+          isClosable: true,
+        });
+        setIsBulkPrinting(false);
+        return;
+      }
+
+      // If only one label is selected, open it directly
+      if (selectedLabels.length === 1) {
+        window.open(selectedLabels[0].pdf_url, '_blank');
+        setSelectedForPrint(new Set());
+        setIsBulkPrinting(false);
+        return;
+      }
+
+      // For multiple labels, call backend endpoint to combine PDFs
+      const shipmentIds = selectedLabels.map(label => label.shipment_id);
+      
+      const response = await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/user/bulkPrintLabels`,
+        { shipment_ids: shipmentIds },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          responseType: 'blob' // Important for handling PDF response
+        }
+      );
+
+      // Create a blob URL from the response
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const pdfUrl = window.URL.createObjectURL(blob);
+      
+      // Open the combined PDF in a new window
+      window.open(pdfUrl, '_blank');
+      
+      // Clean up the blob URL after a delay
+      setTimeout(() => {
+        window.URL.revokeObjectURL(pdfUrl);
+      }, 1000);
+
+      toast({
+        title: "Success",
+        description: `Combined ${selectedLabels.length} labels into one PDF.`,
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+
+      // Clear selections after printing
+      setSelectedForPrint(new Set());
+
+    } catch (error) {
+      console.error('Error bulk printing:', error);
+      toast({
+        title: "Error",
+        description: "Failed to combine and print labels. Please try again.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setIsBulkPrinting(false);
+    }
   }
   
   const handleConfirmCancel = async () => {
@@ -206,6 +320,11 @@ function ViewLabels() {
 
             onCancelClose();
             
+            // Remove from selected for print if it was selected
+            const newSelected = new Set(selectedForPrint);
+            newSelected.delete(selectedLabel.shipment_id);
+            setSelectedForPrint(newSelected);
+            
             // Optional: Update local state immediately for a faster UI response
             // The WebSocket will eventually synchronize the state
             setShippingLabels(prevLabels =>
@@ -231,7 +350,13 @@ function ViewLabels() {
     }
   };
 
-  // Rest of your component remains the same
+  // Check if all selectable labels are selected
+  const selectableLabels = currentLabels.filter(
+    label => label.pdf_url && label.status !== 'cancelled' && label.status !== 'pending'
+  );
+  const isAllSelected = selectableLabels.length > 0 && 
+    selectableLabels.every(label => selectedForPrint.has(label.shipment_id));
+
   return (
     <Box
       display="flex"
@@ -258,6 +383,31 @@ function ViewLabels() {
           </Text>
         </Center>
 
+        {/* Bulk Print Button */}
+        {!isLoading && currentLabels.length > 0 && (
+          <Flex justify="flex-end" mb={4}>
+            <Button
+              leftIcon={<MdPrint />}
+              colorScheme="purple"
+              size="lg"
+              onClick={handleBulkPrint}
+              isDisabled={selectedForPrint.size === 0}
+              isLoading={isBulkPrinting}
+              loadingText="Processing..."
+              _hover={{
+                transform: selectedForPrint.size > 0 ? "scale(1.05)" : "none",
+                boxShadow: selectedForPrint.size > 0 ? "0px 4px 12px rgba(128, 0, 128, 0.4)" : "none",
+              }}
+              transition="all 0.2s ease-in-out"
+            >
+              {selectedForPrint.size > 0 
+                ? `Bulk Print (${selectedForPrint.size} selected)`
+                : "Select one or more to bulk print"
+              }
+            </Button>
+          </Flex>
+        )}
+
         {/* Loading Animation */}
         {isLoading ? (
           <Center height="60vh">
@@ -282,6 +432,15 @@ function ViewLabels() {
               <Thead bg="teal.600">
                 <Tr>
                   <Th color="white" fontSize="lg">
+                    <Checkbox
+                      colorScheme="orange"
+                      isChecked={isAllSelected}
+                      isIndeterminate={selectedForPrint.size > 0 && !isAllSelected}
+                      onChange={(e) => handleSelectAll(e.target.checked)}
+                      isDisabled={selectableLabels.length === 0}
+                    />
+                  </Th>
+                  <Th color="white" fontSize="lg">
                     <Icon as={MdPerson} mr={2} color="orange" /> Name
                   </Th>
                   <Th color="white" fontSize="lg">
@@ -303,6 +462,14 @@ function ViewLabels() {
                     _hover={{ bg: "teal.50", transform: "scale(1.02)" }}
                     transition="0.2s"
                   >
+                    <Td>
+                      <Checkbox
+                        colorScheme="purple"
+                        isChecked={selectedForPrint.has(label.shipment_id)}
+                        onChange={() => handleCheckboxChange(label.shipment_id)}
+                        isDisabled={!label.pdf_url || label.status === 'cancelled' || label.status === 'pending'}
+                      />
+                    </Td>
                     <Td fontWeight="bold">{label.recipient_name}</Td>
                     <Td>
                       <Box as="span" display="inline-flex" alignItems="center" mr={2} fontSize="1.3rem">

@@ -4,6 +4,8 @@ const sql = require('mssql');
 const authenticateToken = require('../middleware/authenticateToken');
 const axios = require('axios');
 const router = express.Router();
+const { PDFDocument } = require('pdf-lib');
+
 //Submit label to database route
 router.post('/submitLabel', authenticateToken, async (req, res) => {
   const { shipment_id, recipientName, recipientAddress, courierName, courierServiceId, trackingNumber, pdf_url, status } = req.body;
@@ -374,6 +376,94 @@ router.get("/getTransactions", authenticateToken, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to retrieve transactions." });
+  }
+});
+// Bulk print labels route
+router.post("/bulkPrintLabels", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id; // Get the user ID from the token
+    const { shipment_ids } = req.body;
+
+    if (!shipment_ids || !Array.isArray(shipment_ids) || shipment_ids.length === 0) {
+      return res.status(400).json({ error: "No shipment IDs provided" });
+    }
+
+    const pool = getPool();
+
+    // Create parameterized query for SQL injection protection
+    const placeholders = shipment_ids.map((_, index) => `@shipment_id${index}`).join(',');
+    
+    // Build the query
+    let query = `
+      SELECT shipment_id, pdf_url, recipient_name, tracking_number 
+      FROM Labels 
+      WHERE user_id = @user_id 
+      AND shipment_id IN (${placeholders})
+      AND pdf_url IS NOT NULL
+    `;
+
+    // Create the request and add parameters
+    const request = pool.request();
+    request.input('user_id', sql.Int, userId);
+    
+    // Add each shipment_id as a parameter
+    shipment_ids.forEach((id, index) => {
+      request.input(`shipment_id${index}`, sql.NVarChar, id);
+    });
+
+    // Execute the query
+    const result = await request.query(query);
+
+    if (result.recordset.length === 0) {
+      return res.status(404).json({ error: "No labels found for the specified shipment IDs" });
+    }
+
+    const labels = result.recordset;
+
+    // Create a new PDF document
+    const mergedPdf = await PDFDocument.create();
+
+    // Download and merge each PDF
+    for (const label of labels) {
+      try {
+        console.log(`Processing PDF for shipment ${label.shipment_id}`);
+        
+        const response = await axios.get(label.pdf_url, { 
+          responseType: 'arraybuffer',
+          timeout: 30000 // 30 second timeout
+        });
+        
+        const pdfToMerge = await PDFDocument.load(response.data);
+        const pages = await mergedPdf.copyPages(pdfToMerge, pdfToMerge.getPageIndices());
+        
+        pages.forEach((page) => {
+          mergedPdf.addPage(page);
+        });
+      } catch (pdfError) {
+        console.error(`Failed to process PDF for shipment ${label.shipment_id}:`, pdfError.message);
+        // Continue with other PDFs even if one fails
+      }
+    }
+
+    // Check if we have any pages in the merged PDF
+    if (mergedPdf.getPageCount() === 0) {
+      return res.status(500).json({ error: "Failed to merge any PDFs" });
+    }
+
+    // Save the merged PDF
+    const mergedPdfBytes = await mergedPdf.save();
+
+    // Send response
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline; filename=shipping-labels.pdf');
+    res.setHeader('Content-Length', mergedPdfBytes.length);
+    res.send(Buffer.from(mergedPdfBytes));
+
+    console.log(`Successfully merged ${labels.length} PDFs for user ${userId}`);
+    
+  } catch (error) {
+    console.error("Error merging PDFs:", error);
+    res.status(500).json({ error: "Failed to merge PDFs", details: error.message });
   }
 });
 module.exports = router;
