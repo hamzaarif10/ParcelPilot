@@ -206,10 +206,6 @@ router.get('/download-label', async (req, res) => {
     const trackingNumber = response.data.shipment.trackings[0].tracking_number;
     const labelBase64 = response.data.shipment.shipping_documents[0].base64_encoded_strings[0];
     const labelUrl = await generatePdfLink(labelBase64, trackingNumber);
-
-    //DEBUGGIN LOG
-    console.log("TRACKING NUMBER: " + trackingNumber);
-    console.log("PDFLINK: " + labelUrl);
    
     // Update DB label with the tracking number and amazon aws pdf link url
     try {
