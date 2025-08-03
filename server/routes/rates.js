@@ -108,6 +108,10 @@ router.get('/download-gls-label', async (req, res) => {
 // Fetch rate from API
 router.post('/get-rate', rateLimitMiddleware, async (req, res) => {
   try {
+    if (!req.body?.destination_address?.postal_code) { 
+    console.log('[ACCESS LOG] Rate requested with missing postal code'); 
+    return res.status(400).json({ error: 'Destination postal code is required' }); 
+  }
     //added logging for shopify compliance
     console.log(`[ACCESS LOG] Rate requested for recipient postal code: ${req.body?.destination_address?.postal_code}`);
 
