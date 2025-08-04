@@ -1,12 +1,13 @@
-import {React, useState} from 'react';
+import {React, useState, useEffect} from 'react';
 import '../styles/Login.css';
 import axios from 'axios';
 import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@chakra-ui/react";
 
 const Login = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const toast = useToast(); // Initialize Chakra toast
     
     //State variables
@@ -17,24 +18,51 @@ const Login = () => {
     const [loginDisabled, setLoginDisabled] = useState(false);
 
     axios.defaults.withCredentials = true;
+
+    // Get the returnUrl from query parameters (this is for shopify store linkage)
+  const getReturnUrl = () => {
+    const params = new URLSearchParams(location.search);
+    return params.get('returnUrl') || '/integration'; // Default to integrations page
+  };
     
     const login = async (email, password) => {
-        try {
-          const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/auth/login`, { email, password });
-          const token = response.data.token;
-          localStorage.setItem('authToken', token);  // Store the token
-          
-          // Show success toast
-          toast({
-            title: "Login successful",
-            description: "Redirecting to create shipment page...",
-            status: "success",
-            duration: 3000,
-            isClosable: true,
-            position: "top"
-          });
-          
-          window.location.href = "/create-shipment"; // Redirect to the protected page
+            try {
+                const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/auth/login`, { email, password });
+
+                if (response.data.token) 
+                    {
+
+                    const token = response.data.token;
+
+                    localStorage.setItem('authToken', token);  // Store the token
+
+                    // Get the return URL
+                    const returnUrl = getReturnUrl();
+                    console.log('[LOGIN] Redirecting to:', returnUrl);
+                    
+                    // Check if we have a pending Shopify installation
+                    const pendingShop = sessionStorage.getItem('pendingShopifyShop');
+                    const pendingHost = sessionStorage.getItem('pendingShopifyHost');
+        
+                    if (pendingShop) {
+                    // If we have pending Shopify data, go to verification page
+                    const verifyUrl = `/shopify-verify?shop=${pendingShop}${pendingHost ? `&host=${pendingHost}` : ''}`;
+                    console.log('[LOGIN] Found pending Shopify installation, redirecting to:', verifyUrl);
+                    navigate(verifyUrl);
+                    } else {
+                    // Otherwise, go to the return URL
+                    // Show success toast
+                    toast({
+                        title: "Login successful",
+                        description: "Redirecting to create shipment page...",
+                        status: "success",
+                        duration: 3000,
+                        isClosable: true,
+                        position: "top"
+                    });
+                    window.location.href = "/create-shipment"; // Redirect to the protected page
+                    }
+                }
         } catch (error) {
           console.error('Error logging in:', error.response?.data || error.message);
           

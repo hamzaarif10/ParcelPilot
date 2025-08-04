@@ -182,10 +182,11 @@ router.get('/callback', async (req, res) => {
     // This will be picked up when the user associates the shop
     pendingTokens.set(shop, encryptedToken);
     
-    // Clean up old tokens after 10 minutes
+    // Clean up old tokens after 30 minutes (extended for login flow)
     setTimeout(() => {
       pendingTokens.delete(shop);
-    }, 10 * 60 * 1000);
+      console.log(`[SHOPIFY CALLBACK] Cleaned up expired token for shop ${shop}`);
+    }, 30 * 60 * 1000);
 
     console.log(`[SHOPIFY CALLBACK] Token stored temporarily for shop ${shop}`);
     
