@@ -353,25 +353,7 @@ function RateEstimateForm(props) {
                         <option value="" disabled>
                           Select a Country Code
                         </option>
-                        <option value="US">United States (US)</option>
                         <option value="CA">Canada (CA)</option>
-                        <option value="GB">United Kingdom (GB)</option>
-                        <option value="AU">Australia (AU)</option>
-                        <option value="NZ">New Zealand (NZ)</option>
-                        <option value="DE">Germany (DE)</option>
-                        <option value="FR">France (FR)</option>
-                        <option value="IT">Italy (IT)</option>
-                        <option value="ES">Spain (ES)</option>
-                        <option value="SE">Sweden (SE)</option>
-                        <option value="NO">Norway (NO)</option>
-                        <option value="DK">Denmark (DK)</option>
-                        <option value="FI">Finland (FI)</option>
-                        <option value="CH">Switzerland (CH)</option>
-                        <option value="JP">Japan (JP)</option>
-                        <option value="SG">Singapore (SG)</option>
-                        <option value="KR">South Korea (KR)</option>
-                        <option value="IE">Ireland (IE)</option>
-                        <option value="NL">Netherlands (NL)</option>
                       </select>
                     </div>
                   </div>
@@ -405,25 +387,7 @@ function RateEstimateForm(props) {
                         <option value="" disabled>
                           Select a Country Code
                         </option>
-                        <option value="US">United States (US)</option>
                         <option value="CA">Canada (CA)</option>
-                        <option value="GB">United Kingdom (GB)</option>
-                        <option value="AU">Australia (AU)</option>
-                        <option value="NZ">New Zealand (NZ)</option>
-                        <option value="DE">Germany (DE)</option>
-                        <option value="FR">France (FR)</option>
-                        <option value="IT">Italy (IT)</option>
-                        <option value="ES">Spain (ES)</option>
-                        <option value="SE">Sweden (SE)</option>
-                        <option value="NO">Norway (NO)</option>
-                        <option value="DK">Denmark (DK)</option>
-                        <option value="FI">Finland (FI)</option>
-                        <option value="CH">Switzerland (CH)</option>
-                        <option value="JP">Japan (JP)</option>
-                        <option value="SG">Singapore (SG)</option>
-                        <option value="KR">South Korea (KR)</option>
-                        <option value="IE">Ireland (IE)</option>
-                        <option value="NL">Netherlands (NL)</option>
                       </select>
                     </div>
                   </div>
