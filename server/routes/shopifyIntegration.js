@@ -45,7 +45,9 @@ function verifyHmac(queryParams) {
   return hmac === calculatedHmac;
 }
 
-// REMOVED: save-shopify-domain endpoint - no longer needed
+// Temporary storage for OAuth tokens pending user association
+// In production, use Redis or similar
+const pendingTokens = new Map();
 
 // Check if shop has valid Shopify OAuth
 router.post('/check-shopify-oauth', authenticateToken, async (req, res) => {
@@ -130,11 +132,9 @@ router.get('/', async (req, res) => {
   const redirectUri = `${backendUrl}/auth/callback`;
   const scopes = process.env.REACT_APP_SHOPIFY_SCOPE || process.env.SHOPIFY_SCOPE;
 
-  // Generate a unique state parameter and store it temporarily
+  // Generate a unique state parameter
   const state = crypto.randomBytes(16).toString('hex');
   
-  // In production, you'd store this state in a session or temporary storage
-  // For now, we'll include it in the OAuth URL
   const oauthUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=${scopes}&redirect_uri=${redirectUri}&state=${state}&grant_options[]=per-user`;
 
   console.log(`[SHOPIFY AUTH] Starting OAuth for shop: ${shop}`);
@@ -154,7 +154,6 @@ router.get('/callback', async (req, res) => {
     return res.status(400).send('Invalid request');
   }
 
-  // In production, verify the state parameter matches what was stored
   if (!state) {
     console.error('Missing state parameter');
     return res.status(403).send('Request origin cannot be verified');
@@ -176,38 +175,22 @@ router.get('/callback', async (req, res) => {
       return res.status(500).send('Error receiving access token');
     }
 
-    // Encrypt and store the token
+    // Encrypt the token
     const encryptedToken = encrypt(access_token);
-    const pool = getPool();
     
-    // First check if there's already a user with this shopify_domain
-    const existingUser = await pool.request()
-      .input('shopify_domain', sql.NVarChar(255), shop)
-      .query(`
-        SELECT id FROM Users WHERE shopify_domain = @shopify_domain
-      `);
-
-    if (existingUser.recordset.length > 0) {
-      // Update existing user
-      await pool.request()
-        .input('shopify_access_token', sql.NVarChar(sql.MAX), encryptedToken)
-        .input('shopify_domain', sql.NVarChar(255), shop)
-        .query(`
-          UPDATE Users 
-          SET shopify_access_token = @shopify_access_token, 
-              shopify_token_last_used = GETDATE()
-          WHERE shopify_domain = @shopify_domain
-        `);
-    } else {
-      // For new installations, we need to associate with a logged-in user
-      // This will be handled in the verification page
-      console.log(`[SHOPIFY AUTH] New shop ${shop} - will need user association`);
-    }
-
-    console.log(`[ACCESS LOG] Shopify token stored for domain ${shop}`);
+    // Store the token temporarily, keyed by shop domain
+    // This will be picked up when the user associates the shop
+    pendingTokens.set(shop, encryptedToken);
     
-    // Always redirect to verification page for proper user association
-    const verifyUrl = `${process.env.REACT_APP_FRONTEND_URL}/shopify-verify?shop=${shop}&host=${host || ''}`;
+    // Clean up old tokens after 10 minutes
+    setTimeout(() => {
+      pendingTokens.delete(shop);
+    }, 10 * 60 * 1000);
+
+    console.log(`[SHOPIFY CALLBACK] Token stored temporarily for shop ${shop}`);
+    
+    // Redirect to verification page
+    const verifyUrl = `${process.env.REACT_APP_FRONTEND_URL}/shopify-verify?shop=${shop}${host ? `&host=${host}` : ''}`;
     return res.redirect(verifyUrl);
     
   } catch (error) {
@@ -216,9 +199,11 @@ router.get('/callback', async (req, res) => {
   }
 });
 
-// New endpoint to associate Shopify shop with logged-in user
+// Associate Shopify shop with logged-in user
 router.post('/associate-shop', authenticateToken, async (req, res) => {
-  const { shop, accessToken } = req.body;
+  const { shop } = req.body;
+  
+  console.log(`[ASSOCIATE SHOP] Request from user ${req.user.id} for shop ${shop}`);
   
   if (!shop) {
     return res.status(400).json({ error: 'Shop parameter required' });
@@ -227,36 +212,15 @@ router.post('/associate-shop', authenticateToken, async (req, res) => {
   try {
     const pool = getPool();
     
-    // Check if shop already has a token (from OAuth callback)
-    const shopResult = await pool.request()
-      .input('shopify_domain', sql.NVarChar(255), shop)
-      .query(`
-        SELECT shopify_access_token FROM Users WHERE shopify_domain = @shopify_domain
-      `);
-
-    if (shopResult.recordset.length === 0) {
-      // If we have an access token from the request, use it
-      if (accessToken) {
-        const encryptedToken = encrypt(accessToken);
-        await pool.request()
-          .input('shopify_access_token', sql.NVarChar(sql.MAX), encryptedToken)
-          .input('shopify_domain', sql.NVarChar(255), shop)
-          .input('user_id', sql.Int, req.user.id)
-          .query(`
-            UPDATE Users 
-            SET shopify_access_token = @shopify_access_token,
-                shopify_domain = @shopify_domain,
-                shopify_token_last_used = GETDATE()
-            WHERE id = @user_id
-          `);
-      } else {
-        return res.status(400).json({ error: 'No access token available for this shop' });
-      }
-    } else {
-      // Shop already has token, just associate with current user
-      const existingToken = shopResult.recordset[0].shopify_access_token;
+    // Check if we have a pending token for this shop
+    const pendingToken = pendingTokens.get(shop);
+    
+    if (pendingToken) {
+      console.log(`[ASSOCIATE SHOP] Found pending token for shop ${shop}`);
+      
+      // Associate the shop and token with the user
       await pool.request()
-        .input('shopify_access_token', sql.NVarChar(sql.MAX), existingToken)
+        .input('shopify_access_token', sql.NVarChar(sql.MAX), pendingToken)
         .input('shopify_domain', sql.NVarChar(255), shop)
         .input('user_id', sql.Int, req.user.id)
         .query(`
@@ -266,10 +230,16 @@ router.post('/associate-shop', authenticateToken, async (req, res) => {
               shopify_token_last_used = GETDATE()
           WHERE id = @user_id
         `);
+      
+      // Remove the pending token
+      pendingTokens.delete(shop);
+      
+      console.log(`[SHOPIFY ASSOCIATION] Shop ${shop} associated with user ${req.user.id}`);
+      res.json({ success: true });
+    } else {
+      console.error(`[ASSOCIATE SHOP] No pending token found for shop ${shop}`);
+      return res.status(400).json({ error: 'No pending authorization for this shop. Please install the app again from Shopify.' });
     }
-
-    console.log(`[SHOPIFY ASSOCIATION] Shop ${shop} associated with user ${req.user.id}`);
-    res.json({ success: true });
     
   } catch (error) {
     console.error('Error associating shop:', error);
