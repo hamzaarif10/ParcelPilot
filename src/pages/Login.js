@@ -36,15 +36,16 @@ const Login = () => {
 
                     localStorage.setItem('authToken', token);  // Store the token
 
-                    // Get the return URL
+        
+        
+                    if (sessionStorage.getItem('pendingShopifyShop')) {
+                         // Get the return URL
                     const returnUrl = getReturnUrl();
                     console.log('[LOGIN] Redirecting to:', returnUrl);
                     
                     // Check if we have a pending Shopify installation
                     const pendingShop = sessionStorage.getItem('pendingShopifyShop');
                     const pendingHost = sessionStorage.getItem('pendingShopifyHost');
-        
-                    if (pendingShop) {
                     // If we have pending Shopify data, go to verification page
                     const verifyUrl = `/shopify-verify?shop=${pendingShop}${pendingHost ? `&host=${pendingHost}` : ''}`;
                     console.log('[LOGIN] Found pending Shopify installation, redirecting to:', verifyUrl);
