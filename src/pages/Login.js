@@ -16,11 +16,16 @@ const Login = () => {
 
     axios.defaults.withCredentials = true;
 
-    // Clear Shopify sessionStorage if not coming from ?shop= param
+    // On mount, capture Shopify params if they exist
     useEffect(() => {
         const urlParams = new URLSearchParams(location.search);
         const shop = urlParams.get("shop");
-        if (!shop) {
+        const host = urlParams.get("host");
+
+        if (shop) {
+            sessionStorage.setItem("pendingShopifyShop", shop);
+            if (host) sessionStorage.setItem("pendingShopifyHost", host);
+        } else {
             sessionStorage.removeItem('pendingShopifyShop');
             sessionStorage.removeItem('pendingShopifyHost');
         }
@@ -39,22 +44,14 @@ const Login = () => {
                 const token = response.data.token;
                 localStorage.setItem('authToken', token);
 
-                const returnUrl = getReturnUrl();
-                console.log('[LOGIN] Redirecting to:', returnUrl);
-
                 const pendingShop = sessionStorage.getItem('pendingShopifyShop');
                 const pendingHost = sessionStorage.getItem('pendingShopifyHost');
 
-                // Check if it's a real Shopify-origin login
-                if (pendingShop && location.search.includes("shop=")) {
+                if (pendingShop) {
                     const verifyUrl = `/shopify-verify?shop=${pendingShop}${pendingHost ? `&host=${pendingHost}` : ''}`;
-                    console.log('[LOGIN] Found pending Shopify installation, redirecting to:', verifyUrl);
+                    console.log('[LOGIN] Shopify install detected, redirecting to:', verifyUrl);
                     navigate(verifyUrl);
                 } else {
-                    // Clear stale values
-                    sessionStorage.removeItem('pendingShopifyShop');
-                    sessionStorage.removeItem('pendingShopifyHost');
-
                     toast({
                         title: "Login successful",
                         description: "Redirecting to create shipment page...",
@@ -209,4 +206,5 @@ const Login = () => {
 }
 
 export default Login;
+
 
