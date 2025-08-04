@@ -224,7 +224,7 @@ function Integrations() {
 
               {orders.length === 0 ? (
                 <VStack py={10} px={4}>
-                  <Text color="gray.500">No orders found. Sync to fetch latest orders.</Text>
+                  <Text color="gray.500">No orders found. Sync to fetch latest orders!.</Text>
                 </VStack>
               ) : (
                 <Box overflowX="auto">
