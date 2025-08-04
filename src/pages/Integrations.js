@@ -52,6 +52,41 @@ function Integrations() {
     getShopifyToken();
   }, [toast]);
 
+  async function handleConnectShopify(shopifyDomain) {
+    if (!shopifyDomain.includes('.myshopify.com')) {
+      toast({
+        title: "Invalid Domain",
+        description: "Please enter a valid store domain ending with .myshopify.com",
+        status: "warning",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom-right"
+      });
+      return;
+    }
+    
+    const token = localStorage.getItem("authToken");
+    try {
+      await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/auth/save-shopify-domain`, 
+        { shopifyDomain }, 
+        { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+      );
+      const oauthUrl = `https://${shopifyDomain}/admin/oauth/authorize?client_id=${process.env.REACT_APP_SHOPIFY_CLIENT_ID}&scope=${process.env.REACT_APP_SHOPIFY_SCOPE}&redirect_uri=${process.env.REACT_APP_SHOPIFY_REDIRECT_URI}`;
+      window.location.href = oauthUrl;
+    } catch (error) {
+      console.error("Error connecting to Shopify:", error);
+      toast({
+        title: "Connection Failed",
+        description: "Unable to connect to your store. Please try again.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom-right"
+      });
+    }
+  }
+
   const syncOrders = async (showAnimation = false) => {
     const token = localStorage.getItem("authToken");
     let shopifyDomain = "";
@@ -194,20 +229,17 @@ function Integrations() {
                 </Box>
                 <Divider />
                 <Button 
-                    colorScheme="blue" 
-                    size="lg" 
-                    onClick={() => {
-                      const shopifyInstallUrl = `https://${process.env.REACT_APP_SHOPIFY_APP_HANDLE}.myshopify.com/admin/oauth/authorize?client_id=${process.env.REACT_APP_SHOPIFY_CLIENT_ID}&scope=${process.env.REACT_APP_SHOPIFY_SCOPE}&redirect_uri=${process.env.REACT_APP_SHOPIFY_REDIRECT_URI}&state=nonce123&grant_options[]=per-user`;
-                      window.location.href = shopifyInstallUrl;
-                    }}
-                    rightIcon={<FaLink />}
-                    px={8}
-                    py={6}
-                    fontWeight="bold"
-                    _hover={{ transform: "translateY(-2px)", boxShadow: "lg" }}
-                    transition="all 0.2s"
-                  >
-                    Connect My Store
+                  colorScheme="blue" 
+                  size="lg" 
+                  onClick={onShopifyModalOpen}
+                  rightIcon={<FaLink />}
+                  px={8}
+                  py={6}
+                  fontWeight="bold"
+                  _hover={{ transform: "translateY(-2px)", boxShadow: "lg" }}
+                  transition="all 0.2s"
+                >
+                  Connect My Store
                 </Button>
               </VStack>
             </Flex>
@@ -224,7 +256,7 @@ function Integrations() {
 
               {orders.length === 0 ? (
                 <VStack py={10} px={4}>
-                  <Text color="gray.500">No orders found. Sync to fetch latest orders!.</Text>
+                  <Text color="gray.500">No orders found. Sync to fetch latest orders.</Text>
                 </VStack>
               ) : (
                 <Box overflowX="auto">
@@ -317,6 +349,71 @@ function Integrations() {
           )}
         </Flex>
       </Box>
+
+      {/* Connect Store Modal */}
+      <Modal 
+        isOpen={isShopifyModalOpen} 
+        onClose={() => {
+          onShopifyModalClose();
+          setShopifyDomain('');
+        }} 
+        size="lg"
+        key={isShopifyModalOpen ? 'open' : 'closed'}
+      >
+        <ModalOverlay backdropFilter="blur(4px)" />
+        <ModalContent borderRadius="xl" shadow="2xl">
+          <ModalHeader borderBottomWidth="1px" borderColor="gray.100" py={4} px={6}>
+            <Flex align="center">
+              <Icon as={FaStore} mr={3} color="blue.500" />
+              <Text>Connect Your Store</Text>
+            </Flex>
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody py={6} px={6}>
+          <VStack spacing={4} align="stretch">
+            <Text>Please enter your store domain:</Text>
+            <Input
+              value={shopifyDomain}
+              onChange={(e) => setShopifyDomain(e.target.value)}
+              placeholder="your-store.myshopify.com"
+              size="lg"
+              borderRadius="md"
+              borderColor="gray.300"
+              _focus={{ borderColor: "blue.500", boxShadow: "0 0 0 1px #3182ce" }}
+            />
+            <Text fontSize="sm" color="gray.500">
+              Your domain should end with .myshopify.com
+            </Text>
+            {/* Add privacy disclosure */}
+            <Box p={3} bg="blue.50" borderRadius="md" fontSize="sm">
+              <Text fontWeight="medium" mb={1}>Data Access Information:</Text>
+              <Text>By connecting, we'll access order information including customer names, addresses, phone numbers, and emails as well as order details solely for order fulfillment purposes. See our 
+                 <Button variant="link" colorScheme="blue" onClick={() => window.open('/privacy-policy', '_blank')}>Privacy Policy</Button> for details on how we handle and protect customer data.</Text>
+            </Box>
+          </VStack>
+        </ModalBody>
+          <ModalFooter bg="gray.50" borderTopWidth="1px" borderColor="gray.100" borderBottomRadius="xl" px={6} py={4}>
+            <HStack spacing={3}>
+              <Button 
+                onClick={onShopifyModalClose}
+                variant="outline"
+              >
+                Cancel
+              </Button>
+              <Button 
+                colorScheme="blue"
+                onClick={() => handleConnectShopify(shopifyDomain)}
+                disabled={!shopifyDomain}
+                leftIcon={<FaLink />}
+                px={6}
+              >
+                Connect Now
+              </Button>
+            </HStack>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
       {/* Ship Order Modal */}
       {selectedOrder && (
         <ShipShopifyOrderModal 
