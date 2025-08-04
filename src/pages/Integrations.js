@@ -3,15 +3,14 @@ import {
   Box, Button, Text, VStack, Icon, Input, Modal, 
   ModalOverlay, ModalContent, ModalBody, ModalHeader, ModalFooter, 
   ModalCloseButton, useDisclosure, Table, Thead, Tbody, Tr, Th, Td, Spinner,
-  Flex, Heading, Badge, useToast, HStack, Divider, Tooltip
+  Flex, Heading, Badge, useToast, HStack, Divider, Tooltip, Link, Code, OrderedList, ListItem
 } from "@chakra-ui/react";
-import { FaStore, FaSync, FaShippingFast, FaLink, FaBoxOpen, FaPlug } from "react-icons/fa";
+import { FaStore, FaSync, FaShippingFast, FaLink, FaBoxOpen, FaPlug, FaExternalLinkAlt } from "react-icons/fa";
 import SideBar from "../components/SideBar.js";
 import axios from 'axios';
 import ShipShopifyOrderModal from "../modals/ShipShopifyOrderModal.js";
 
 function Integrations() {
-  const [shopifyDomain, setShopifyDomain] = useState('');
   const [isShopifyIntegrated, setIsShopifyIntegrated] = useState(false);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,21 +18,36 @@ function Integrations() {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const toast = useToast();
 
-  const { isOpen: isShopifyModalOpen, onOpen: onShopifyModalOpen, onClose: onShopifyModalClose } = useDisclosure();
+  const { isOpen: isInstallModalOpen, onOpen: onInstallModalOpen, onClose: onInstallModalClose } = useDisclosure();
   const { isOpen: isShipOrderModalOpen, onOpen: onShipOrderModalOpen, onClose: onShipOrderModalClose } = useDisclosure();
 
   useEffect(() => {
-    async function getShopifyToken() {
+    async function checkIntegrationStatus() {
       const token = localStorage.getItem("authToken");
+      
+      // Check if we're returning from Shopify installation
+      const params = new URLSearchParams(window.location.search);
+      const shop = params.get('shop');
+      const host = params.get('host');
+      
       try {
         const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/auth/get-shopify-auth-details`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        
         if (response.data.shopify_access_token) {
           setIsShopifyIntegrated(true);
-          syncOrders(true);
+          // Only auto-sync if we're returning from Shopify installation
+          if (shop || host) {
+            syncOrders(true);
+          } else {
+            setLoading(false);
+            setShowLoadingAnimation(false);
+          }
         } else {
           setIsShopifyIntegrated(false);
+          setLoading(false);
+          setShowLoadingAnimation(false);
         }
       } catch (error) {
         console.error("Error fetching Shopify token:", error);
@@ -45,47 +59,12 @@ function Integrations() {
           isClosable: true,
           position: "bottom-right"
         });
-      } finally {
         setLoading(false);
+        setShowLoadingAnimation(false);
       }
     }
-    getShopifyToken();
+    checkIntegrationStatus();
   }, [toast]);
-
-  async function handleConnectShopify(shopifyDomain) {
-    if (!shopifyDomain.includes('.myshopify.com')) {
-      toast({
-        title: "Invalid Domain",
-        description: "Please enter a valid store domain ending with .myshopify.com",
-        status: "warning",
-        duration: 5000,
-        isClosable: true,
-        position: "bottom-right"
-      });
-      return;
-    }
-    
-    const token = localStorage.getItem("authToken");
-    try {
-      await axios.post(
-        `${process.env.REACT_APP_BACKEND_URL}/auth/save-shopify-domain`, 
-        { shopifyDomain }, 
-        { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
-      );
-      const oauthUrl = `https://${shopifyDomain}/admin/oauth/authorize?client_id=${process.env.REACT_APP_SHOPIFY_CLIENT_ID}&scope=${process.env.REACT_APP_SHOPIFY_SCOPE}&redirect_uri=${process.env.REACT_APP_SHOPIFY_REDIRECT_URI}`;
-      window.location.href = oauthUrl;
-    } catch (error) {
-      console.error("Error connecting to Shopify:", error);
-      toast({
-        title: "Connection Failed",
-        description: "Unable to connect to your store. Please try again.",
-        status: "error",
-        duration: 5000,
-        isClosable: true,
-        position: "bottom-right"
-      });
-    }
-  }
 
   const syncOrders = async (showAnimation = false) => {
     const token = localStorage.getItem("authToken");
@@ -93,6 +72,7 @@ function Integrations() {
     let shopifyAccessToken = "";
     setLoading(true);
     setShowLoadingAnimation(showAnimation);
+    
     try {
       const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/auth/get-shopify-auth-details`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -143,6 +123,43 @@ function Integrations() {
   const handleShipOrder = (order) => {
     setSelectedOrder(order);
     onShipOrderModalOpen();
+  };
+
+  // Remove the test install URL function since we're showing the URL template instead
+  const copyInstallUrl = (storeSubdomain) => {
+    if (!storeSubdomain) {
+      toast({
+        title: "Store subdomain required",
+        description: "Please enter your store subdomain to generate the install URL",
+        status: "warning",
+        duration: 3000,
+        isClosable: true,
+        position: "bottom-right"
+      });
+      return;
+    }
+    
+    const installUrl = `https://${storeSubdomain}.myshopify.com/admin/oauth/authorize?client_id=${process.env.REACT_APP_SHOPIFY_CLIENT_ID}&scope=${process.env.REACT_APP_SHOPIFY_SCOPE}&redirect_uri=${process.env.REACT_APP_SHOPIFY_REDIRECT_URI}`;
+    
+    navigator.clipboard.writeText(installUrl).then(() => {
+      toast({
+        title: "URL Copied!",
+        description: "Installation URL copied to clipboard",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+        position: "bottom-right"
+      });
+    }).catch(() => {
+      toast({
+        title: "Copy failed",
+        description: "Please copy the URL manually",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+        position: "bottom-right"
+      });
+    });
   };
 
   return (
@@ -220,26 +237,26 @@ function Integrations() {
                 </Flex>
                 <Box>
                   <Heading size="md" fontWeight="bold" color="gray.800">
-                    Connect Your Store
+                    Connect Your Shopify Store
                   </Heading>
                   <Text fontSize="md" color="gray.600" mt={2} lineHeight="tall">
-                    Import your store orders seamlessly and automate your shipping process.
-                    Manage all your orders in one place.
+                    Install our app directly from your Shopify admin to import orders 
+                    and automate your shipping process.
                   </Text>
                 </Box>
                 <Divider />
                 <Button 
                   colorScheme="blue" 
                   size="lg" 
-                  onClick={onShopifyModalOpen}
-                  rightIcon={<FaLink />}
+                  onClick={onInstallModalOpen}
+                  rightIcon={<FaExternalLinkAlt />}
                   px={8}
                   py={6}
                   fontWeight="bold"
                   _hover={{ transform: "translateY(-2px)", boxShadow: "lg" }}
                   transition="all 0.2s"
                 >
-                  Connect My Store
+                  View Installation Instructions
                 </Button>
               </VStack>
             </Flex>
@@ -315,12 +332,10 @@ function Integrations() {
                           <Td fontSize="sm" py={4}>
                             {order.customer.phone && (
                               <Text color="gray.700">
-                                {/* Mask phone number, showing only last 4 digits */}
                                 {order.customer.phone.replace(/^(.*)(\d{4})$/, '••••••$2')}
                               </Text>
                             )}
                             <Text color="blue.600">
-                              {/* Mask email, showing only first part and domain */}
                               {order.customer.email ? 
                                 `${order.customer.email.split('@')[0].substring(0, 3)}•••@${order.customer.email.split('@')[1]}` : 
                                 "N/A"}
@@ -350,66 +365,108 @@ function Integrations() {
         </Flex>
       </Box>
 
-      {/* Connect Store Modal */}
+      {/* Installation Instructions Modal */}
       <Modal 
-        isOpen={isShopifyModalOpen} 
-        onClose={() => {
-          onShopifyModalClose();
-          setShopifyDomain('');
-        }} 
+        isOpen={isInstallModalOpen} 
+        onClose={onInstallModalClose}
         size="lg"
-        key={isShopifyModalOpen ? 'open' : 'closed'}
       >
         <ModalOverlay backdropFilter="blur(4px)" />
         <ModalContent borderRadius="xl" shadow="2xl">
           <ModalHeader borderBottomWidth="1px" borderColor="gray.100" py={4} px={6}>
             <Flex align="center">
               <Icon as={FaStore} mr={3} color="blue.500" />
-              <Text>Connect Your Store</Text>
+              <Text>Install from Shopify</Text>
             </Flex>
           </ModalHeader>
           <ModalCloseButton />
           <ModalBody py={6} px={6}>
-          <VStack spacing={4} align="stretch">
-            <Text>Please enter your store domain:</Text>
-            <Input
-              value={shopifyDomain}
-              onChange={(e) => setShopifyDomain(e.target.value)}
-              placeholder="your-store.myshopify.com"
-              size="lg"
-              borderRadius="md"
-              borderColor="gray.300"
-              _focus={{ borderColor: "blue.500", boxShadow: "0 0 0 1px #3182ce" }}
-            />
-            <Text fontSize="sm" color="gray.500">
-              Your domain should end with .myshopify.com
-            </Text>
-            {/* Add privacy disclosure */}
-            <Box p={3} bg="blue.50" borderRadius="md" fontSize="sm">
-              <Text fontWeight="medium" mb={1}>Data Access Information:</Text>
-              <Text>By connecting, we'll access order information including customer names, addresses, phone numbers, and emails as well as order details solely for order fulfillment purposes. See our 
-                 <Button variant="link" colorScheme="blue" onClick={() => window.open('/privacy-policy', '_blank')}>Privacy Policy</Button> for details on how we handle and protect customer data.</Text>
-            </Box>
-          </VStack>
-        </ModalBody>
+            <VStack spacing={4} align="stretch">
+              <Text fontWeight="semibold" fontSize="lg">How to Install Parcel Pilot</Text>
+              
+              {/* For apps pending review */}
+              <Box p={4} bg="blue.50" borderRadius="md" borderWidth="1px" borderColor="blue.200">
+                <Text fontWeight="semibold" color="blue.800" mb={3}>
+                  App Pending Shopify Review
+                </Text>
+                <Text fontSize="sm" color="gray.700">
+                  Parcel Pilot is currently under review by Shopify. During this period, 
+                  installation must be initiated from within your Shopify admin panel.
+                </Text>
+              </Box>
+
+              <Text fontWeight="semibold" fontSize="md" mb={2}>Installation Instructions:</Text>
+              
+              <OrderedList spacing={3} pl={4}>
+                <ListItem>
+                  <Text>Contact our support team to request installation access for your store</Text>
+                </ListItem>
+                <ListItem>
+                  <Text>We'll provide you with a direct installation link specific to your store</Text>
+                </ListItem>
+                <ListItem>
+                  <Text>Click the link from within your Shopify admin to start the installation</Text>
+                </ListItem>
+                <ListItem>
+                  <Text>Review the permissions and click <Code>Install app</Code></Text>
+                </ListItem>
+                <ListItem>
+                  <Text>You'll be redirected back here automatically once installation is complete</Text>
+                </ListItem>
+              </OrderedList>
+
+              {/* Contact Support */}
+              <Box p={4} bg="white" borderRadius="md" borderWidth="1px" borderColor="gray.200" mt={4}>
+                <Text fontWeight="semibold" mb={2}>Request Installation Access</Text>
+                <Text fontSize="sm" color="gray.600" mb={3}>
+                  Email us at support@parcelpilot.com with your Shopify store URL and we'll 
+                  send you the installation link within 24 hours.
+                </Text>
+                <Button
+                  colorScheme="blue"
+                  size="md"
+                  onClick={() => window.location.href = 'mailto:support@parcelpilot.com?subject=Parcel Pilot Installation Request'}
+                  leftIcon={<Icon as={FaExternalLinkAlt} />}
+                >
+                  Email Support
+                </Button>
+              </Box>
+
+              {/* Note about future App Store listing */}
+              <Box p={3} bg="gray.50" borderRadius="md" fontSize="sm" mt={4}>
+                <Flex align="start">
+                  <Icon as={FaStore} color="gray.500" mt={0.5} mr={2} />
+                  <Text color="gray.600">
+                    Once our app is approved and published in the Shopify App Store, you'll be able to 
+                    search for "Parcel Pilot" and install it directly without contacting support.
+                  </Text>
+                </Flex>
+              </Box>
+
+              {/* Privacy disclosure */}
+              <Box p={3} bg="blue.50" borderRadius="md" fontSize="sm" mt={4}>
+                <Text fontWeight="medium" mb={1}>Data Access Information:</Text>
+                <Text>
+                  By installing, we'll access order information including customer names, 
+                  addresses, phone numbers, and emails solely for order fulfillment purposes. 
+                  See our{' '}
+                  <Button 
+                    variant="link" 
+                    colorScheme="blue" 
+                    size="sm"
+                    onClick={() => window.open('/privacy-policy', '_blank')}
+                  >
+                    Privacy Policy
+                  </Button>{' '}
+                  for details on how we handle and protect customer data.
+                </Text>
+              </Box>
+            </VStack>
+          </ModalBody>
           <ModalFooter bg="gray.50" borderTopWidth="1px" borderColor="gray.100" borderBottomRadius="xl" px={6} py={4}>
-            <HStack spacing={3}>
-              <Button 
-                onClick={onShopifyModalClose}
-                variant="outline"
-              >
-                Cancel
-              </Button>
-              <Button 
-                colorScheme="blue"
-                onClick={() => handleConnectShopify(shopifyDomain)}
-                disabled={!shopifyDomain}
-                leftIcon={<FaLink />}
-                px={6}
-              >
-                Connect Now
-              </Button>
-            </HStack>
+            <Button onClick={onInstallModalClose}>
+              Close
+            </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -428,4 +485,5 @@ function Integrations() {
     </Box>
   );
 }
+
 export default Integrations;
