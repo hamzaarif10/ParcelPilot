@@ -13,8 +13,20 @@ import ShipShopifyOrderModal from "../modals/ShipShopifyOrderModal.js";
 function Integrations() {
   const [isShopifyIntegrated, setIsShopifyIntegrated] = useState(false);
   const [orders, setOrders] = useState(() => {
-    const stored = localStorage.getItem('shopifyOrders');
-    return stored ? JSON.parse(stored) : [];
+    try {
+      const stored = localStorage.getItem('shopifyOrders');
+      if (stored) {
+        const parsedOrders = JSON.parse(stored);
+        // Validate that it's an array and has valid structure
+        if (Array.isArray(parsedOrders)) {
+          return parsedOrders;
+        }
+      }
+    } catch (error) {
+      console.warn('Error loading orders from localStorage:', error);
+      localStorage.removeItem('shopifyOrders'); // Clear corrupted data
+    }
+    return [];
   });
   const [loading, setLoading] = useState(true);
   const [showLoadingAnimation, setShowLoadingAnimation] = useState(true);
@@ -461,34 +473,45 @@ function Integrations() {
                         >
                           <Td py={4}>
                             <Text fontWeight="medium" color="gray.800">
-                              {`${order.customer.firstName} ${order.customer.lastName}`}
+                              {order.customer ? 
+                                `${order.customer.firstName || 'Unknown'} ${order.customer.lastName || ''}` : 
+                                'Unknown Customer'
+                              }
                             </Text>
                             <Text fontSize="sm" color="gray.500" mt={1}>
-                              Order #{order.id.split('/').pop()}
+                              Order #{order.id ? order.id.split('/').pop() : 'Unknown'}
                             </Text>
                           </Td>
                           <Td fontSize="sm" py={4}>
-                            <Text color="gray.700">
-                              {order.shippingAddress.address1}
-                              {order.shippingAddress.address2 && `, ${order.shippingAddress.address2}`}
-                            </Text>
-                            <Text color="gray.700">
-                              {order.shippingAddress.city}, {order.shippingAddress.province} {order.shippingAddress.zip}
-                            </Text>
-                            <Text color="gray.600" fontSize="sm">
-                              {order.shippingAddress.country}
-                            </Text>
+                            {order.shippingAddress ? (
+                              <>
+                                <Text color="gray.700">
+                                  {order.shippingAddress.address1 || 'No address'}
+                                  {order.shippingAddress.address2 && `, ${order.shippingAddress.address2}`}
+                                </Text>
+                                <Text color="gray.700">
+                                  {order.shippingAddress.city || 'Unknown'}, {order.shippingAddress.province || 'Unknown'} {order.shippingAddress.zip || ''}
+                                </Text>
+                                <Text color="gray.600" fontSize="sm">
+                                  {order.shippingAddress.country || 'Unknown'}
+                                </Text>
+                              </>
+                            ) : (
+                              <Text color="gray.500" fontSize="sm">
+                                No shipping address
+                              </Text>
+                            )}
                           </Td>
                           <Td fontSize="sm" py={4}>
-                            {order.customer.phone && (
+                            {order.customer?.phone && (
                               <Text color="gray.700">
                                 {order.customer.phone.replace(/^(.*)(\d{4})$/, '••••••$2')}
                               </Text>
                             )}
                             <Text color="blue.600">
-                              {order.customer.email ? 
+                              {order.customer?.email ? 
                                 `${order.customer.email.split('@')[0].substring(0, 3)}•••@${order.customer.email.split('@')[1]}` : 
-                                "N/A"}
+                                "No email"}
                             </Text>
                           </Td>
                           <Td textAlign="center" py={4}>
@@ -540,9 +563,46 @@ function Integrations() {
                   App Pending Shopify Review
                 </Text>
                 <Text fontSize="sm" color="gray.700">
-                  Parcel Pilot is currently under review by Shopify. 
+                  Parcel Pilot is currently under review by Shopify. During this period, 
                   installation must be initiated from within your Shopify admin panel.
                 </Text>
+              </Box>
+
+              <Text fontWeight="semibold" fontSize="md" mb={2}>Installation Instructions:</Text>
+              
+              <OrderedList spacing={3} pl={4}>
+                <ListItem>
+                  <Text>Contact our support team to request installation access for your store</Text>
+                </ListItem>
+                <ListItem>
+                  <Text>We'll provide you with a direct installation link specific to your store</Text>
+                </ListItem>
+                <ListItem>
+                  <Text>Click the link from within your Shopify admin to start the installation</Text>
+                </ListItem>
+                <ListItem>
+                  <Text>Review the permissions and click <Code>Install app</Code></Text>
+                </ListItem>
+                <ListItem>
+                  <Text>You'll be redirected back here automatically once installation is complete</Text>
+                </ListItem>
+              </OrderedList>
+
+              {/* Contact Support */}
+              <Box p={4} bg="white" borderRadius="md" borderWidth="1px" borderColor="gray.200" mt={4}>
+                <Text fontWeight="semibold" mb={2}>Request Installation Access</Text>
+                <Text fontSize="sm" color="gray.600" mb={3}>
+                  Email us at support@parcelpilot.com with your Shopify store URL and we'll 
+                  send you the installation link within 24 hours.
+                </Text>
+                <Button
+                  colorScheme="blue"
+                  size="md"
+                  onClick={() => window.location.href = 'mailto:support@parcelpilot.com?subject=Parcel Pilot Installation Request'}
+                  leftIcon={<Icon as={FaExternalLinkAlt} />}
+                >
+                  Email Support
+                </Button>
               </Box>
 
               {/* Note about future App Store listing */}
@@ -551,7 +611,7 @@ function Integrations() {
                   <Icon as={FaStore} color="gray.500" mt={0.5} mr={2} />
                   <Text color="gray.600">
                     Once our app is approved and published in the Shopify App Store, you'll be able to 
-                    search for "Parcel Pilot" and install it directly.
+                    search for "Parcel Pilot" and install it directly without contacting support.
                   </Text>
                 </Flex>
               </Box>
