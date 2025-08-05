@@ -248,4 +248,42 @@ router.post('/associate-shop', authenticateToken, async (req, res) => {
   }
 });
 
+// Disconnect store route
+router.patch('/delete-shop', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id; 
+    const pool = await getPool();
+    
+    // Update the user's record to set shopify fields to null
+    const request = pool.request();
+    request.input('id', sql.Int, userId);
+    
+    const query = `
+      UPDATE Users 
+      SET shopify_domain = NULL, shopify_access_token = NULL 
+      WHERE id = @id
+    `;
+    
+    const result = await request.query(query);
+    
+    if (result.rowsAffected[0] === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+    
+    res.json({ 
+      success: true, 
+      message: 'Store disconnected successfully' 
+    });
+    
+  } catch (error) {
+    console.error('Error disconnecting store:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Internal server error' 
+    });
+  }
+});
 module.exports = router;

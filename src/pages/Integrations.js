@@ -5,21 +5,83 @@ import {
   ModalCloseButton, useDisclosure, Table, Thead, Tbody, Tr, Th, Td, Spinner,
   Flex, Heading, Badge, useToast, HStack, Divider, Tooltip, Link, Code, OrderedList, ListItem
 } from "@chakra-ui/react";
-import { FaStore, FaSync, FaShippingFast, FaLink, FaBoxOpen, FaPlug, FaExternalLinkAlt } from "react-icons/fa";
+import { FaStore, FaSync, FaShippingFast, FaTrash, FaLink, FaBoxOpen, FaPlug, FaExternalLinkAlt } from "react-icons/fa";
 import SideBar from "../components/SideBar.js";
 import axios from 'axios';
 import ShipShopifyOrderModal from "../modals/ShipShopifyOrderModal.js";
 
 function Integrations() {
   const [isShopifyIntegrated, setIsShopifyIntegrated] = useState(false);
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders] = useState(() => {
+    const stored = localStorage.getItem('shopifyOrders');
+    return stored ? JSON.parse(stored) : [];
+  });
   const [loading, setLoading] = useState(true);
   const [showLoadingAnimation, setShowLoadingAnimation] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  
+  // Rate limiting state
+  const [lastSyncTime, setLastSyncTime] = useState(() => {
+    const stored = localStorage.getItem('lastSyncTime');
+    return stored ? parseInt(stored) : null;
+  });
+  const [timeRemaining, setTimeRemaining] = useState(0);
+  const [isRateLimited, setIsRateLimited] = useState(false);
+  
   const toast = useToast();
+  const RATE_LIMIT_MINUTES = 3;
+  const RATE_LIMIT_MS = RATE_LIMIT_MINUTES * 60 * 1000; // 3 minutes in milliseconds
 
   const { isOpen: isInstallModalOpen, onOpen: onInstallModalOpen, onClose: onInstallModalClose } = useDisclosure();
   const { isOpen: isShipOrderModalOpen, onOpen: onShipOrderModalOpen, onClose: onShipOrderModalClose } = useDisclosure();
+
+  // Rate limiting effect
+  useEffect(() => {
+    let interval;
+    
+    if (lastSyncTime) {
+      const checkRateLimit = () => {
+        const now = Date.now();
+        const timeDiff = now - lastSyncTime;
+        const remaining = RATE_LIMIT_MS - timeDiff;
+        
+        if (remaining > 0) {
+          setIsRateLimited(true);
+          setTimeRemaining(Math.ceil(remaining / 1000)); // Convert to seconds
+        } else {
+          setIsRateLimited(false);
+          setTimeRemaining(0);
+          // Clear from localStorage when rate limit expires
+          localStorage.removeItem('lastSyncTime');
+          setLastSyncTime(null);
+          if (interval) {
+            clearInterval(interval);
+          }
+        }
+      };
+      
+      // Check immediately
+      checkRateLimit();
+      
+      // Then check every second if rate limited
+      if (isRateLimited) {
+        interval = setInterval(checkRateLimit, 1000);
+      }
+    }
+    
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [lastSyncTime, isRateLimited, RATE_LIMIT_MS]);
+
+  // Format time remaining for display
+  const formatTimeRemaining = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   useEffect(() => {
     async function checkIntegrationStatus() {
@@ -67,11 +129,29 @@ function Integrations() {
   }, [toast]);
 
   const syncOrders = async (showAnimation = false) => {
+    // Check rate limit
+    if (isRateLimited) {
+      toast({
+        title: "Rate Limited",
+        description: `Please wait ${formatTimeRemaining(timeRemaining)} before syncing again.`,
+        status: "warning",
+        duration: 3000,
+        isClosable: true,
+        position: "bottom-right"
+      });
+      return;
+    }
+
     const token = localStorage.getItem("authToken");
     let shopifyDomain = "";
     let shopifyAccessToken = "";
     setLoading(true);
     setShowLoadingAnimation(showAnimation);
+    
+    // Set the sync time at the start of the request
+    const syncTime = Date.now();
+    setLastSyncTime(syncTime);
+    localStorage.setItem('lastSyncTime', syncTime.toString());
     
     try {
       const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/auth/get-shopify-auth-details`, {
@@ -89,6 +169,10 @@ function Integrations() {
         isClosable: true,
         position: "bottom-right"
       });
+      // Reset rate limit if sync failed
+      localStorage.removeItem('lastSyncTime');
+      setLastSyncTime(null);
+      setIsRateLimited(false);
     }
 
     try {
@@ -96,6 +180,8 @@ function Integrations() {
         params: { shopifyDomain, shopifyAccessToken },
       });
       setOrders(response.data.orders);
+      // Persist orders to localStorage
+      localStorage.setItem('shopifyOrders', JSON.stringify(response.data.orders));
       toast({
         title: "Orders Synced",
         description: `Successfully synced ${response.data.orders.length} orders from your store.`,
@@ -114,6 +200,10 @@ function Integrations() {
         isClosable: true,
         position: "bottom-right"
       });
+      // Reset rate limit if sync failed
+      localStorage.removeItem('lastSyncTime');
+      setLastSyncTime(null);
+      setIsRateLimited(false);
     } finally {
       setLoading(false);
       setShowLoadingAnimation(false);
@@ -162,6 +252,48 @@ function Integrations() {
     });
   };
 
+  const handleDeleteStore = async() => {
+    if (window.confirm('Are you sure you want to delete this store connection?')) {
+      // Perform deletion logic here
+      try {
+        const token = localStorage.getItem("authToken");
+        const response = await axios.patch(
+          `${process.env.REACT_APP_BACKEND_URL}/auth/delete-shop`,
+          {}, // empty data object for PATCH
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        );
+        
+        // Clear stored orders when disconnecting store
+        localStorage.removeItem('shopifyOrders');
+        localStorage.removeItem('lastSyncTime');
+        
+        toast({
+          title: "Store Disconnected.",
+          description: "Your Shopify store connection has been removed.",
+          status: "success",
+          duration: 4000,
+          isClosable: true,
+          position: "bottom-right"
+        });
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } catch (error) {
+        console.error("Error disconnecting shopify store:", error);
+        toast({
+          title: "Error",
+          description: "Unable to disconnect store.",
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+          position: "bottom-right"
+        });
+      }
+    };
+  }
+
   return (
     <Box display="flex" minHeight="100vh" bg="gray.50">
       <Box w={{ base: "80px", md: "250px" }} bg="blue.900" color="white" shadow="lg">
@@ -182,25 +314,43 @@ function Integrations() {
             </Box>
             {isShopifyIntegrated && (
               <HStack spacing={4}>
-                <Badge colorScheme="green" px={3} py={2} borderRadius="md" fontSize="sm">
-                  <Flex align="center">
-                    <Icon as={FaStore} mr={2} />
-                    Store Connected
-                  </Flex>
-                </Badge>
-                <Tooltip label="Sync latest orders">
-                  <Button 
-                    colorScheme="blue" 
-                    size="md" 
-                    onClick={() => syncOrders(true)} 
-                    isLoading={loading}
-                    leftIcon={<FaSync />}
-                    variant="outline"
+                  <Badge colorScheme="green" px={3} py={2} borderRadius="md" fontSize="sm">
+                    <Flex align="center">
+                      <Icon as={FaStore} mr={2} />
+                      Store Connected
+                    </Flex>
+                  </Badge>
+                  <Tooltip 
+                    label={
+                      isRateLimited 
+                        ? `Rate limited. Wait ${formatTimeRemaining(timeRemaining)} before syncing again.`
+                        : "Sync latest orders"
+                    }
                   >
-                    Sync Orders
-                  </Button>
-                </Tooltip>
-              </HStack>
+                    <Button 
+                      colorScheme="blue" 
+                      size="md" 
+                      onClick={() => syncOrders(true)} 
+                      isLoading={loading}
+                      isDisabled={isRateLimited}
+                      leftIcon={<FaSync />}
+                      variant="outline"
+                    >
+                      {isRateLimited ? `Sync (${formatTimeRemaining(timeRemaining)})` : "Sync Orders"}
+                    </Button>
+                  </Tooltip>
+                  <Tooltip label="Delete store connection">
+                    <Button 
+                      colorScheme="red" 
+                      size="md" 
+                      onClick={() => handleDeleteStore()} 
+                      leftIcon={<FaTrash />}
+                      variant="outline"
+                    >
+                      Delete Store
+                    </Button>
+                  </Tooltip>
+                </HStack>
             )}
           </Flex>
 
@@ -390,46 +540,9 @@ function Integrations() {
                   App Pending Shopify Review
                 </Text>
                 <Text fontSize="sm" color="gray.700">
-                  Parcel Pilot is currently under review by Shopify. During this period, 
+                  Parcel Pilot is currently under review by Shopify. 
                   installation must be initiated from within your Shopify admin panel.
                 </Text>
-              </Box>
-
-              <Text fontWeight="semibold" fontSize="md" mb={2}>Installation Instructions:</Text>
-              
-              <OrderedList spacing={3} pl={4}>
-                <ListItem>
-                  <Text>Contact our support team to request installation access for your store</Text>
-                </ListItem>
-                <ListItem>
-                  <Text>We'll provide you with a direct installation link specific to your store</Text>
-                </ListItem>
-                <ListItem>
-                  <Text>Click the link from within your Shopify admin to start the installation</Text>
-                </ListItem>
-                <ListItem>
-                  <Text>Review the permissions and click <Code>Install app</Code></Text>
-                </ListItem>
-                <ListItem>
-                  <Text>You'll be redirected back here automatically once installation is complete</Text>
-                </ListItem>
-              </OrderedList>
-
-              {/* Contact Support */}
-              <Box p={4} bg="white" borderRadius="md" borderWidth="1px" borderColor="gray.200" mt={4}>
-                <Text fontWeight="semibold" mb={2}>Request Installation Access</Text>
-                <Text fontSize="sm" color="gray.600" mb={3}>
-                  Email us at support@parcelpilot.com with your Shopify store URL and we'll 
-                  send you the installation link within 24 hours.
-                </Text>
-                <Button
-                  colorScheme="blue"
-                  size="md"
-                  onClick={() => window.location.href = 'mailto:support@parcelpilot.com?subject=Parcel Pilot Installation Request'}
-                  leftIcon={<Icon as={FaExternalLinkAlt} />}
-                >
-                  Email Support
-                </Button>
               </Box>
 
               {/* Note about future App Store listing */}
@@ -438,7 +551,7 @@ function Integrations() {
                   <Icon as={FaStore} color="gray.500" mt={0.5} mr={2} />
                   <Text color="gray.600">
                     Once our app is approved and published in the Shopify App Store, you'll be able to 
-                    search for "Parcel Pilot" and install it directly without contacting support.
+                    search for "Parcel Pilot" and install it directly.
                   </Text>
                 </Flex>
               </Box>
