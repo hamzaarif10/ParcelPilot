@@ -16,18 +16,38 @@ const Login = () => {
 
   axios.defaults.withCredentials = true;
 
-  // On mount: save Shopify params if present
-  useEffect(() => {
+  // Get the returnUrl from query parameters
+  const getReturnUrl = () => {
     const params = new URLSearchParams(location.search);
-    const shop = params.get('shop');
-    const host = params.get('host');
+    return params.get('returnUrl') || null;
+  };
 
-    if (shop && host) {
-      sessionStorage.setItem('pendingShopifyShop', shop);
-      sessionStorage.setItem('pendingShopifyHost', host);
-    } else {
-      sessionStorage.removeItem('pendingShopifyShop');
-      sessionStorage.removeItem('pendingShopifyHost');
+  // On mount: check for pending Shopify installation
+  useEffect(() => {
+    // First check if we already have pending Shopify data in session
+    const existingShop = sessionStorage.getItem('pendingShopifyShop');
+    const existingHost = sessionStorage.getItem('pendingShopifyHost');
+    
+    if (existingShop) {
+      console.log('[LOGIN] Found existing pending Shopify installation:', existingShop);
+      return; // Don't override existing pending data
+    }
+
+    // If not, check the returnUrl for Shopify parameters
+    const returnUrl = getReturnUrl();
+    if (returnUrl && returnUrl.includes('shopify-verify')) {
+      // Parse the shop and host from the returnUrl
+      const returnUrlParams = new URLSearchParams(returnUrl.split('?')[1]);
+      const shop = returnUrlParams.get('shop');
+      const host = returnUrlParams.get('host');
+      
+      if (shop) {
+        console.log('[LOGIN] Found Shopify params in returnUrl:', { shop, host });
+        sessionStorage.setItem('pendingShopifyShop', shop);
+        if (host) {
+          sessionStorage.setItem('pendingShopifyHost', host);
+        }
+      }
     }
   }, [location.search]);
 
@@ -38,27 +58,37 @@ const Login = () => {
       if (response.data.token) {
         localStorage.setItem('authToken', response.data.token);
 
+        // Check for pending Shopify installation
         const pendingShop = sessionStorage.getItem('pendingShopifyShop');
         const pendingHost = sessionStorage.getItem('pendingShopifyHost');
-
-        if (pendingShop && pendingHost) {
-          // Clear stored Shopify params so they don't persist after redirect
-          sessionStorage.removeItem('pendingShopifyShop');
-          sessionStorage.removeItem('pendingShopifyHost');
-
-          // Redirect to shopify-verify which handles redirect to /integration
-          navigate(`/shopify-verify?shop=${pendingShop}&host=${pendingHost}`);
+        
+        if (pendingShop) {
+          console.log('[LOGIN] Redirecting to complete Shopify installation for shop:', pendingShop);
+          
+          // Don't clear the session storage yet - let the verification page do it
+          // This ensures the data is available if something goes wrong
+          
+          // Redirect to shopify-verify with the shop parameters
+          const verifyUrl = `/shopify-verify?shop=${pendingShop}${pendingHost ? `&host=${pendingHost}` : ''}`;
+          navigate(verifyUrl);
         } else {
-          toast({
-            title: "Login successful",
-            description: "Redirecting to create shipment page...",
-            status: "success",
-            duration: 3000,
-            isClosable: true,
-            position: "top"
-          });
+          // Check if we have a returnUrl that's not Shopify-related
+          const returnUrl = getReturnUrl();
+          if (returnUrl && !returnUrl.includes('shopify-verify')) {
+            navigate(returnUrl);
+          } else {
+            // Default redirect
+            toast({
+              title: "Login successful",
+              description: "Redirecting to create shipment page...",
+              status: "success",
+              duration: 3000,
+              isClosable: true,
+              position: "top"
+            });
 
-          window.location.href = "/create-shipment";
+            window.location.href = "/create-shipment";
+          }
         }
       }
     } catch (error) {
@@ -108,6 +138,9 @@ const Login = () => {
     await login(email, password);
   };
 
+  // Show a message if coming from Shopify
+  const showShopifyMessage = sessionStorage.getItem('pendingShopifyShop') !== null;
+
   return (
     <section className="h-100 gradient-form" style={{ backgroundColor: '#eee' }}>
       <div className="container py-5 h-100">
@@ -123,6 +156,12 @@ const Login = () => {
 
                     <form onSubmit={handleSubmit}>
                       <p>Please login to your account</p>
+                      
+                      {showShopifyMessage && (
+                        <div className="alert alert-info mb-3">
+                          Please log in to complete your Shopify store installation.
+                        </div>
+                      )}
 
                       <div className="form-outline mb-4">
                         <input
@@ -192,5 +231,3 @@ const Login = () => {
 };
 
 export default Login;
-
-
