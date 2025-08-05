@@ -74,6 +74,7 @@ function Navbar() {
         <ul className="navbar-links">
           <li onClick={() => handleNavigation('/how-it-works')}>How It Works</li>
           <li onClick={() => handleNavigation('/about-us')}>About Us</li>
+          <li onClick={() => handleNavigation('/billing-info')}>See Pricing</li>
         </ul>
         <div className="navbar-buttons">
           <button onClick={handleSignUpClick} className="sign-up">Sign Up</button>
