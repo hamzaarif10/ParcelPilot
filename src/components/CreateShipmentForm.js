@@ -350,7 +350,7 @@ const handleSubmit = async (e) => {
   } 
 }finally {
   //Mark the order as fulfilled in shopify if this is a shopify store order, only do so here for gls shipments, rest will be marked when label is generated in the backend
-    if(newShipmentId && orderId)
+    if(newShipmentId && orderId && courierId === 'GlsDicomExpressGround')
     {
       fulfillShopifyOrder(orderId, lineItemId, newTrackingNumber, newCourierName);
     }
