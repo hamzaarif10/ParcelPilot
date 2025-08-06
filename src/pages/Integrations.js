@@ -556,66 +556,23 @@ function Integrations() {
           <ModalBody py={6} px={6}>
             <VStack spacing={4} align="stretch">
               <Text fontWeight="semibold" fontSize="lg">How to Install Parcel Pilot</Text>
-              
-              {/* For apps pending review */}
-              <Box p={4} bg="blue.50" borderRadius="md" borderWidth="1px" borderColor="blue.200">
-                <Text fontWeight="semibold" color="blue.800" mb={3}>
-                  App Pending Shopify Review
-                </Text>
-                <Text fontSize="sm" color="gray.700">
-                  Parcel Pilot is currently under review by Shopify. During this period, 
-                  installation must be initiated from within your Shopify admin panel.
-                </Text>
-              </Box>
 
               <Text fontWeight="semibold" fontSize="md" mb={2}>Installation Instructions:</Text>
               
               <OrderedList spacing={3} pl={4}>
                 <ListItem>
-                  <Text>Contact our support team to request installation access for your store</Text>
-                </ListItem>
-                <ListItem>
-                  <Text>We'll provide you with a direct installation link specific to your store</Text>
-                </ListItem>
-                <ListItem>
-                  <Text>Click the link from within your Shopify admin to start the installation</Text>
+                  <Text>Click this link to install the app: <a href="https://apps.shopify.com/ship-master">apps.shopify.com/ship-master</a></Text>
                 </ListItem>
                 <ListItem>
                   <Text>Review the permissions and click <Code>Install app</Code></Text>
                 </ListItem>
                 <ListItem>
+                  <Text>After installing you will be redirected here and all of your orders will be pulled up.</Text>
+                </ListItem>
+                <ListItem>
                   <Text>You'll be redirected back here automatically once installation is complete</Text>
                 </ListItem>
               </OrderedList>
-
-              {/* Contact Support */}
-              <Box p={4} bg="white" borderRadius="md" borderWidth="1px" borderColor="gray.200" mt={4}>
-                <Text fontWeight="semibold" mb={2}>Request Installation Access</Text>
-                <Text fontSize="sm" color="gray.600" mb={3}>
-                  Email us at support@parcelpilot.com with your Shopify store URL and we'll 
-                  send you the installation link within 24 hours.
-                </Text>
-                <Button
-                  colorScheme="blue"
-                  size="md"
-                  onClick={() => window.location.href = 'mailto:support@parcelpilot.com?subject=Parcel Pilot Installation Request'}
-                  leftIcon={<Icon as={FaExternalLinkAlt} />}
-                >
-                  Email Support
-                </Button>
-              </Box>
-
-              {/* Note about future App Store listing */}
-              <Box p={3} bg="gray.50" borderRadius="md" fontSize="sm" mt={4}>
-                <Flex align="start">
-                  <Icon as={FaStore} color="gray.500" mt={0.5} mr={2} />
-                  <Text color="gray.600">
-                    Once our app is approved and published in the Shopify App Store, you'll be able to 
-                    search for "Parcel Pilot" and install it directly without contacting support.
-                  </Text>
-                </Flex>
-              </Box>
-
               {/* Privacy disclosure */}
               <Box p={3} bg="blue.50" borderRadius="md" fontSize="sm" mt={4}>
                 <Text fontWeight="medium" mb={1}>Data Access Information:</Text>
