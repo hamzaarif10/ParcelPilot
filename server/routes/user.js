@@ -8,7 +8,7 @@ const { PDFDocument } = require('pdf-lib');
 
 //Submit label to database route
 router.post('/submitLabel', authenticateToken, async (req, res) => {
-  const { shipment_id, recipientName, recipientAddress, courierName, courierServiceId, trackingNumber, pdf_url, status } = req.body;
+  const { shipment_id, recipientName, recipientAddress, courierName, courierServiceId, trackingNumber, pdf_url, status} = req.body;
   const userId = req.user.id;
 
   try {

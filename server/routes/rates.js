@@ -5,6 +5,7 @@ const { Redis } = require('@upstash/redis');
 const {generatePdfLink} = require("../functions/generateLabel.js");
 const { getPool } = require('../db');
 const sql = require('mssql');
+const { fulfillShopifyOrder } = require('../../src/functions/fulfillShopifyOrder.js');
 
 const router = express.Router();
 
@@ -152,7 +153,7 @@ router.get('/download-label', async (req, res) => {
   console.log("Query Params:", req.query);
  
   try {
-    const { shipment_id, format, label, commercial_invoice, packing_slip } = req.query;
+    const { shipment_id, format, label, commercial_invoice, packing_slip, shopify_order_id, shopify_line_item_id, courier_name } = req.query;
     const url = `https://public-api.easyship.com/2024-09/shipments/${shipment_id}`;
    
     // Maximum number of polling attempts (10 attempts * 3 seconds = 30 seconds max wait time)
@@ -207,9 +208,14 @@ router.get('/download-label', async (req, res) => {
     }
    
     // Process the successful response
+    
+
     const trackingNumber = response.data.shipment.trackings[0].tracking_number;
     const labelBase64 = response.data.shipment.shipping_documents[0].base64_encoded_strings[0];
     const labelUrl = await generatePdfLink(labelBase64, trackingNumber);
+
+    //Mark shopify order as fulfilled
+    fulfillShopifyOrder(shopify_order_id, shopify_line_item_id, trackingNumber, courier_name);
    
     // Update DB label with the tracking number and amazon aws pdf link url
     try {

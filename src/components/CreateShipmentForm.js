@@ -320,7 +320,10 @@ const handleSubmit = async (e) => {
                 format: 'PDF',
                 label: 'A4',
                 commercial_invoice: 'A4',
-                packing_slip: 'none'
+                packing_slip: 'none',
+                shopify_order_id: orderId,
+                shopify_line_item_id: lineItemId,
+                courier_name: newCourierName
               }
             });
             // You can handle the response here if needed
@@ -346,7 +349,7 @@ const handleSubmit = async (e) => {
     showToast('Shipment Error', 'Failed to create shipment. Please try again or reach out to support.', 'error');
   } 
 }finally {
-  //Mark the order as fulfilled in shopify if this is a shopify store order
+  //Mark the order as fulfilled in shopify if this is a shopify store order, only do so here for gls shipments, rest will be marked when label is generated in the backend
     if(newShipmentId && orderId)
     {
       fulfillShopifyOrder(orderId, lineItemId, newTrackingNumber, newCourierName);
