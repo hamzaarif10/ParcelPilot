@@ -162,7 +162,6 @@ router.post('/updatePickupDetails', authenticateToken, async (req, res) => {
   }
 });
 //PickUp cancellation route
-//PickUp cancellation route
 router.post('/cancelPickup', authenticateToken, async (req, res) => {
   const {pickup_id, shipment_id} = req.body;
   const userId = req.user.id;

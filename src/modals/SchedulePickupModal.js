@@ -14,6 +14,7 @@ import {
   FormLabel
 } from "@chakra-ui/react";
 import { authorizePayment, capturePayment, voidPayment } from '../functions/payment';
+import { DateTime } from "luxon";
 
 function SchedulePickupModal({ shipmentId, trackingNumber, courierId, isOpen, onClose }) {
   const [pickupDate, setPickupDate] = useState("");
@@ -44,30 +45,36 @@ function SchedulePickupModal({ shipmentId, trackingNumber, courierId, isOpen, on
   }
 
   // Helper to get next 5 business days
-  const getNextBusinessDays = (count) => {
-    const businessDays = [];
-    let date = new Date();
-    while (businessDays.length < count) {
-      date.setDate(date.getDate() + 1);
-      const day = date.getDay(); // 0 = Sunday, 6 = Saturday
-      if (day !== 0 && day !== 6) {
-        businessDays.push(new Date(date).toISOString().split('T')[0]);
-      }
+const getNextBusinessDays = (count) => {
+  const businessDays = [];
+  let date = new Date();
+  
+  while (businessDays.length < count) {
+    const day = date.getDay();
+    
+    if (day !== 0 && day !== 6) {
+      const dateString = new Date(date).toISOString().split('T')[0];
+      businessDays.push(dateString);
     }
-    return businessDays;
-  };
+    date.setDate(date.getDate() + 1);
+  }
+  
+  return businessDays;
+};
 
   const getPickupTime = async () => {
     if (courierId === 'GlsDicomExpressGround') {
-      // GLS – Fixed next 5 business days with 10am – 5pm slot
-      const businessDays = getNextBusinessDays(5);
-      const slots = businessDays.map(date => ({
-        date,
-        time: "10:00 AM - 5:00 PM",
-        time_slot_ids: ["GLS_FIXED_SLOT"] // Fixed slot ID
-      }));
-      setFormattedPickupTimes(slots);
-    } else {
+    const businessDays = getNextBusinessDays(5);
+    const slots = businessDays.map(date => ({
+      date,
+      time: "12:00 PM - 4:00 PM",
+      time_slot_ids: ["GLS_FIXED_SLOT"]
+    }));
+    
+    console.log("GLS slots created:", slots); // Add this log
+    setFormattedPickupTimes(slots);
+  } 
+  else {
       // Other couriers – Fetch from API
       try {
         const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/pickups/get-time-slots`, {
@@ -101,39 +108,36 @@ function SchedulePickupModal({ shipmentId, trackingNumber, courierId, isOpen, on
     let pickupId = '';
 
     try{
-    if (courierId === 'GlsDicomExpressGround')
-    {
-    const pickupDateObj = new Date(pickupDate);
-    const readyDateTime = new Date(pickupDateObj.setHours(6, 0, 0)).toISOString(); // 10:00 AM
-    const closedDateTime = new Date(pickupDateObj.setHours(13, 0, 0)).toISOString(); // 5:00 PM
+        if (courierId === 'GlsDicomExpressGround') {
+      const localPickupDate = DateTime.fromISO(pickupDate).set({ hour: 12, minute: 0 });
+      const readyDateTime = localPickupDate.toISO({ suppressMilliseconds: true }); // local time
+      const closedDateTime = localPickupDate.plus({ hours: 4 }).toISO({ suppressMilliseconds: true }); // local + 4h
 
-    const pickupData = {
-      trackingNumbers: [shipmentId],
-      readyDateTime: readyDateTime, 
-      closedDateTime: closedDateTime 
-    };
+      const pickupData = {
+        trackingNumbers: [shipmentId],
+        readyDateTime,
+        closedDateTime
+      };
 
-    try {
-      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/pickups/schedule-gls-pickup`, pickupData);
-      pickupId = response.data.id;
+      try {
+        const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/pickups/schedule-gls-pickup`, pickupData);
+        pickupId = response.data.id;
 
-      Swal.fire({
-        title: "Pickup Scheduled!",
-        text: "Your GLS pickup has been successfully scheduled.",
-        icon: "success",
-        confirmButtonText: "OK",
-      }).then(() => {
-        
-      });
-    } catch (error) {
-      Swal.fire({
-        title: "Pickup Not Scheduled",
-        text: "Could not schedule the pickup. Please try again.",
-        icon: "error",
-        confirmButtonText: "OK",
-      })
+        Swal.fire({
+          title: "Pickup Scheduled!",
+          text: "Your GLS pickup has been successfully scheduled.",
+          icon: "success",
+          confirmButtonText: "OK",
+        });
+      } catch (error) {
+        Swal.fire({
+          title: "Pickup Not Scheduled",
+          text: "Could not schedule the pickup. Please try again.",
+          icon: "error",
+          confirmButtonText: "OK",
+        });
+      }
     }
-    } 
     else     //SCHEDULE PICK UP
     {
     
