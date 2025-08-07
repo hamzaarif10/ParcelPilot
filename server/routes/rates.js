@@ -215,8 +215,17 @@ router.get('/download-label', async (req, res) => {
     const labelUrl = await generatePdfLink(labelBase64, trackingNumber);
 
     //Mark shopify order as fulfilled
-    fulfillShopifyOrder(shopify_order_id, shopify_line_item_id, trackingNumber, courier_name);
-   
+    if (shopify_order_id)
+    {
+      try {
+      await fulfillShopifyOrder(shopify_order_id, shopify_line_item_id, trackingNumber, courier_name);
+      console.log('Shopify order fulfilled successfully');
+    } catch (error) {
+      console.error('Failed to fulfill Shopify order:', error);
+      // Decide if this should fail the entire request or just log the error
+      // For now, we'll log and continue since the label was created successfully
+    }
+    }
     // Update DB label with the tracking number and amazon aws pdf link url
     try {
       const pool = getPool();
