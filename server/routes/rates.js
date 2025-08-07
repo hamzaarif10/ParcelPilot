@@ -149,6 +149,7 @@ router.post('/get-label', async (req, res) => {
     res.status(500).json({ error: 'Failed to create shipping label from eashyship api' });
   }
 });
+
 router.get('/download-label', async (req, res) => {
   console.log("Query Params:", req.query);
  
@@ -156,15 +157,29 @@ router.get('/download-label', async (req, res) => {
     const { shipment_id, format, label, commercial_invoice, packing_slip, shopify_order_id, shopify_line_item_id, auth_token } = req.query;
     const url = `https://public-api.easyship.com/2024-09/shipments/${shipment_id}`;
    
-    // Maximum number of polling attempts (10 attempts * 3 seconds = 30 seconds max wait time)
-    const MAX_ATTEMPTS = 10;
+    // UPDATED POLLING CONFIGURATION FOR 3+ MINUTE WAITS
+    // Strategy: Start with shorter intervals, then increase to reduce API calls for long waits
+    const TOTAL_TIMEOUT_MS = 240000; // 4 minutes total (240 seconds)
+    const startTime = Date.now();
     let attempts = 0;
     let success = false;
     let response;
+    
+    console.log(`Starting polling for shipment ${shipment_id} with ${TOTAL_TIMEOUT_MS/1000}s total timeout`);
    
-    // Add polling logic
-    while (!success && attempts < MAX_ATTEMPTS) {
+    // Simplified polling: 5s for first 30s, then 15s after that
+    const getWaitTime = (attemptNumber) => {
+      if (attemptNumber <= 6) return 5000;       // First 30 seconds: check every 5s (6 attempts)
+      return 15000;                              // After that: check every 15s
+    };
+   
+    while (!success && (Date.now() - startTime) < TOTAL_TIMEOUT_MS) {
+      attempts++;
+      const elapsedTime = Math.round((Date.now() - startTime) / 1000);
+      
       try {
+        console.log(`Polling attempt ${attempts} (${elapsedTime}s elapsed)`);
+        
         response = await axios.get(url, {
           headers: {
             accept: 'application/json',
@@ -176,63 +191,90 @@ router.get('/download-label', async (req, res) => {
             label,
             commercial_invoice,
             packing_slip
-          }
+          },
+          timeout: 15000 // 15 second timeout per request
         });
        
         // Check if the response has the required data
         if (response.data?.shipment?.trackings?.[0]?.tracking_number &&
             response.data?.shipment?.shipping_documents?.[0]?.base64_encoded_strings?.[0]) {
           success = true;
+          console.log(`✅ Label data received after ${elapsedTime}s (${attempts} attempts)`);
         } else {
-          // If not successful, increment attempts and wait 3 seconds before retrying
-          attempts++;
-          if (attempts < MAX_ATTEMPTS) {
-            await new Promise(resolve => setTimeout(resolve, 3000));
+          // Calculate wait time for next attempt
+          const waitTime = getWaitTime(attempts);
+          const remainingTime = TOTAL_TIMEOUT_MS - (Date.now() - startTime);
+          
+          if (remainingTime > waitTime) {
+            console.log(`⏳ Label not ready, waiting ${waitTime/1000}s before next attempt (${Math.round(remainingTime/1000)}s remaining)`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+          } else {
+            console.log(`⏰ Timeout approaching, no more attempts`);
+            break;
           }
         }
       } catch (error) {
-        // If the request fails, increment attempts and wait 3 seconds before retrying
-        console.error(`Polling attempt ${attempts + 1} failed:`, error.message);
-        attempts++;
-        if (attempts < MAX_ATTEMPTS) {
-          await new Promise(resolve => setTimeout(resolve, 3000));
+        const waitTime = getWaitTime(attempts);
+        const remainingTime = TOTAL_TIMEOUT_MS - (Date.now() - startTime);
+        
+        console.error(`❌ Polling attempt ${attempts} failed:`, error.message);
+        
+        if (remainingTime > waitTime) {
+          console.log(`Retrying in ${waitTime/1000}s...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+        } else {
+          console.log(`⏰ Timeout approaching, stopping attempts`);
+          break;
         }
       }
     }
    
-    // If we've reached max attempts without success, return an error response
+    // Check final timeout
+    const totalElapsed = Math.round((Date.now() - startTime) / 1000);
+    
     if (!success) {
+      console.error(`❌ Timeout after ${totalElapsed}s waiting for label data from EasyShip API`);
       return res.status(408).json({
-        error: 'Timeout waiting for label data from EasyShip API'
+        error: 'Timeout waiting for label data from EasyShip API',
+        elapsed_time: `${totalElapsed}s`,
+        attempts: attempts
       });
     }
-   
-    // Process the successful response
-    
+
+    console.log(`📦 Processing successful response for shipment ${shipment_id}`);
 
     const trackingNumber = response.data.shipment.trackings[0].tracking_number;
     const labelBase64 = response.data.shipment.shipping_documents[0].base64_encoded_strings[0];
     const labelUrl = await generatePdfLink(labelBase64, trackingNumber);
 
-    //Mark shopify order as fulfilled NOTE PROCEED WITH CREATING LABEL EVEN IF THIS FAILS
-    if (shopify_order_id)
-    {
+    // Mark shopify order as fulfilled NOTE PROCEED WITH CREATING LABEL EVEN IF THIS FAILS
+    if (shopify_order_id) {
       try {
-      await fulfillShopifyOrder(shopify_order_id, shopify_line_item_id, trackingNumber, courier_name, auth_token);
-      console.log('Shopify order fulfilled successfully');
-    } catch (error) {
-      console.error('Failed to fulfill Shopify order:', error);
-      // Decide if this should fail the entire request or just log the error
-      // For now, we'll log and continue since the label was created successfully
+        // Get courier_name from database first (this was missing in your current version!)
+        const pool = getPool();
+        const courierResult = await pool.request()
+          .input('shipment_id', sql.NVarChar(255), shipment_id)
+          .query(`SELECT courier_name FROM Labels WHERE shipment_id = @shipment_id`);
+        
+        const courier_name = courierResult.recordset[0]?.courier_name || 'Unknown Courier';
+        
+        await fulfillShopifyOrder(shopify_order_id, shopify_line_item_id, trackingNumber, courier_name, auth_token);
+        console.log('Shopify order fulfilled successfully');
+      } catch (error) {
+        console.error('Failed to fulfill Shopify order:', error);
+        // Continue with label processing even if Shopify fails
+      }
     }
-    }
+    
     // Update DB label with the tracking number and amazon aws pdf link url
     try {
+      console.log(`🗄️ Updating database for shipment ${shipment_id}`);
+      
       const pool = getPool();
-      await pool.request()
+      const updateResult = await pool.request()
         .input('shipment_id', sql.NVarChar(255), shipment_id)
         .input('tracking_number', sql.NVarChar(255), trackingNumber)
-        .input('pdf_url', sql.NVarChar(sql.MAX), labelUrl)
+        .input('pdf_url', sql.NVarChar(4000), labelUrl) // Changed from sql.MAX
         .input('status', sql.VarChar(20), "ready")
         .query(`
           UPDATE Labels
@@ -242,6 +284,8 @@ router.get('/download-label', async (req, res) => {
             status = @status
           WHERE shipment_id = @shipment_id
         `);
+      
+      console.log(`Database update result: ${updateResult.rowsAffected[0]} rows affected`);
       
       // After successfully updating the database, get the user ID associated with this shipment
       // to send WebSocket notification
@@ -267,7 +311,6 @@ router.get('/download-label', async (req, res) => {
           recipient_address: userResult.recordset[0].recipient_address,
           courier_name: userResult.recordset[0].courier_name,
           courier_service_id: userResult.recordset[0].courier_service_id
-          // Add any other fields that your front-end expects
         };
         
         // Send the real-time update
@@ -276,14 +319,17 @@ router.get('/download-label', async (req, res) => {
           label: updatedLabel
         });
         
-        console.log(`WebSocket notification sent to user ${userId} for shipment ${shipment_id}`);
+        console.log(`✅ WebSocket notification sent to user ${userId} for shipment ${shipment_id}`);
       }
+       
+      console.log(`✅ Label processing completed successfully for ${shipment_id} after ${totalElapsed}s`);
        
       // Return success response with the label URL and tracking number
       return res.status(200).json({
         success: true,
         tracking_number: trackingNumber,
-        label_url: labelUrl
+        label_url: labelUrl,
+        processing_time: `${totalElapsed}s`
       });
      
     } catch (error) {
