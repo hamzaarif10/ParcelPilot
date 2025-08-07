@@ -271,8 +271,6 @@ const handleSubmit = async (e) => {
       newShipmentId = response.data.shipment.easyship_shipment_id;
       newCourierName = response.data.shipment.courier_service.name;
       newLabelState="pending";
-      //trackingNumber = response.data.shipment.trackings[0].tracking_number;
-      //labelBase64 = response.data.shipment.shipping_documents?.[0]?.base64_encoded_strings?.[0];
     }
     if (newShipmentId) {
       // Step 3: Capture the payment
@@ -329,7 +327,6 @@ const handleSubmit = async (e) => {
               packing_slip: 'none',
               shopify_order_id: orderId,
               shopify_line_item_id: lineItemId,
-              courier_name: newCourierName,
               auth_token: authToken  // Add this line
             }
           });
