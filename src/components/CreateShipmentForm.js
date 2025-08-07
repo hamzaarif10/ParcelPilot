@@ -327,7 +327,8 @@ const handleSubmit = async (e) => {
               packing_slip: 'none',
               shopify_order_id: orderId,
               shopify_line_item_id: lineItemId,
-              auth_token: authToken  // Add this line
+              auth_token: authToken, 
+              courier_name: newCourierName
             }
           });
           // You can handle the response here if needed

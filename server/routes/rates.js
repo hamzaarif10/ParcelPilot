@@ -154,7 +154,7 @@ router.get('/download-label', async (req, res) => {
   console.log("Query Params:", req.query);
  
   try {
-    const { shipment_id, format, label, commercial_invoice, packing_slip, shopify_order_id, shopify_line_item_id, auth_token } = req.query;
+    const { shipment_id, format, label, commercial_invoice, packing_slip, shopify_order_id, shopify_line_item_id, auth_token, courier_name } = req.query;
     const url = `https://public-api.easyship.com/2024-09/shipments/${shipment_id}`;
    
     // UPDATED POLLING CONFIGURATION FOR 3+ MINUTE WAITS
@@ -250,14 +250,6 @@ router.get('/download-label', async (req, res) => {
     // Mark shopify order as fulfilled NOTE PROCEED WITH CREATING LABEL EVEN IF THIS FAILS
     if (shopify_order_id) {
       try {
-        // Get courier_name from database first (this was missing in your current version!)
-        const pool = getPool();
-        const courierResult = await pool.request()
-          .input('shipment_id', sql.NVarChar(255), shipment_id)
-          .query(`SELECT courier_name FROM Labels WHERE shipment_id = @shipment_id`);
-        
-        const courier_name = courierResult.recordset[0]?.courier_name || 'Unknown Courier';
-        
         await fulfillShopifyOrder(shopify_order_id, shopify_line_item_id, trackingNumber, courier_name, auth_token);
         console.log('Shopify order fulfilled successfully');
       } catch (error) {
