@@ -42,7 +42,7 @@ function Integrations() {
   
   const toast = useToast();
   const RATE_LIMIT_MINUTES = 3;
-  const RATE_LIMIT_MS = RATE_LIMIT_MINUTES * 60 * 1000; // 3 minutes in milliseconds
+  const RATE_LIMIT_MS = RATE_LIMIT_MINUTES * 10 * 1000; // 3 minutes in milliseconds
 
   const { isOpen: isInstallModalOpen, onOpen: onInstallModalOpen, onClose: onInstallModalClose } = useDisclosure();
   const { isOpen: isShipOrderModalOpen, onOpen: onShipOrderModalOpen, onClose: onShipOrderModalClose } = useDisclosure();

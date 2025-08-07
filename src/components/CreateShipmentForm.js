@@ -269,7 +269,7 @@ const handleSubmit = async (e) => {
       );
       // Extract shipment details
       newShipmentId = response.data.shipment.easyship_shipment_id;
-      newCourierName=response.data.shipment.courier_service.name;
+      newCourierName = response.data.shipment.courier_service.name;
       newLabelState="pending";
       //trackingNumber = response.data.shipment.trackings[0].tracking_number;
       //labelBase64 = response.data.shipment.shipping_documents?.[0]?.base64_encoded_strings?.[0];
