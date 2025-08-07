@@ -153,7 +153,7 @@ router.get('/download-label', async (req, res) => {
   console.log("Query Params:", req.query);
  
   try {
-    const { shipment_id, format, label, commercial_invoice, packing_slip, shopify_order_id, shopify_line_item_id, courier_name } = req.query;
+    const { shipment_id, format, label, commercial_invoice, packing_slip, shopify_order_id, shopify_line_item_id, courier_name, auth_token } = req.query;
     const url = `https://public-api.easyship.com/2024-09/shipments/${shipment_id}`;
    
     // Maximum number of polling attempts (10 attempts * 3 seconds = 30 seconds max wait time)
@@ -214,11 +214,11 @@ router.get('/download-label', async (req, res) => {
     const labelBase64 = response.data.shipment.shipping_documents[0].base64_encoded_strings[0];
     const labelUrl = await generatePdfLink(labelBase64, trackingNumber);
 
-    //Mark shopify order as fulfilled
+    //Mark shopify order as fulfilled NOTE PROCEED WITH CREATING LABEL EVEN IF THIS FAILS
     if (shopify_order_id)
     {
       try {
-      await fulfillShopifyOrder(shopify_order_id, shopify_line_item_id, trackingNumber, courier_name);
+      await fulfillShopifyOrder(shopify_order_id, shopify_line_item_id, trackingNumber, courier_name, auth_token);
       console.log('Shopify order fulfilled successfully');
     } catch (error) {
       console.error('Failed to fulfill Shopify order:', error);

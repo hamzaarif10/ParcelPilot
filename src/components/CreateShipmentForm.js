@@ -303,8 +303,10 @@ const handleSubmit = async (e) => {
           console.error("Error fetching GLS label:", error);
           showToast('Error', 'Failed to fetch GLS label. Please try again.', 'error');
         }
-      }else{//POLL the NON gls label route until there is a response and update label in db with tracking and pdf url
-        //setting label values in state
+      }
+      else {
+        // POLL the NON gls label route until there is a response and update label in db with tracking and pdf url
+        // setting label values in state
         setShipmentId(newShipmentId);
         setCourierName(newCourierName);
         setLabelState(newLabelState); 
@@ -313,24 +315,29 @@ const handleSubmit = async (e) => {
         setModalType("shipmentDetails");
         // Open the modal
         onOpen();
-          try {
-            await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/download-label`, {
-              params: {
-                shipment_id: newShipmentId,
-                format: 'PDF',
-                label: 'A4',
-                commercial_invoice: 'A4',
-                packing_slip: 'none',
-                shopify_order_id: orderId,
-                shopify_line_item_id: lineItemId,
-                courier_name: newCourierName
-              }
-            });
-            // You can handle the response here if needed
-          } catch (error) {
-            console.error("Error fetching label:", error);
-            showToast('Error', 'Failed to fetch label. Please try again.', 'error');
-          }
+        
+        try {
+          // Get auth token from localStorage
+          const authToken = localStorage.getItem("authToken");
+          
+          await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/download-label`, {
+            params: {
+              shipment_id: newShipmentId,
+              format: 'PDF',
+              label: 'A4',
+              commercial_invoice: 'A4',
+              packing_slip: 'none',
+              shopify_order_id: orderId,
+              shopify_line_item_id: lineItemId,
+              courier_name: newCourierName,
+              auth_token: authToken  // Add this line
+            }
+          });
+          // You can handle the response here if needed
+        } catch (error) {
+          console.error("Error fetching label:", error);
+          showToast('Error', 'Failed to fetch label. Please try again.', 'error');
+        }
       }
     } else {
       console.error("Base64 encoded string for label not found.");
@@ -352,7 +359,9 @@ const handleSubmit = async (e) => {
   //Mark the order as fulfilled in shopify if this is a shopify store order, only do so here for gls shipments, rest will be marked when label is generated in the backend
     if(newShipmentId && orderId && courierId === 'GlsDicomExpressGround')
     {
-      fulfillShopifyOrder(orderId, lineItemId, newTrackingNumber, newCourierName);
+      // Get auth token from localStorage
+      const authToken = localStorage.getItem("authToken");
+      fulfillShopifyOrder(orderId, lineItemId, newTrackingNumber, newCourierName, authToken);
     }
     // Ensure loading state is turned off
     setIsLoading(false);

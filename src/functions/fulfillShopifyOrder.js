@@ -1,7 +1,6 @@
 import axios from 'axios';
 
-export async function fulfillShopifyOrder(orderId, lineItemId, trackingNumber, trackingCompany) {
-    const token = localStorage.getItem("authToken"); // Assuming you're using the token for authorization
+export async function fulfillShopifyOrder(orderId, lineItemId, trackingNumber, trackingCompany, authToken) {
     let shopify_domain = "";
     let shopify_access_token = "";
 
@@ -11,7 +10,7 @@ export async function fulfillShopifyOrder(orderId, lineItemId, trackingNumber, t
     console.log("tracking number: " + trackingNumber);
     console.log("tracking company: " + trackingCompany);
   
-    if (!token) {
+    if (!authToken) {
       console.error("Authentication token is missing");
       return;
     }
@@ -19,7 +18,7 @@ export async function fulfillShopifyOrder(orderId, lineItemId, trackingNumber, t
     // Get Shopify domain and access token
     try {
       const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/auth/get-shopify-auth-details`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${authToken}` }
       });
       shopify_domain = response.data.shopify_domain;
       shopify_access_token = response.data.shopify_access_token;
@@ -40,7 +39,7 @@ export async function fulfillShopifyOrder(orderId, lineItemId, trackingNumber, t
         },
         {
           headers: {
-            Authorization: `Bearer ${token}`, // Passing the token in headers if needed
+            Authorization: `Bearer ${authToken}`, // Passing the token in headers if needed
             'Content-Type': 'application/json'
           }
         }
