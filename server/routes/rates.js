@@ -211,7 +211,6 @@ router.get('/download-label', async (req, res) => {
     
 
     const trackingNumber = response.data.shipment.trackings[0].tracking_number;
-    const courierName = response.data.shipment.courier_service?.name || "Unknown Courier";
     const labelBase64 = response.data.shipment.shipping_documents[0].base64_encoded_strings[0];
     const labelUrl = await generatePdfLink(labelBase64, trackingNumber);
 
@@ -219,12 +218,23 @@ router.get('/download-label', async (req, res) => {
     if (shopify_order_id)
     {
       try {
-          await fulfillShopifyOrder(shopify_order_id, shopify_line_item_id, trackingNumber, courierName, auth_token);
-          console.log('Shopify order fulfilled successfully');
+      // Fetch courier_name from DB
+      const courierNameResult = await pool.request()
+        .input('shipment_id', sql.NVarChar(255), shipment_id)
+        .query(`
+          SELECT courier_name
+          FROM Labels
+          WHERE shipment_id = @shipment_id
+        `);
+
+      const dbCourierName = courierNameResult.recordset[0]?.courier_name || 'Unknown Courier';
+
+      await fulfillShopifyOrder(shopify_order_id, shopify_line_item_id, trackingNumber, dbCourierName, auth_token);
+      console.log('Shopify order fulfilled successfully');
     } catch (error) {
-          console.error('Failed to fulfill Shopify order:', error);
-          // Decide if this should fail the entire request or just log the error
-          // For now, we'll log and continue since the label was created successfully
+      console.error('Failed to fulfill Shopify order:', error);
+      // Decide if this should fail the entire request or just log the error
+      // For now, we'll log and continue since the label was created successfully
     }
     }
     // Update DB label with the tracking number and amazon aws pdf link url
