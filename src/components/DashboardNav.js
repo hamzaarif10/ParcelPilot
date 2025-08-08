@@ -29,13 +29,17 @@ export default function WithSubnavigation() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // Clear the auth token from localStorage
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("userPostalCode"); 
-    // Redirect to login or home page
-    navigate('/login'); // Adjust the path to your login page
-  };
-
+  // Clear the auth token from localStorage
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("userPostalCode");
+  
+  // Clear Shopify-related data to prevent data leakage between users
+  localStorage.removeItem("shopifyOrders");
+  localStorage.removeItem("lastSyncTime");
+  
+  // Redirect to login or home page
+  navigate('/login'); // Adjust the path to your login page
+};
   return (
     <Box>
       <Flex
