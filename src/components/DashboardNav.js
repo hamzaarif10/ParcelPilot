@@ -36,7 +36,7 @@ export default function WithSubnavigation() {
   // Clear Shopify-related data to prevent data leakage between users
   localStorage.removeItem("shopifyOrders");
   localStorage.removeItem("lastSyncTime");
-  
+  //jiust a test
   // Redirect to login or home page
   navigate('/login'); // Adjust the path to your login page
 };
