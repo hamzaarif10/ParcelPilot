@@ -6,6 +6,10 @@ const {generatePdfLink} = require("../functions/generateLabel.js");
 const { getPool } = require('../db');
 const sql = require('mssql');
 const { fulfillShopifyOrder } = require('../../src/functions/fulfillShopifyOrder.js');
+const {capturePayment} = require('../../src/functions/payment.js');
+
+const Stripe = require('stripe');
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const router = express.Router();
 
@@ -154,7 +158,7 @@ router.get('/download-label', async (req, res) => {
   console.log("Query Params:", req.query);
  
   try {
-    const { shipment_id, format, label, commercial_invoice, packing_slip, shopify_order_id, shopify_line_item_id, auth_token, courier_name } = req.query;
+    const { shipment_id, format, label, commercial_invoice, packing_slip, shopify_order_id, shopify_line_item_id, auth_token, courier_name, payment_id } = req.query;
     const url = `https://public-api.easyship.com/2024-09/shipments/${shipment_id}`;
    
     // UPDATED POLLING CONFIGURATION FOR 3+ MINUTE WAITS
@@ -240,9 +244,20 @@ router.get('/download-label', async (req, res) => {
         attempts: attempts
       });
     }
+    //Proceed if successfully fetched label
+    //Capture the payment
+    if (!payment_id) {
+      return res.status(400).json({ error: "Missing payment_id for payment capture." });
+    }
 
-    console.log(`📦 Processing successful response for shipment ${shipment_id}`);
-
+    const isCaptured = await capturePayment(payment_id);
+    
+    if (!isCaptured) {
+      console.error('Payment capture failed for payment ID:', payment_id);
+      return res.status(402).json({ error: 'Payment capture failed. Please contact support.' });
+    }
+    
+    //Proceed with fulfillment and updating db once payment captured
     const trackingNumber = response.data.shipment.trackings[0].tracking_number;
     const labelBase64 = response.data.shipment.shipping_documents[0].base64_encoded_strings[0];
     const labelUrl = await generatePdfLink(labelBase64, trackingNumber);

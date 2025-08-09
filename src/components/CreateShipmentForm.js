@@ -273,15 +273,15 @@ const handleSubmit = async (e) => {
       newLabelState="pending";
     }
     if (newShipmentId) {
-      // Step 3: Capture the payment
-      const isCaptured = await capturePayment(paymentId);
+        //DOWNLOAD SHIPPING LABELS AND OPEN SHIPMENT DETAILS MODAL
+        if (courierId == "GlsDicomExpressGround"){
+          // Step 3: Capture the payment
+        const isCaptured = await capturePayment(paymentId);
 
-      if (!isCaptured) {
-        showToast('Payment Error', 'Payment capture failed. Please contact support.', 'error');
-        return;
-      }
-      //DOWNLOAD SHIPPING LABELS AND OPEN SHIPMENT DETAILS MODAL
-      if (courierId == "GlsDicomExpressGround"){
+        if (!isCaptured) {
+          showToast('Payment Error', 'Payment capture failed. Please contact support.', 'error');
+          return;
+        }
         try {
           const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/download-gls-label`, {
             params: { shipment_id: newShipmentId, documentSize: 'Thermal'}
@@ -328,7 +328,8 @@ const handleSubmit = async (e) => {
               shopify_order_id: orderId,
               shopify_line_item_id: lineItemId,
               auth_token: authToken, 
-              courier_name: newCourierName
+              courier_name: newCourierName,
+              payment_id: paymentId
             }
           });
           // You can handle the response here if needed
