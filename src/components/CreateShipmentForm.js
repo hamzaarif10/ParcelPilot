@@ -275,16 +275,9 @@ const handleSubmit = async (e) => {
     if (newShipmentId) {
         //DOWNLOAD SHIPPING LABELS AND OPEN SHIPMENT DETAILS MODAL
         if (courierId == "GlsDicomExpressGround"){
-          // Step 3: Capture the payment
-        const isCaptured = await capturePayment(paymentId);
-
-        if (!isCaptured) {
-          showToast('Payment Error', 'Payment capture failed. Please contact support.', 'error');
-          return;
-        }
         try {
           const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/download-gls-label`, {
-            params: { shipment_id: newShipmentId, documentSize: 'Thermal'}
+            params: { shipment_id: newShipmentId, documentSize: 'Thermal', payment_id: paymentId}
           });
           setPdfLink(await generatePdfLink(response.data.base64String, newTrackingNumber));
           //setting label values in state

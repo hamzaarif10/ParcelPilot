@@ -83,13 +83,25 @@ router.post('/get-gls-label', async (req, res) => {
 });
 router.get('/download-gls-label', async (req, res) => {
   try {
-    const { shipment_id, documentSize } = req.query;
+    const { shipment_id, documentSize, payment_id } = req.query;
     
 
     if (!shipment_id) {
       return res.status(400).json({ error: 'shipment_id is required' });
     }
 
+    //Capture the payment
+    if (!payment_id) {
+      return res.status(400).json({ error: "Missing payment_id for payment capture." });
+    }
+
+    const isCaptured = await capturePayment(payment_id);
+    
+    if (!isCaptured) {
+      console.error('Payment capture failed for payment ID:', payment_id);
+      return res.status(402).json({ error: 'Payment capture failed. Please contact support.' });
+    }
+    //Proceed to fetch the label
     const url = `https://secureship.ca/ship/api/v1/carriers/download/documents/${shipment_id}`;
     const response = await axios.get(url, {
       headers: {
@@ -256,7 +268,7 @@ router.get('/download-label', async (req, res) => {
       console.error('Payment capture failed for payment ID:', payment_id);
       return res.status(402).json({ error: 'Payment capture failed. Please contact support.' });
     }
-    
+
     //Proceed with fulfillment and updating db once payment captured
     const trackingNumber = response.data.shipment.trackings[0].tracking_number;
     const labelBase64 = response.data.shipment.shipping_documents[0].base64_encoded_strings[0];
