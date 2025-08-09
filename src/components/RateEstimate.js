@@ -207,99 +207,103 @@ function RateEstimate({
       }
     }
   };
-  
-  
-  
   // Fetch rates
-  const fetchRates = async () => {
-    try {
-      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/get-rate`, rateEstimateData);
-      if (response.data.rates && response.data.rates.length > 0) {
-        const filteredRates = response.data.rates
-        .filter(
-          (rate) =>
-            rate.cost_rank >= 1 &&
-            rate.cost_rank <= 7 &&
-            rate.total_charge !== undefined &&
-            rate.total_charge !== null &&
-            rate.courier_service !== undefined &&
-            rate.courier_service !== null
-        )
-        .sort((a, b) => a.cost_rank - b.cost_rank);
+const fetchRates = async () => {
+  try {
+    const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/get-rate`, rateEstimateData);
+    if (response.data.rates && response.data.rates.length > 0) {
+      const excludedCourierIds = [
+        'e65debff-8b0d-450b-a008-5a337ae8ce72'
+        // Note: You mentioned the same ID twice, so I'm only including it once
+        // If you have a different second ID, replace this comment with it
+      ];
 
-  
-        if (filteredRates[0]) {
-          setRate2(calculateRateWithMargin(filteredRates[0]?.total_charge, filteredRates[0]?.residential_full_fee, isResidential, labelsPrinted));
-          setUrl2(filteredRates[0]?.courier_service.logo);
-          setCourier2(filteredRates[0]?.courier_service.id);
-        }
-        if (filteredRates[1]) {
-          setRate3(calculateRateWithMargin(filteredRates[1]?.total_charge, filteredRates[1]?.residential_full_fee, isResidential, labelsPrinted));
-          setUrl3(filteredRates[1]?.courier_service.logo);
-          setCourier3(filteredRates[1]?.courier_service.id);
-        }
-        if (filteredRates[2]) {
-          setRate4(calculateRateWithMargin(filteredRates[2]?.total_charge, filteredRates[2]?.residential_full_fee, isResidential, labelsPrinted));
-          setUrl4(filteredRates[2]?.courier_service.logo);
-          setCourier4(filteredRates[2]?.courier_service.id);
-        }
-        if (filteredRates[3]) {
-          setRate5(calculateRateWithMargin(filteredRates[3]?.total_charge, filteredRates[3]?.residential_full_fee, isResidential, labelsPrinted));
-          setUrl5(filteredRates[3]?.courier_service.logo);
-          setCourier5(filteredRates[3]?.courier_service.id);
-        }
-        if (filteredRates[4]) {
-          setRate6(calculateRateWithMargin(filteredRates[4]?.total_charge, filteredRates[4]?.residential_full_fee, isResidential, labelsPrinted));
-          setUrl6(filteredRates[4]?.courier_service.logo);
-          setCourier6(filteredRates[4]?.courier_service.id);
-        }
-        if (filteredRates[5]) {
-          setRate7(calculateRateWithMargin(filteredRates[5]?.total_charge, filteredRates[5]?.residential_full_fee, isResidential, labelsPrinted));
-          setUrl7(filteredRates[5]?.courier_service.logo);
-          setCourier7(filteredRates[5]?.courier_service.id);
-        }
-        if (filteredRates[6]) {
-          setRate8(calculateRateWithMargin(filteredRates[6]?.total_charge, filteredRates[6]?.residential_full_fee, isResidential, labelsPrinted));
-          setUrl8(filteredRates[6]?.courier_service.logo);
-          setCourier8(filteredRates[6]?.courier_service.id);
-        }
-  
-        const newDeliveryTimes = [];
-        const newServiceNames = [];
-  
-        filteredRates.forEach(rate => {
-          const timeRange = rate.max_delivery_time === rate.min_delivery_time
-            ? `${rate.max_delivery_time} business days`
-            : `${rate.min_delivery_time}-${rate.max_delivery_time} business days`;
-  
-          newDeliveryTimes.push(timeRange);
-          newServiceNames.push(rate.courier_service.name);
-        });
-  
-        setDeliveryTimes(newDeliveryTimes);
-        setServiceNames(newServiceNames);
+      const filteredRates = response.data.rates
+      .filter(
+        (rate) =>
+          rate.cost_rank >= 1 &&
+          rate.cost_rank <= 9 &&
+          rate.total_charge !== undefined &&
+          rate.total_charge !== null &&
+          rate.courier_service !== undefined &&
+          rate.courier_service !== null &&
+          // Add filter to exclude specific courier IDs
+          !excludedCourierIds.includes(rate.courier_service.courier_id)
+      )
+      .sort((a, b) => a.cost_rank - b.cost_rank);
+
+      if (filteredRates[0]) {
+        setRate2(calculateRateWithMargin(filteredRates[0]?.total_charge, filteredRates[0]?.residential_full_fee, isResidential, labelsPrinted));
+        setUrl2(filteredRates[0]?.courier_service.logo);
+        setCourier2(filteredRates[0]?.courier_service.id);
       }
-    } catch (error) {
-      console.error('Error fetching rates:', error);
-      if (error.response?.status === 429) {
-        toast({
-          title: "Rate limit exceeded",
-          description: "Too many requests. Please try again shortly.",
-          status: "error",
-          duration: 5000,
-          isClosable: true,
-        });
-      } else {
-        toast({
-          title: "Error fetching rates",
-          description: error.response?.data?.message || error.message,
-          status: "error",
-          duration: 5000,
-          isClosable: true,
-        });
+      if (filteredRates[1]) {
+        setRate3(calculateRateWithMargin(filteredRates[1]?.total_charge, filteredRates[1]?.residential_full_fee, isResidential, labelsPrinted));
+        setUrl3(filteredRates[1]?.courier_service.logo);
+        setCourier3(filteredRates[1]?.courier_service.id);
       }
+      if (filteredRates[2]) {
+        setRate4(calculateRateWithMargin(filteredRates[2]?.total_charge, filteredRates[2]?.residential_full_fee, isResidential, labelsPrinted));
+        setUrl4(filteredRates[2]?.courier_service.logo);
+        setCourier4(filteredRates[2]?.courier_service.id);
+      }
+      if (filteredRates[3]) {
+        setRate5(calculateRateWithMargin(filteredRates[3]?.total_charge, filteredRates[3]?.residential_full_fee, isResidential, labelsPrinted));
+        setUrl5(filteredRates[3]?.courier_service.logo);
+        setCourier5(filteredRates[3]?.courier_service.id);
+      }
+      if (filteredRates[4]) {
+        setRate6(calculateRateWithMargin(filteredRates[4]?.total_charge, filteredRates[4]?.residential_full_fee, isResidential, labelsPrinted));
+        setUrl6(filteredRates[4]?.courier_service.logo);
+        setCourier6(filteredRates[4]?.courier_service.id);
+      }
+      if (filteredRates[5]) {
+        setRate7(calculateRateWithMargin(filteredRates[5]?.total_charge, filteredRates[5]?.residential_full_fee, isResidential, labelsPrinted));
+        setUrl7(filteredRates[5]?.courier_service.logo);
+        setCourier7(filteredRates[5]?.courier_service.id);
+      }
+      if (filteredRates[6]) {
+        setRate8(calculateRateWithMargin(filteredRates[6]?.total_charge, filteredRates[6]?.residential_full_fee, isResidential, labelsPrinted));
+        setUrl8(filteredRates[6]?.courier_service.logo);
+        setCourier8(filteredRates[6]?.courier_service.id);
+      }
+
+      const newDeliveryTimes = [];
+      const newServiceNames = [];
+
+      filteredRates.forEach(rate => {
+        const timeRange = rate.max_delivery_time === rate.min_delivery_time
+          ? `${rate.max_delivery_time} business days`
+          : `${rate.min_delivery_time}-${rate.max_delivery_time} business days`;
+
+        newDeliveryTimes.push(timeRange);
+        newServiceNames.push(rate.courier_service.name);
+      });
+
+      setDeliveryTimes(newDeliveryTimes);
+      setServiceNames(newServiceNames);
     }
-  };
+  } catch (error) {
+    console.error('Error fetching rates:', error);
+    if (error.response?.status === 429) {
+      toast({
+        title: "Rate limit exceeded",
+        description: "Too many requests. Please try again shortly.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    } else {
+      toast({
+        title: "Error fetching rates",
+        description: error.response?.data?.message || error.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  }
+};
   
     //core fetching rate logic
     useEffect(() => {

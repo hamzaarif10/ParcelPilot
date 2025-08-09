@@ -538,6 +538,62 @@ return (
           <div
             className="input-group"
             style={{
+              marginBottom: '0px',
+            }}
+          >
+            <label
+              htmlFor="receiverContactName"
+              style={{
+                fontSize: '0.9em',
+                color: '#1e293b',
+                fontWeight: '500',
+                marginBottom: '6px',
+                display: 'block',
+                marginTop: '-20px'
+              }}
+            >
+              Contact Name
+            </label>
+            <input
+              type="text"
+              id="receiverContactName"
+              value={receiverContactName}
+              onChange={(e) => setReceiverContactName(e.target.value)}
+              placeholder="Enter receiver's contact name"
+              style={{
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                padding: '10px',
+                fontSize: '1em',
+                backgroundColor: '#f8fafc',
+                transition: 'all 0.3s ease',
+                boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.05)',
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = '#3b82f6';
+                e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.2)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = '#e2e8f0';
+                e.target.style.boxShadow = 'inset 0 1px 3px rgba(0, 0, 0, 0.05)';
+              }}
+            />
+            {errors.receiverContactName && (
+              <p
+                className="error-message"
+                style={{
+                  color: '#dc2626',
+                  fontSize: '0.85em',
+                  margin: '4px 0 0',
+                }}
+              >
+                {errors.receiverContactName}
+              </p>
+            )}
+          </div>
+          <div
+            className="input-group"
+            style={{
               marginBottom: '15px',
             }}
           >
@@ -690,10 +746,12 @@ return (
               </p>
             )}
           </div>
+        </div>
+        <div className="receiver-info">
           <div
             className="input-group"
             style={{
-              marginBottom: '15px',
+              marginBottom: '0px',
             }}
           >
             <label
@@ -756,8 +814,6 @@ return (
               </p>
             )}
           </div>
-        </div>
-        <div className="receiver-info">
           <div
             className="input-group"
             style={{
@@ -790,62 +846,6 @@ return (
               }}
               readOnly
             />
-          </div>
-          <div
-            className="input-group"
-            style={{
-              marginBottom: '15px',
-            }}
-          >
-            <label
-              htmlFor="receiverContactName"
-              style={{
-                fontSize: '0.9em',
-                color: '#1e293b',
-                fontWeight: '500',
-                marginBottom: '6px',
-                display: 'block',
-                marginTop: '-20px'
-              }}
-            >
-              Contact Name
-            </label>
-            <input
-              type="text"
-              id="receiverContactName"
-              value={receiverContactName}
-              onChange={(e) => setReceiverContactName(e.target.value)}
-              placeholder="Enter receiver's contact name"
-              style={{
-                border: '1px solid #e2e8f0',
-                borderRadius: '8px',
-                padding: '10px',
-                fontSize: '1em',
-                backgroundColor: '#f8fafc',
-                transition: 'all 0.3s ease',
-                boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.05)',
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#3b82f6';
-                e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.2)';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#e2e8f0';
-                e.target.style.boxShadow = 'inset 0 1px 3px rgba(0, 0, 0, 0.05)';
-              }}
-            />
-            {errors.receiverContactName && (
-              <p
-                className="error-message"
-                style={{
-                  color: '#dc2626',
-                  fontSize: '0.85em',
-                  margin: '4px 0 0',
-                }}
-              >
-                {errors.receiverContactName}
-              </p>
-            )}
           </div>
           <div
             className="input-group"
