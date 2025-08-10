@@ -63,7 +63,7 @@ export const getGlsCreateShipmentData = ({
         "province": getProvinceCode(receiverProvince),
         "residential": true,
         "emails": [
-          receiverEmail || ""
+          receiverEmail || "tecmanautomotive@gmail.com"
         ],
         "isInside": false,
         "isTailGate": false,

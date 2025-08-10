@@ -40,7 +40,7 @@ export const getCreateShipmentData = ({
       postal_code: receiverPostalCode,
       contact_name: receiverContactName,
       contact_phone: receiverPhone,
-      contact_email: receiverEmail || "hamzaarifmaxwell@gmail.com",
+      contact_email: receiverEmail || "tecmanautomotive@gmail.com",
       country_alpha2: receiverCountryCode,
     },
     incoterms: "DDU",
