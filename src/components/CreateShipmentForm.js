@@ -1083,56 +1083,33 @@ return (
         className="button"
         disabled={isButtonDisabled}
         style={{
-          backgroundColor: '#06b6d4',
-          color: '#ffffff',
+          backgroundColor: isButtonDisabled ? '#ccc' : '#06b6d4',
+          color: isButtonDisabled ? '#666' : '#ffffff',
           padding: '12px 24px',
           border: 'none',
           borderRadius: '8px',
           fontSize: '1em',
           fontWeight: '600',
-          cursor: 'pointer',
+          cursor: isButtonDisabled ? 'not-allowed' : 'pointer',
           transition: 'all 0.3s ease',
-          boxShadow: '0 3px 8px rgba(235, 131, 52, 0.3)',
+          boxShadow: isButtonDisabled ? 'none' : '0 3px 8px rgba(235, 131, 52, 0.3)',
           outline: 'none',
+          opacity: isButtonDisabled ? 0.6 : 1,
         }}
         onMouseOver={(e) => {
-          e.currentTarget.style.backgroundColor = '#f26513';
-          e.currentTarget.style.boxShadow = '0 5px 12px rgba(153, 19, 242, 0.4)';
+          if (!isButtonDisabled) {
+            e.currentTarget.style.backgroundColor = '#f26513';
+            e.currentTarget.style.boxShadow = '0 5px 12px rgba(153, 19, 242, 0.4)';
+          }
         }}
         onMouseOut={(e) => {
-          e.currentTarget.style.backgroundColor = '#06b6d4';
-          e.currentTarget.style.boxShadow = '0 3px 8px rgba(235, 131, 52, 0.3)';
+          if (!isButtonDisabled) {
+            e.currentTarget.style.backgroundColor = '#06b6d4';
+            e.currentTarget.style.boxShadow = '0 3px 8px rgba(235, 131, 52, 0.3)';
+          }
         }}
       >
         Create Shipment
-      </button>
-      <button
-        type="button"
-        className="button"
-        style={{
-          backgroundColor: '#06b6d4',
-          color: '#ffffff',
-          padding: '12px 24px',
-          border: 'none',
-          borderRadius: '8px',
-          fontSize: '1em',
-          fontWeight: '600',
-          cursor: 'pointer',
-          transition: 'all 0.3s ease',
-          boxShadow: '0 3px 8px rgba(235, 131, 52, 0.3)',
-          outline: 'none',
-        }}
-        onMouseOver={(e) => {
-          e.currentTarget.style.backgroundColor = '#f26513';
-          e.currentTarget.style.boxShadow = '0 5px 12px rgba(153, 19, 242, 0.4)';
-        }}
-        onMouseOut={(e) => {
-          e.currentTarget.style.backgroundColor = '#06b6d4';
-          e.currentTarget.style.boxShadow = '0 3px 8px rgba(235, 131, 52, 0.3)';
-        }}
-        onClick={() => window.location.href = "/create-shipment"}
-      >
-        Create Another Shipment
       </button>
     </form>
     {modalType === 'shipmentDetails' && (
