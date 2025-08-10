@@ -183,7 +183,7 @@ router.get("/getShippingLabels", authenticateToken, async (req, res) => {
       .input('offset', sql.Int, offset)
       .input('limit', sql.Int, limit)
       .query(`
-        SELECT shipment_id, recipient_name, recipient_address, courier_name, courier_service_id, tracking_number, pdf_url, status, secure_ship_tracking_number, pickup_date, time_slot, pickup_id 
+        SELECT shipment_id, recipient_name, recipient_address, courier_name, courier_service_id, tracking_number, pdf_url, status, secure_ship_tracking_number, pickup_date, time_slot, pickup_id, date_created 
         FROM Labels 
         WHERE user_id = @user_id
         ORDER BY label_id DESC

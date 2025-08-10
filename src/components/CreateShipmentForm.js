@@ -21,10 +21,10 @@ import { submitTransaction } from '../functions/submitTransaction';
 import { Box, Center } from "@chakra-ui/react";
 import LoadingAnimation from "../LoadingAnimations/LoadingAnimation2";
 
-
 function CreateShipmentForm({courierId, courierUrl, courierCost, senderCountry, receiverAddressLine1Prop, receiverAddressLine2Prop, receiverCityProp, 
   receiverCountry, receiverPostCode, receiverProvinceProp, receiverName, receiverPhoneNumber, receiverEmailProp, measurements, mass,
   orderId, lineItemId, onShopifyOrderModalClose}) {
+
   const [senderAddressLine1, setSenderAddressLine1] = useState("");
   const [senderAddressLine2, setSenderAddressLine2] = useState("");
   const [senderProvince, setSenderProvince] = useState("");
@@ -129,6 +129,7 @@ useEffect(() => {
         description: "Shipment for " + receiverContactName + " shipped via " + courierName,
         amount: courierCost
       });      
+      window.location.href = "/create-shipment";
   }
 }
 handleSubmit();

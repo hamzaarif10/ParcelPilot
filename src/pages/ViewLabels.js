@@ -429,6 +429,9 @@ function ViewLabels() {
                   <Th color="white" fontSize="lg">
                     <Icon as={FaBarcode} mr={2} color="orange" /> Tracking ID
                   </Th>
+                  <Th color="white" fontSize="lg">
+                    <Icon as={FaBarcode} mr={2} color="orange" /> Date Created
+                  </Th>
                   <Th color="white" fontSize="lg">Actions</Th>
                 </Tr>
               </Thead>
@@ -456,6 +459,7 @@ function ViewLabels() {
                     </Td>
                     <Td>{label.courier_name}</Td>
                     <Td>{label.tracking_number}</Td>
+                    <Td>{label.date_created?.slice(0, 10)}</Td>
                     <Td>
                       {label.status === 'cancelled' ? (
                         <Flex align="center">
