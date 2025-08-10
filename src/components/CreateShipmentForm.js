@@ -195,9 +195,12 @@ const handleSubmit = async (e) => {
 
 
   // Validate email (proper email format)
-  if (!receiverEmail || !/\S+@\S+\.\S+/.test(receiverEmail)) {
+  if (reveiverEmail)
+  {
+    if (!/\S+@\S+\.\S+/.test(receiverEmail)) {
     setErrors(prev => ({ ...prev, receiverEmail: 'Email is invalid.' }));
     formIsValid = false;
+    }
   }
 
   // If form is valid, proceed with the rest of the logic
@@ -923,7 +926,7 @@ return (
                 marginTop: '-20px'
               }}
             >
-              Email
+              Email (optional)
             </label>
             <input
               type="text"
