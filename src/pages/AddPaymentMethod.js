@@ -58,49 +58,103 @@ const AddPaymentMethod = () => {
   }, []);
 
   const handleAddPaymentMethod = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    if (!stripe || !elements) {
-      setMessage("Stripe is not loaded yet.");
-      setLoading(false);
-      return;
-    }
-    try {
-      const token = localStorage.getItem("authToken");
-      const cardNumberElement = elements.getElement(CardNumberElement);
-      const { paymentMethod: stripePaymentMethod, error } =
-        await stripe.createPaymentMethod({
-          type: "card",
-          card: cardNumberElement
-        });
+  e.preventDefault();
+  setLoading(true);
+  
+  if (!stripe || !elements) {
+    setMessage("Stripe is not loaded yet. Please refresh and try again.");
+    setLoading(false);
+    return;
+  }
 
-      if (error) {
-        throw new Error(error.message);
+  try {
+    const token = localStorage.getItem("authToken");
+    const cardNumberElement = elements.getElement(CardNumberElement);
+    
+    // Create payment method with Stripe
+    const { paymentMethod: stripePaymentMethod, error } = await stripe.createPaymentMethod({
+      type: "card",
+      card: cardNumberElement
+    });
+
+    if (error) {
+      // Handle Stripe validation errors with user-friendly messages
+      let friendlyMessage = error.message;
+      
+      if (error.code === 'incomplete_number') {
+        friendlyMessage = "Please enter a complete card number.";
+      } else if (error.code === 'invalid_number') {
+        friendlyMessage = "Please enter a valid card number.";
+      } else if (error.code === 'incomplete_cvc') {
+        friendlyMessage = "Please enter your card's security code.";
+      } else if (error.code === 'invalid_cvc') {
+        friendlyMessage = "Please enter a valid security code.";
+      } else if (error.code === 'incomplete_expiry') {
+        friendlyMessage = "Please enter a complete expiration date.";
+      } else if (error.code === 'invalid_expiry_month' || error.code === 'invalid_expiry_year') {
+        friendlyMessage = "Please enter a valid expiration date.";
+      } else if (error.code === 'card_declined') {
+        friendlyMessage = "Your card was declined. Please try a different payment method.";
       }
-      const response = await axios.post(
-        `${process.env.REACT_APP_BACKEND_URL}/payment/add-payment-method`,
-        {
-          paymentMethodId: stripePaymentMethod.id
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      if (response.data.success) {
-        setMessage("Payment method added successfully!");
-        setPaymentMethod(response.data.paymentMethod);
-        setTimeout(() => {
-          window.location.reload();
-        }, 1500); 
-      } else {
-        throw new Error(response.data.error);
-      }
-    } catch (error) {
-      setMessage(error.message);
-    } finally {
-      setLoading(false);
+      
+      throw new Error(friendlyMessage);
     }
-  };
+
+    // Send to backend
+    const response = await axios.post(
+      `${process.env.REACT_APP_BACKEND_URL}/payment/add-payment-method`,
+      {
+        paymentMethodId: stripePaymentMethod.id
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    if (response.data.success) {
+      setMessage("Payment method added successfully!");
+      setPaymentMethod(response.data.paymentMethod);
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500); 
+    } else {
+      throw new Error(response.data.error || "Failed to add payment method. Please try again.");
+    }
+    
+  } catch (error) {
+    let userFriendlyMessage = "Something went wrong. Please try again.";
+
+    if (error.response) {
+      // Handle axios HTTP errors (400, 401, 500, etc.)
+      const status = error.response.status;
+      const serverError = error.response.data?.error || error.response.data?.message;
+      
+      if (status === 400) {
+        userFriendlyMessage = serverError || "Invalid payment information. Please check your details and try again.";
+      } else if (status === 401) {
+        userFriendlyMessage = "Your session has expired. Please log in again.";
+      } else if (status === 403) {
+        userFriendlyMessage = "You don't have permission to perform this action.";
+      } else if (status === 409) {
+        userFriendlyMessage = serverError || "This payment method is already added to your account.";
+      } else if (status >= 500) {
+        userFriendlyMessage = "Our servers are experiencing issues. Please try again in a few moments.";
+      } else {
+        userFriendlyMessage = serverError || `Error: ${status}. Please try again.`;
+      }
+    } else if (error.request) {
+      // Network error
+      userFriendlyMessage = "Unable to connect to our servers. Please check your internet connection and try again.";
+    } else if (error.message) {
+      // This includes Stripe errors we already formatted above
+      userFriendlyMessage = error.message;
+    }
+
+    setMessage(userFriendlyMessage);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <Flex direction={{ base: "column", md: "row" }} h="100vh" bg="gray.100">

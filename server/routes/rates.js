@@ -266,7 +266,6 @@ router.get('/download-label', async (req, res) => {
           
         } catch (error) {
           console.error('SQL update label error:', error);
-          // Don't return here - we still want to send the timeout response
         }
         
         return res.status(408).json({
