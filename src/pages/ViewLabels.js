@@ -468,18 +468,9 @@ function ViewLabels() {
                           <Text color="orange.500" fontWeight="bold"> Shipment Pending</Text>
                         </Flex>
                       ) : label.status === 'failed' ? (
-                         <Flex align="center" gap={2}>
+                         <Flex align="center">
                           <AiOutlineExclamationCircle color="orange" size={17} />
-                          <Text color="orange.500" fontWeight="bold">Failed to generate label. please try again.</Text>
-                          <Text 
-                            color="blue.500" 
-                            textDecoration="underline" 
-                            cursor="pointer"
-                            fontSize="sm"
-                            onClick={() => setShowFailureReasons(true)}
-                          >
-                            See why
-                          </Text>
+                          <Text color="orange.500" fontWeight="bold"> Failed to generate label. please try again.</Text>
                         </Flex>
                       ) : 
                        label.status === 'ready' ? (
