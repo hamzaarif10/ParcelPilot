@@ -93,7 +93,7 @@ export const getGlsCreateShipmentData = ({
       ],
       "shipDateTime": today,
       "deliveryEmails": [
-        receiverEmail || ""
+        receiverEmail || "tecmanautomotive@gmail.com"
       ],
       "billingOption": "Prepaid",
       "billingAccountNumber": "126645",
