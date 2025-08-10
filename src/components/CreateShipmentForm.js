@@ -195,13 +195,10 @@ const handleSubmit = async (e) => {
 
 
   // Validate email (proper email format)
-  if (reveiverEmail)
-  {
-    if (!/\S+@\S+\.\S+/.test(receiverEmail)) {
-    setErrors(prev => ({ ...prev, receiverEmail: 'Email is invalid.' }));
-    formIsValid = false;
-    }
-  }
+  if (receiverEmail && !/\S+@\S+\.\S+/.test(receiverEmail)) {
+  setErrors(prev => ({ ...prev, receiverEmail: 'Email is invalid.' }));
+  formIsValid = false;
+}
 
   // If form is valid, proceed with the rest of the logic
   if (!formIsValid) {
