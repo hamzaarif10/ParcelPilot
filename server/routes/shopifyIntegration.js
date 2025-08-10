@@ -135,7 +135,7 @@ router.get('/', async (req, res) => {
   // Generate a unique state parameter
   const state = crypto.randomBytes(16).toString('hex');
   
-  const oauthUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=${scopes}&redirect_uri=${redirectUri}&state=${state}&grant_options[]=per-user`;
+  const oauthUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=${scopes}&redirect_uri=${redirectUri}&state=${state}`;
 
   console.log(`[SHOPIFY AUTH] Starting OAuth for shop: ${shop}`);
   console.log(`[SHOPIFY AUTH] OAuth URL: ${oauthUrl}`);
