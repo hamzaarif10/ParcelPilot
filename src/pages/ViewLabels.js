@@ -1,31 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
 import {
-  Box,
-  Text,
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  Button,
-  Icon,
-  useDisclosure,
-  Center,
-  Spinner,
-  Flex,
-  IconButton,
-  useToast,
-  AlertDialog,
-  AlertDialogOverlay,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogBody,
-  AlertDialogFooter,
-  Menu, MenuButton, MenuList, MenuItem,
-  Button as ChakraButton,
-  Checkbox,
-  HStack
+  Box, Text, Table, Thead, Tbody, Tr, Th, Td, Button, Icon, useDisclosure, Center, Spinner, Flex, IconButton, useToast, AlertDialog, AlertDialogOverlay, AlertDialogContent,
+  AlertDialogHeader, AlertDialogBody, AlertDialogFooter, Menu, MenuButton, MenuList, MenuItem, Button as ChakraButton, Checkbox, HStack, Modal, ModalOverlay, ModalContent,
+  ModalHeader, ModalBody, ModalFooter, ModalCloseButton, UnorderedList, ListItem
 } from "@chakra-ui/react";
 import { ChevronDownIcon } from '@chakra-ui/icons';
 import { MdPerson, MdLocationOn, MdLocalShipping, MdClose, MdPrint } from "react-icons/md";
@@ -490,7 +467,22 @@ function ViewLabels() {
                           <AiOutlineExclamationCircle color="orange" size={17} />
                           <Text color="orange.500" fontWeight="bold"> Shipment Pending</Text>
                         </Flex>
-                      ) : label.status === 'ready' ? (
+                      ) : label.status === 'failed' ? (
+                         <Flex align="center" gap={2}>
+                          <AiOutlineExclamationCircle color="orange" size={17} />
+                          <Text color="orange.500" fontWeight="bold">Failed to generate label. please try again.</Text>
+                          <Text 
+                            color="blue.500" 
+                            textDecoration="underline" 
+                            cursor="pointer"
+                            fontSize="sm"
+                            onClick={() => setShowFailureReasons(true)}
+                          >
+                            See why
+                          </Text>
+                        </Flex>
+                      ) : 
+                       label.status === 'ready' ? (
                         <Flex gap={4}>
                           <Button
                             flex="1"
@@ -739,6 +731,7 @@ function ViewLabels() {
             }}
           />
         )}
+        
       </Box>
     </Box>
   );

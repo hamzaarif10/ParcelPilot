@@ -249,13 +249,32 @@ router.get('/download-label', async (req, res) => {
     const totalElapsed = Math.round((Date.now() - startTime) / 1000);
     
     if (!success) {
-      console.error(`❌ Timeout after ${totalElapsed}s waiting for label data from EasyShip API`);
-      return res.status(408).json({
-        error: 'Timeout waiting for label data from EasyShip API',
-        elapsed_time: `${totalElapsed}s`,
-        attempts: attempts
-      });
-    }
+        console.error(`❌ Timeout after ${totalElapsed}s waiting for label.`);
+        
+        try {
+          const pool = getPool();
+          const updateResult = await pool.request()
+            .input('shipment_id', sql.NVarChar(255), shipment_id)
+            .input('status', sql.VarChar(20), "failed")
+            .query(`
+              UPDATE Labels
+              SET status = @status
+              WHERE shipment_id = @shipment_id
+            `);
+          
+          console.log(`Updated label status to 'failed' for shipment_id: ${shipment_id}`);
+          
+        } catch (error) {
+          console.error('SQL update label error:', error);
+          // Don't return here - we still want to send the timeout response
+        }
+        
+        return res.status(408).json({
+          error: 'Timeout waiting for label data.',
+          elapsed_time: `${totalElapsed}s`,
+          attempts: attempts
+        });
+      }
     //Proceed if successfully fetched label
     //Capture the payment
     if (!payment_id) {
