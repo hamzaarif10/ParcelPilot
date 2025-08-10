@@ -60,6 +60,8 @@ function CreateShipmentForm({courierId, courierUrl, courierCost, senderCountry, 
   const [courierName, setCourierName] = useState("");
   const [labelState, setLabelState] = useState("");
 
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+
   const toast = useToast();
   const showToast = (title, description, status = 'error') => {
     toast({
@@ -128,7 +130,8 @@ useEffect(() => {
       submitTransaction({
         description: "Shipment for " + receiverContactName + " shipped via " + courierName,
         amount: courierCost
-      });      
+      });
+      setIsButtonDisabled(true);      
   }
 }
 handleSubmit();
@@ -1078,6 +1081,7 @@ return (
       <button
         type="submit"
         className="button"
+        disabled={isButtonDisabled}
         style={{
           backgroundColor: '#06b6d4',
           color: '#ffffff',
