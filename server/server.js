@@ -130,13 +130,21 @@ wss.on('connection', (ws) => {
             message: 'Authentication successful'
           }));
         } catch (error) {
-          console.error('WebSocket authentication error:', error);
-          ws.send(JSON.stringify({
-            type: 'auth_error',
-            message: 'Authentication failed'
-          }));
+          if (error.name === 'TokenExpiredError') {
+            ws.send(JSON.stringify({
+              type: 'auth_error',
+              message: 'Token expired',
+              code: 'TOKEN_EXPIRED'
+            }));
+          } else {
+            console.error('WebSocket authentication error:', error);
+            ws.send(JSON.stringify({
+              type: 'auth_error',
+              message: 'Authentication failed'
+            }));
+          }
         }
-      }
+      } // ← THIS CLOSING BRACE WAS MISSING
     } catch (error) {
       console.error('Error processing WebSocket message:', error);
     }
@@ -189,21 +197,25 @@ app.use("/webhooks", webHooksRoute);
 app.use(express.json());
 
 // Session middleware with custom Upstash Redis store
+const SESSION_TIMEOUT = 3 * 60 * 60; // 3 hours in seconds
+
 app.use(session({
   store: new UpstashRedisStore({
     client: redis,
     prefix: "session:",
-    ttl: 86400 // Session expiration time (1 day)
+    ttl: SESSION_TIMEOUT // ✅ NOW MATCHES COOKIE
   }),
   secret: process.env.SESSION_SECRET || 'dev-secret',
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false, // ✅ FIXED
   cookie: {
     secure: isProd,
     httpOnly: true,
     sameSite: isProd ? 'strict' : 'lax',
-    maxAge: 3 * 60 * 60 * 1000 // 3 hours
-  }
+    maxAge: SESSION_TIMEOUT * 1000 // ✅ NOW MATCHES TTL
+  },
+  rolling: true, // ✅ ADDED
+  name: 'sessionId' // ✅ ADDED
 }));
 
 // Connect to the database

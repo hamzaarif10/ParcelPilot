@@ -23,21 +23,38 @@ import {
   ChevronRightIcon,
 } from '@chakra-ui/icons'
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 export default function WithSubnavigation() {
   const { isOpen, onToggle } = useDisclosure();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-  // Clear the auth token from localStorage
-  localStorage.removeItem("authToken");
-  localStorage.removeItem("userPostalCode");
-  
-  // Clear Shopify-related data to prevent data leakage between users
-  localStorage.removeItem("shopifyOrders");
-  localStorage.removeItem("lastSyncTime");
-  // Redirect to login or home page
-  navigate('/login'); // Adjust the path to your login page
+  const handleLogout = async () => {
+  try {
+    // Call server logout endpoint to destroy session
+    await axios.post(`${process.env.REACT_APP_BACKEND_URL}/auth/logout`, {}, {
+      withCredentials: true, // Include cookies
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+      }
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    // Don't block logout on server error - continue with cleanup
+  } finally {
+    // Clear local storage regardless of server response
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("userPostalCode");
+    localStorage.removeItem("shopifyOrders");
+    localStorage.removeItem("lastSyncTime");
+    
+    // Clear any session storage too
+    sessionStorage.removeItem('pendingShopifyShop');
+    sessionStorage.removeItem('pendingShopifyHost');
+    
+    // Redirect to login
+    navigate('/login');
+  }
 };
   return (
     <Box>

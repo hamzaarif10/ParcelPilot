@@ -170,6 +170,36 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ message: 'Error logging in' });
   }
 });
+//Logout route
+router.post('/logout', (req, res) => {
+  try {
+    // Destroy session if it exists
+    if (req.session) {
+      req.session.destroy((err) => {
+        if (err) {
+          console.error('Error destroying session:', err);
+          return res.status(500).json({ message: 'Error logging out' });
+        }
+        
+        // Clear the session cookie
+        res.clearCookie('sessionId');
+        
+        // Clear the auth token cookie
+        res.clearCookie('authToken');
+        
+        res.json({ message: 'Logged out successfully' });
+      });
+    } else {
+      // No session to destroy, just clear cookies
+      res.clearCookie('sessionId');
+      res.clearCookie('authToken');
+      res.json({ message: 'Logged out successfully' });
+    }
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({ message: 'Error logging out' });
+  }
+});
 // Password reset request endpoint
 router.post("/reset-password-request", async (req, res) => {
   const { email } = req.body;
