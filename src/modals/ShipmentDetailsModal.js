@@ -60,6 +60,12 @@ const ShipmentDetailsModal = ({ recipientName, recipientAddress, courierName, tr
           </ModalBody>
 
           <ModalFooter>
+            <Button colorScheme="blue" mr={3} onClick={() => window.location.href = "/create-shipment"}>
+              Create Another Shipement
+            </Button>
+            <Button colorScheme="blue" mr={3} onClick={() => window.location.href = "/view-labels"}>
+              View Shipments
+            </Button>
             <Button colorScheme="blue" mr={3} onClick={onClose}>
               Close
             </Button>

@@ -129,7 +129,6 @@ useEffect(() => {
         description: "Shipment for " + receiverContactName + " shipped via " + courierName,
         amount: courierCost
       });      
-      window.location.href = "/create-shipment";
   }
 }
 handleSubmit();
@@ -1102,6 +1101,34 @@ return (
         }}
       >
         Create Shipment
+      </button>
+      <button
+        type="button"
+        className="button"
+        style={{
+          backgroundColor: '#06b6d4',
+          color: '#ffffff',
+          padding: '12px 24px',
+          border: 'none',
+          borderRadius: '8px',
+          fontSize: '1em',
+          fontWeight: '600',
+          cursor: 'pointer',
+          transition: 'all 0.3s ease',
+          boxShadow: '0 3px 8px rgba(235, 131, 52, 0.3)',
+          outline: 'none',
+        }}
+        onMouseOver={(e) => {
+          e.currentTarget.style.backgroundColor = '#f26513';
+          e.currentTarget.style.boxShadow = '0 5px 12px rgba(153, 19, 242, 0.4)';
+        }}
+        onMouseOut={(e) => {
+          e.currentTarget.style.backgroundColor = '#06b6d4';
+          e.currentTarget.style.boxShadow = '0 3px 8px rgba(235, 131, 52, 0.3)';
+        }}
+        onClick={() => window.location.href = "/create-shipment"}
+      >
+        Create Another Shipment
       </button>
     </form>
     {modalType === 'shipmentDetails' && (
