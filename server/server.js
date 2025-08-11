@@ -8,7 +8,7 @@ const WebSocket = require('ws'); // You'll need to install this: npm install ws
 const jwt = require('jsonwebtoken'); // Make sure this is installed: npm install jsonwebtoken
 const { connectToDatabase } = require('./db');
 const { Redis } = require('@upstash/redis');
-const { refreshTokenMiddleware } = require('./middleware/auth');
+const { refreshTokenMiddleware } = require('./middleware/authenticateToken');
 dotenv.config();
 
 // Create Redis client using @upstash/redis
