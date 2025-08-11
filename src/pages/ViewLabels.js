@@ -459,7 +459,6 @@ function ViewLabels() {
                     </Td>
                     <Td>{label.courier_name}</Td>
                     <Td>{label.tracking_number}</Td>
-                    <Td>{label.date_created?.slice(0, 10)}</Td>
                     <Td>
                       {label.status === 'cancelled' ? (
                         <Flex align="center">
