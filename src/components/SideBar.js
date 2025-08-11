@@ -55,7 +55,7 @@ const SideBar = () => {
 
   return (
     <Box
-  w={isCollapsed ? '80px' : '250px'}
+  w={isCollapsed ? '70px' : '200px'}
   h="100vh"
   bgGradient="linear(to-b,rgb(0, 77, 77),rgb(102, 204, 204))" // Cyanish blue gradient
   color="white"
