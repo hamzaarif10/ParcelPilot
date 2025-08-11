@@ -3,6 +3,7 @@ import { Box, Button, VStack, Text, Icon } from '@chakra-ui/react';
 import { FaExchangeAlt, FaShippingFast, FaBox, FaUserCog, FaSignOutAlt, FaCreditCard, FaPlug, FaHeadset } from 'react-icons/fa'; // Updated icons
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftRight } from 'lucide-react';
+import axios from 'axios';
 
 const SideBar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
