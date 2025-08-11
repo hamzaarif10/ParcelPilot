@@ -429,9 +429,6 @@ function ViewLabels() {
                   <Th color="white" fontSize="lg">
                     <Icon as={FaBarcode} mr={2} color="orange" /> Tracking ID
                   </Th>
-                  <Th color="white" fontSize="lg">
-                    <Icon as={FaBarcode} mr={2} color="orange" /> Date Created
-                  </Th>
                   <Th color="white" fontSize="lg">Actions</Th>
                 </Tr>
               </Thead>
