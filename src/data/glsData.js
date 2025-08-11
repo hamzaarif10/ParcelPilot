@@ -103,6 +103,6 @@ export const getGlsCreateShipmentData = ({
       "comments": "",
       "clearInProgress": true,
       "editTrackingNumber": "",
-      "returnSampleLabelOnly": true
+      "returnSampleLabelOnly": false
     };
   };
