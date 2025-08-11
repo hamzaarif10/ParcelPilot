@@ -1,7 +1,7 @@
 const express = require('express');
 const { getPool } = require('../db');
 const sql = require('mssql');
-const authenticateToken = require('../middleware/authenticateToken');
+const { authenticateToken } = require('../middleware/authenticateToken');
 const axios = require('axios');
 const router = express.Router();
 const { PDFDocument } = require('pdf-lib');

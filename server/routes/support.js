@@ -3,7 +3,7 @@ const { getPool } = require('../db');
 const sql = require('mssql');
 const router = express.Router();
 const nodemailer = require('nodemailer');
-const authenticateToken = require('../middleware/authenticateToken');
+const {authenticateToken} = require('../middleware/authenticateToken');
 
 // Setup Nodemailer Transporter
 const transporter = nodemailer.createTransport({

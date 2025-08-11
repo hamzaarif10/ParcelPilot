@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 const { getPool } = require('../db');
 const sql = require('mssql');
-const authenticateToken = require('../middleware/authenticateToken');
+const {authenticateToken} = require('../middleware/authenticateToken');
 
 const router = express.Router();
 
