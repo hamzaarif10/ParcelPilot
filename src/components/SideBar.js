@@ -13,13 +13,33 @@ const SideBar = () => {
   };
 
   // Function to handle logout
-  const handleLogout = () => {
-    // Clear the auth token from localStorage
+  const handleLogout = async () => {
+  try {
+    // Call server logout endpoint to destroy session
+    await axios.post(`${process.env.REACT_APP_BACKEND_URL}/auth/logout`, {}, {
+      withCredentials: true, // Include cookies
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+      }
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    // Don't block logout on server error - continue with cleanup
+  } finally {
+    // Clear local storage regardless of server response
     localStorage.removeItem("authToken");
-    localStorage.removeItem("userPostalCode"); 
-    // Redirect to the login page
+    localStorage.removeItem("userPostalCode");
+    localStorage.removeItem("shopifyOrders");
+    localStorage.removeItem("lastSyncTime");
+    
+    // Clear any session storage too
+    sessionStorage.removeItem('pendingShopifyShop');
+    sessionStorage.removeItem('pendingShopifyHost');
+    
+    // Redirect to login
     navigate('/login');
-  };
+  }
+};
 
   const menuItems = [
     { id: 2, label: 'Create Shipment', icon: FaShippingFast, route: '/create-shipment' },
