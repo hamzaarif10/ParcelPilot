@@ -24,7 +24,7 @@ class UpstashRedisStore extends session.Store {
     this.ttl = options.ttl || 86400; // One day in seconds
     this.client = options.client || redis;
   }
-
+//testing
   async get(sid, cb) {
     try {
       const key = this.prefix + sid;
