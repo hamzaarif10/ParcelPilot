@@ -158,7 +158,7 @@ router.post('/login', async (req, res) => {
 
     res.cookie('authToken', token, {
       httpOnly: true,
-      secure: true, // Only send cookie over HTTPS
+      secure: process.env.NODE_ENV === 'production', // Only send cookie over HTTPS in prod
       sameSite: 'lax', // Or 'none' if you embed it in Shopify iframe (see note below)
       maxAge: 3 * 60 * 60 * 1000 // 3 hours
     });

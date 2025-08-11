@@ -30,6 +30,7 @@ import ViewTransactions from './pages/ViewTransactions.js';
 import RateEstimate from './components/RateEstimate.js';
 import PrivacyPolicy from './pages/PrivacyPolicy.js';
 import ShopifyVerification from "./components/ShopifyVerification.js";
+import "./axiosConfig.js";
 
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISH_KEY);
 

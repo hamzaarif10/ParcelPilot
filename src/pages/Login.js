@@ -14,8 +14,6 @@ const Login = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [loginDisabled, setLoginDisabled] = useState(false);
 
-  axios.defaults.withCredentials = true;
-
   // Get the returnUrl from query parameters
   const getReturnUrl = () => {
     const params = new URLSearchParams(location.search);

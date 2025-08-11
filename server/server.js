@@ -8,6 +8,7 @@ const WebSocket = require('ws'); // You'll need to install this: npm install ws
 const jwt = require('jsonwebtoken'); // Make sure this is installed: npm install jsonwebtoken
 const { connectToDatabase } = require('./db');
 const { Redis } = require('@upstash/redis');
+const { refreshTokenMiddleware } = require('./middleware/auth');
 dotenv.config();
 
 // Create Redis client using @upstash/redis
@@ -217,7 +218,8 @@ app.use(session({
   rolling: true, // ✅ ADDED
   name: 'sessionId' // ✅ ADDED
 }));
-
+//Refresh jwt token middleware
+app.use(refreshTokenMiddleware);
 // Connect to the database
 connectToDatabase();
 // Routes
