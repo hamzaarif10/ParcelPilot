@@ -15,7 +15,7 @@ import { FaUser, FaEnvelope, FaMapMarkerAlt, FaBuilding, FaPhone } from "react-i
 import axios from "axios";
 import UserAddressModal from '../modals/UserAddressModal';
 import { EditIcon } from '@chakra-ui/icons'; 
-
+//testing
 function AccountDetails() {
   const [accountDetails, setAccountDetails] = useState(null);
   // Use Chakra UI's disclosure hook
