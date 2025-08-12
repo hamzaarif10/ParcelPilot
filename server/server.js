@@ -231,7 +231,6 @@ const pickUpRoute = require('./routes/pickups');
 const billingRoute = require('./routes/payment');
 const shopifyIntegrationRoute = require('./routes/shopifyIntegration');
 const fetchShopifyOrdersRoute = require('./routes/fetchShopifyOrders');
-const supportRoute = require('./routes/support');
 
 app.use('/user', userRoutes);
 app.use('/api', rateRoutes);
@@ -241,7 +240,6 @@ app.use('/pickups', pickUpRoute);
 app.use('/payment', billingRoute);
 app.use('/auth', shopifyIntegrationRoute);
 app.use('/fetchShopifyOrders', fetchShopifyOrdersRoute);
-app.use('/support', supportRoute);
 
 // Serve static files in production (React build)
 if (isProd) {

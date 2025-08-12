@@ -1,26 +1,21 @@
 // SupportPage.jsx
-import React, { useState } from 'react';
-import axios from 'axios';
+import React from 'react';
 import {
   Box,
   Button,
   Container,
-  FormControl,
-  FormLabel,
   Heading,
-  Input,
-  Textarea,
-  Alert,
-  AlertIcon,
-  AlertTitle,
-  AlertDescription,
+  Text,
+  Flex,
   VStack,
-  useToast,
+  Icon,
+  Link,
   ChakraProvider,
   extendTheme,
-  Text,
-  Flex
+  useColorModeValue,
+  HStack
 } from '@chakra-ui/react';
+import { EmailIcon, ExternalLinkIcon } from '@chakra-ui/icons';
 import SideBar from "../components/SideBar.js";
 
 // Custom theme definition with modern palette
@@ -53,75 +48,21 @@ const theme = extendTheme({
         colorScheme: 'brand',
       },
     },
-    Input: {
-      baseStyle: {
-        field: {
-          borderRadius: 'md',
-        },
-      },
-    },
-    Textarea: {
-      baseStyle: {
-        borderRadius: 'md',
-      },
-    },
   },
 });
 
 // Support Page Component
 const SupportPageContent = () => {
-  const [title, setTitle] = useState('');
-  const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState('');
-  const toast = useToast();
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!title.trim() || !message.trim()) {
-      setError('Please fill in all fields');
-      return;
-    }
-    
-    setLoading(true);
-    setError('');
-    
-    try {
-      // Get the authentication token from localStorage or wherever you store it
-      const token = localStorage.getItem('authToken');
-      
-      if (!token) {
-        throw new Error('You must be logged in to submit a support request');
-      }
-      
-      // Send the support request to your backend
-      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/support/submitTicket`, 
-        { title, message },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      
-      setSuccess(true);
-      setTitle('');
-      setMessage('');
-      
-      toast({
-        title: 'Request Submitted',
-        description: "We've received your support request and will get back to you soon.",
-        status: 'success',
-        duration: 5000,
-        isClosable: true,
-      });
-    } catch (err) {
-      setError(err.message || 'An error occurred. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
+  const handleEmailClick = () => {
+    window.location.href = 'mailto:support@parcelpilot.ca?subject=Support Request&body=Hi ParcelPilot Support Team,%0D%0A%0D%0APlease describe your issue or question below:%0D%0A%0D%0A';
   };
 
+  const bgGradient = useColorModeValue("linear(to-br, blue.50, purple.50)", "linear(to-br, gray.900, gray.800)");
+  const cardBg = useColorModeValue("white", "gray.800");
+  const textColor = useColorModeValue("gray.600", "gray.300");
+
   return (
-    <Box display="flex" minHeight="100vh" bgGradient="linear(to-br, blue.50, purple.50)">
+    <Box display="flex" minHeight="100vh" bgGradient={bgGradient}>
       {/* Sidebar */}
       <Box w={{ base: '80px', md: '250px' }} bg="gray.800" color="white" shadow="lg">
         <SideBar />
@@ -133,108 +74,129 @@ const SupportPageContent = () => {
           {/* Page header */}
           <Flex direction="column" align="flex-start" mb={8}>
             <Heading size="xl" mb={2}>Help & Support</Heading>
-            <Text color="gray.600">How can we help you today?</Text>
+            <Text color={textColor}>We're here to help you with any questions or issues.</Text>
           </Flex>
           
-          {/* Support form */}
+          {/* Support contact card */}
           <Box 
-            bg="white" 
+            bg={cardBg}
             borderRadius="xl" 
             boxShadow="lg"
             overflow="hidden"
             border="1px solid"
             borderColor="gray.100"
+            p={8}
           >
-            {success ? (
-              <Alert
-                status="success"
-                variant="subtle"
-                flexDirection="column"
-                alignItems="center"
-                justifyContent="center"
-                textAlign="center"
-                borderRadius="xl"
-                p={8}
+            <VStack spacing={6} textAlign="center">
+              {/* Email icon */}
+              <Box
+                bg="brand.50"
+                borderRadius="full"
+                p={4}
+                border="2px solid"
+                borderColor="brand.100"
               >
-                <AlertIcon boxSize="40px" mr={0} />
-                <AlertTitle mt={4} mb={2} fontSize="xl">
-                  Message Sent!
-                </AlertTitle>
-                <AlertDescription maxW="sm">
-                  Your support request has been submitted successfully. We'll get back to you soon.
-                </AlertDescription>
-                <Button 
-                  mt={6} 
-                  colorScheme="brand" 
-                  onClick={() => setSuccess(false)}
-                  size="lg"
-                  shadow="md"
-                >
-                  Send another message
-                </Button>
-              </Alert>
-            ) : (
-              <Box p={8}>
-                <form onSubmit={handleSubmit}>
-                  {error && (
-                    <Alert status="error" mb={6} borderRadius="md">
-                      <AlertIcon />
-                      <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                  )}
-                  
-                  <VStack spacing={6} align="stretch">
-                    <FormControl isRequired>
-                      <FormLabel htmlFor="title" fontWeight="medium">
-                        Subject
-                      </FormLabel>
-                      <Input
-                        id="title"
-                        placeholder="What's your question about?"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        size="lg"
-                        bg="gray.50"
-                        _focus={{ bg: "white", borderColor: "brand.300", shadow: "outline" }}
-                      />
-                    </FormControl>
-                    
-                    <FormControl isRequired>
-                      <FormLabel htmlFor="message" fontWeight="medium">
-                        Message
-                      </FormLabel>
-                      <Textarea
-                        id="message"
-                        placeholder="Tell us how we can help you..."
-                        size="lg"
-                        resize="vertical"
-                        rows={8}
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        bg="gray.50"
-                        _focus={{ bg: "white", borderColor: "brand.300", shadow: "outline" }}
-                      />
-                    </FormControl>
-                    
-                    <Button
-                      mt={2}
-                      colorScheme="brand"
-                      isLoading={loading}
-                      loadingText="Sending..."
-                      type="submit"
-                      size="lg"
-                      height="60px"
-                      shadow="md"
-                      _hover={{ transform: 'translateY(-1px)', shadow: 'lg' }}
-                      _active={{ transform: 'translateY(0px)' }}
-                      transition="all 0.2s"
-                    >
-                      Send Message
-                    </Button>
-                  </VStack>
-                </form>
+                <Icon as={EmailIcon} boxSize={10} color="brand.500" />
               </Box>
-            )}
+              
+              {/* Heading */}
+              <VStack spacing={2}>
+                <Heading size="lg" color="gray.800">
+                  Contact Our Support Team
+                </Heading>
+                <Text color={textColor} fontSize="lg" maxW="md" lineHeight="tall">
+                  For any questions, technical issues, or assistance with ParcelPilot, 
+                  please reach out to our support team directly via email.
+                </Text>
+              </VStack>
+              
+              {/* Email address display */}
+              <Box
+                bg="gray.50"
+                borderRadius="lg"
+                p={4}
+                border="1px solid"
+                borderColor="gray.200"
+                w="full"
+                maxW="sm"
+              >
+                <Text fontSize="lg" fontWeight="medium" color="brand.600">
+                  support@parcelpilot.ca
+                </Text>
+              </Box>
+              
+              {/* Action buttons */}
+              <VStack spacing={3} w="full" maxW="sm">
+                <Button
+                  size="lg"
+                  colorScheme="brand"
+                  leftIcon={<EmailIcon />}
+                  onClick={handleEmailClick}
+                  w="full"
+                  height="60px"
+                  shadow="md"
+                  _hover={{ transform: 'translateY(-1px)', shadow: 'lg' }}
+                  _active={{ transform: 'translateY(0px)' }}
+                  transition="all 0.2s"
+                >
+                  Send Email
+                </Button>
+                
+                <HStack spacing={4} w="full">
+                  <Button
+                    variant="outline"
+                    colorScheme="brand"
+                    size="md"
+                    flex={1}
+                    onClick={() => navigator.clipboard.writeText('support@parcelpilot.ca')}
+                  >
+                    Copy Email
+                  </Button>
+                  
+                  <Link 
+                    href="mailto:support@parcelpilot.ca" 
+                    isExternal
+                    flex={1}
+                  >
+                    <Button
+                      variant="ghost"
+                      colorScheme="brand"
+                      size="md"
+                      w="full"
+                      rightIcon={<ExternalLinkIcon />}
+                    >
+                      Open Mail App
+                    </Button>
+                  </Link>
+                </HStack>
+              </VStack>
+              
+              {/* Additional info */}
+              <Box
+                bg="blue.50"
+                borderRadius="lg"
+                p={4}
+                w="full"
+                borderLeft="4px solid"
+                borderLeftColor="brand.400"
+              >
+                <VStack spacing={2} align="start">
+                  <Text fontWeight="medium" color="gray.800">
+                    💡 Tips to get better support:
+                  </Text>
+                  <VStack spacing={1} align="start" fontSize="sm" color="gray.600">
+                    <Text>• Include specific details about your issue</Text>
+                    <Text>• Attach screenshots if relevant</Text>
+                    <Text>• Include any error messages you received</Text>
+                  </VStack>
+                </VStack>
+              </Box>
+              
+              {/* Response time */}
+              <Text fontSize="sm" color="gray.500" textAlign="center">
+                We typically respond within 30 mins to all requests received between 8am-6pm.
+              </Text>
+            </VStack>
           </Box>
         </Container>
       </Box>
