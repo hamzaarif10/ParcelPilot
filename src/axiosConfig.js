@@ -34,11 +34,11 @@ axios.interceptors.response.use(
   },
   (error) => {
     // Handle expired tokens
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('authToken');
-      window.location.href = '/login';
-    }
+    if ((error.response?.status === 401 || error.response?.status === 403) && !window.location.pathname.includes('/login')) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('authToken');
+    window.location.href = '/login';
+  }
     return Promise.reject(error);
   }
 );
