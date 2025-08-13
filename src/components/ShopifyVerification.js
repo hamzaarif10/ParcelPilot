@@ -108,7 +108,6 @@ const ShopifyVerification = () => {
     const pendingHost = sessionStorage.getItem('pendingShopifyHost');
     
     if (authToken && pendingShop && status === 'verifying') {
-      console.log('[SHOPIFY VERIFY] Found pending installation after login:', pendingShop);
       
       // User just logged in with pending installation
       const params = new URLSearchParams(window.location.search);
@@ -116,7 +115,6 @@ const ShopifyVerification = () => {
       
       if (!currentShop && pendingShop) {
         // Redirect to complete the pending installation
-        console.log('[SHOPIFY VERIFY] Redirecting to complete pending installation');
         window.location.href = `/shopify-verify?shop=${pendingShop}${pendingHost ? `&host=${pendingHost}` : ''}`;
       }
     }

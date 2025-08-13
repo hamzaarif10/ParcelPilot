@@ -85,7 +85,7 @@ function ViewLabels() {
     wsRef.current = new WebSocket(wsUrl);
     
     wsRef.current.onopen = () => {
-      console.log('WebSocket connection established');
+      //console.log('WebSocket connection established');
       
       // Send authentication message
       if (token) {
@@ -127,7 +127,7 @@ function ViewLabels() {
     };
     
     wsRef.current.onclose = () => {
-      console.log('WebSocket connection closed');
+      //console.log('WebSocket connection closed');
     };
     
     // Clean up WebSocket connection on unmount

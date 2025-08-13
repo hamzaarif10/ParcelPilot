@@ -27,7 +27,7 @@ const Login = () => {
     const existingHost = sessionStorage.getItem('pendingShopifyHost');
     
     if (existingShop) {
-      console.log('[LOGIN] Found existing pending Shopify installation:', existingShop);
+      //console.log('[LOGIN] Found existing pending Shopify installation:', existingShop);
       return; // Don't override existing pending data
     }
 
@@ -40,7 +40,7 @@ const Login = () => {
       const host = returnUrlParams.get('host');
       
       if (shop) {
-        console.log('[LOGIN] Found Shopify params in returnUrl:', { shop, host });
+        //console.log('[LOGIN] Found Shopify params in returnUrl:', { shop, host });
         sessionStorage.setItem('pendingShopifyShop', shop);
         if (host) {
           sessionStorage.setItem('pendingShopifyHost', host);
@@ -61,7 +61,7 @@ const Login = () => {
         const pendingHost = sessionStorage.getItem('pendingShopifyHost');
         
         if (pendingShop) {
-          console.log('[LOGIN] Redirecting to complete Shopify installation for shop:', pendingShop);
+          //console.log('[LOGIN] Redirecting to complete Shopify installation for shop:', pendingShop);
           
           // Don't clear the session storage yet - let the verification page do it
           // This ensures the data is available if something goes wrong

@@ -3,12 +3,6 @@ import axios from 'axios';
 export async function fulfillShopifyOrder(orderId, lineItemId, trackingNumber, trackingCompany, authToken) {
     let shopify_domain = "";
     let shopify_access_token = "";
-
-    //DEBUG
-    console.log("Order id: " + orderId);
-    console.log("line item id: " + lineItemId);
-    console.log("tracking number: " + trackingNumber);
-    console.log("tracking company: " + trackingCompany);
   
     if (!authToken) {
       console.error("Authentication token is missing");

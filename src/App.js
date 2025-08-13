@@ -44,7 +44,7 @@ const HomePage = () => {
     
     // If ANY Shopify parameters exist, redirect immediately to OAuth
     if (shop || host) {
-      console.log('Shopify parameters detected - redirecting to OAuth immediately');
+      //console.log('Shopify parameters detected - redirecting to OAuth immediately');
       window.location.href = `${process.env.REACT_APP_BACKEND_URL}/auth?shop=${shop}&host=${host || ''}`;
       return;
     }
