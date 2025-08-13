@@ -198,7 +198,7 @@ app.use("/webhooks", webHooksRoute);
 app.use(express.json());
 
 // Session middleware with custom Upstash Redis store
-const SESSION_TIMEOUT = 3 * 60 * 60; // 3 hours in seconds
+const SESSION_TIMEOUT = 5 * 60; // 3 hours in seconds
 
 app.use(session({
   store: new UpstashRedisStore({

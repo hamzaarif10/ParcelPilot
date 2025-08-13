@@ -7,6 +7,7 @@ const { getPool } = require('../db');
 const sql = require('mssql');
 const { fulfillShopifyOrder } = require('../../src/functions/fulfillShopifyOrder.js');
 const {capturePayment} = require('../../src/functions/payment.js');
+const {authenticateToken} = require('../middleware/authenticateToken');
 
 const Stripe = require('stripe');
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -46,7 +47,7 @@ const rateLimitMiddleware = async (req, res, next) => {
 };
 
 //Fetch gls rate
-router.post('/get-gls-rate', rateLimitMiddleware, async (req, res) => {
+router.post('/get-gls-rate', authenticateToken,rateLimitMiddleware, async (req, res) => {
   try {
     //added logging for shopify compliance
     console.log(`[ACCESS LOG] Rate requested for recipient postal code: ${req.body?.destination_address?.postal_code}`);
@@ -123,7 +124,7 @@ router.get('/download-gls-label', async (req, res) => {
   }
 });
 // Fetch rate from API
-router.post('/get-rate', rateLimitMiddleware, async (req, res) => {
+router.post('/get-rate', authenticateToken, rateLimitMiddleware, async (req, res) => {
   try {
     if (!req.body?.destination_address?.postal_code) { 
     console.log('[ACCESS LOG] Rate requested with missing postal code'); 
