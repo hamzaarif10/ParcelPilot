@@ -24,7 +24,7 @@ const refreshTokenMiddleware = (req, res, next) => {
     const now = Math.floor(Date.now() / 1000);
     const timeUntilExpiry = decoded.exp - now;
     
-    if (timeUntilExpiry < 120) { // CHANGE #1: Less than 2 minutes left (was 3600/1 hour)
+    if (timeUntilExpiry < 300) { // CHANGE #1: Less than 5 minutes left (was 3600/1 hour)
       // Issue new token with fresh 5-minute expiry - CHANGE #2
       const newToken = jwt.sign(
         { id: decoded.id, email: decoded.email }, 
