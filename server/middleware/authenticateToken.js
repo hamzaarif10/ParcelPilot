@@ -20,27 +20,27 @@ const refreshTokenMiddleware = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // Check if token expires in less than 2 minutes (120 seconds) - CHANGE #1
+    // Check if token expires in less than 1 hour (3600 seconds)
     const now = Math.floor(Date.now() / 1000);
     const timeUntilExpiry = decoded.exp - now;
     
-    if (timeUntilExpiry < 300) { // CHANGE #1: Less than 5 minutes left (was 3600/1 hour)
-      // Issue new token with fresh 5-minute expiry - CHANGE #2
+    if (timeUntilExpiry < 3600) { // Less than 1 hour left
+      // Issue new token with fresh 3-hour expiry
       const newToken = jwt.sign(
         { id: decoded.id, email: decoded.email }, 
         process.env.JWT_SECRET, 
-        { expiresIn: '5m' } // CHANGE #2: Was '3h'
+        { expiresIn: '3h' } // 3 hours
       );
       
       // Send new token in response header
       res.setHeader('X-New-Token', newToken);
       
-      // Also update the cookie - CHANGE #3
+      // Also update the cookie
       res.cookie('authToken', newToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 5 * 60 * 1000 // CHANGE #3: Was 3 * 60 * 60 * 1000
+        maxAge: 3 * 60 * 60 * 1000 // 3 hours in milliseconds
       });
     }
     

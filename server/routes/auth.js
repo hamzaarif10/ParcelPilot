@@ -154,13 +154,13 @@ router.post('/login', async (req, res) => {
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) return res.status(401).json({ message: 'Invalid password' });
 
-    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '5m' });
+    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '3h' });
 
     res.cookie('authToken', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production', // Only send cookie over HTTPS in prod
       sameSite: 'lax', // Or 'none' if you embed it in Shopify iframe (see note below)
-      maxAge: 5 * 60 * 1000  // 3 hours
+      maxAge: 3 * 60 * 60 * 1000  // 3 hours
     });
 
     res.json({ message: 'Login successful', token });
