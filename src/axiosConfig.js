@@ -37,6 +37,13 @@ axios.interceptors.response.use(
     if ((error.response?.status === 401 || error.response?.status === 403) && !window.location.pathname.includes('/login')) {
     localStorage.removeItem('token');
     localStorage.removeItem('authToken');
+    localStorage.removeItem("userPostalCode");
+    localStorage.removeItem("shopifyOrders");
+    localStorage.removeItem("lastSyncTime");
+    
+    // Clear any session storage too
+    sessionStorage.removeItem('pendingShopifyShop');
+    sessionStorage.removeItem('pendingShopifyHost');
     window.location.href = '/login';
   }
     return Promise.reject(error);
