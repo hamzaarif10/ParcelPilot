@@ -144,7 +144,7 @@ const Login = () => {
       <div className="container py-5 h-100">
         <div className="row d-flex justify-content-center align-items-center h-100">
           <div className="col-xl-10">
-            <div className="card rounded-3 text-black">
+            <div className="card rounded-3 text-black" style={{ border: "2px solid #dee2e6" }}>
               <div className="row g-0">
                 <div className="col-lg-6">
                   <div className="card-body p-md-5 mx-md-4">
@@ -156,31 +156,70 @@ const Login = () => {
                       <p>Please login to your account</p>
                       
                       {showShopifyMessage && (
-                        <div className="alert alert-info mb-3">
+                        <div className="alert alert-info mb-3" style={{ 
+                          border: "2px solid #b3d7ff",
+                          borderRadius: "8px"
+                        }}>
                           Please log in to complete your Shopify store installation.
                         </div>
                       )}
 
-                      <div className="form-outline mb-4">
+                      <div className="mb-4">
+                        <label htmlFor="form2Example11" style={{ 
+                          fontWeight: "500", 
+                          display: "block", 
+                          marginBottom: "8px",
+                          color: "#333"
+                        }}>
+                          Email
+                        </label>
                         <input
                           onChange={e => setEmail(e.target.value)}
                           type="text"
                           id="form2Example11"
-                          className="form-control"
-                          placeholder="Email Address"
+                          placeholder="Enter your email address"
+                          style={{ 
+                            width: "100%",
+                            padding: "12px 16px",
+                            border: "2px solid #ced4da",
+                            borderRadius: "8px",
+                            transition: "border-color 0.2s",
+                            fontSize: "16px",
+                            outline: "none",
+                            backgroundColor: "#fff"
+                          }}
+                          onFocus={(e) => e.target.style.borderColor = "#0d6efd"}
+                          onBlur={(e) => e.target.style.borderColor = "#ced4da"}
                         />
-                        <label className="form-label" htmlFor="form2Example11">Email</label>
                       </div>
 
-                      <div className="form-outline mb-4">
+                      <div className="mb-4">
+                        <label htmlFor="form2Example22" style={{ 
+                          fontWeight: "500", 
+                          display: "block", 
+                          marginBottom: "8px",
+                          color: "#333"
+                        }}>
+                          Password
+                        </label>
                         <input
                           onChange={e => setPassword(e.target.value)}
                           type="password"
                           id="form2Example22"
-                          className="form-control"
-                          placeholder="Password"
+                          placeholder="Enter your password"
+                          style={{ 
+                            width: "100%",
+                            padding: "12px 16px",
+                            border: "2px solid #ced4da",
+                            borderRadius: "8px",
+                            transition: "border-color 0.2s",
+                            fontSize: "16px",
+                            outline: "none",
+                            backgroundColor: "#fff"
+                          }}
+                          onFocus={(e) => e.target.style.borderColor = "#0d6efd"}
+                          onBlur={(e) => e.target.style.borderColor = "#ced4da"}
                         />
-                        <label className="form-label" htmlFor="form2Example22">Password</label>
                       </div>
 
                       {errorMsg && <div className="text-danger mt-1">{errorMsg}</div>}
@@ -190,10 +229,42 @@ const Login = () => {
                           className="btn btn-primary btn-block fa-lg gradient-custom-2 mb-3"
                           type="submit"
                           disabled={loginDisabled}
+                          style={{
+                            border: "2px solid #0d6efd",
+                            borderRadius: "8px",
+                            transition: "all 0.2s"
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.borderColor = "#0b5ed7";
+                            e.target.style.transform = "translateY(-1px)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.borderColor = "#0d6efd";
+                            e.target.style.transform = "translateY(0)";
+                          }}
                         >
                           {loginDisabled ? "Logging in..." : "Log in"}
                         </button>
-                        <Link className="text-muted" to="/reset-password-request">
+                        <Link 
+                          className="text-muted" 
+                          to="/reset-password-request"
+                          style={{ 
+                            border: "1px solid transparent",
+                            borderRadius: "4px",
+                            padding: "4px 8px",
+                            display: "inline-block",
+                            transition: "border-color 0.2s",
+                            textDecoration: "underline"
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.borderColor = "#6c757d";
+                            e.target.style.backgroundColor = "#f8f9fa";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.borderColor = "transparent";
+                            e.target.style.backgroundColor = "transparent";
+                          }}
+                        >
                           Forgot password?
                         </Link>
                       </div>
@@ -204,6 +275,23 @@ const Login = () => {
                           type="button"
                           className="btn btn-outline-danger"
                           onClick={() => navigate("/register")}
+                          style={{
+                            border: "2px solid #dc3545",
+                            borderRadius: "8px",
+                            transition: "all 0.2s"
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.borderColor = "#bb2d3b";
+                            e.target.style.backgroundColor = "#dc3545";
+                            e.target.style.color = "white";
+                            e.target.style.transform = "translateY(-1px)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.borderColor = "#dc3545";
+                            e.target.style.backgroundColor = "transparent";
+                            e.target.style.color = "#dc3545";
+                            e.target.style.transform = "translateY(0)";
+                          }}
                         >
                           Create new
                         </button>

@@ -19,23 +19,25 @@ function HeroSection() {
         animate={{ opacity: 1, y: 0 }} // Animate to normal position
         transition={{ duration: 1.5 }} // Duration of the animation
       >
-        <motion.h1 
-          className="hero-title"
-          initial={{ opacity: 0, y: -50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1 }}
-        >
-          <span style={{ color: 'lightgreen' }}>Save Big</span> on Shipping with GLS Rates
-        </motion.h1>
-        <motion.p 
-          className="hero-description"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 2 }}
-        >
-          Parcel Pilot gives you access to discounted GLS shipping rates, 
-          allowing you to save on your shipping costs while enjoying reliable and fast deliveries.
-        </motion.p>
+       <motion.h1 
+  className="hero-title"
+  initial={{ opacity: 0, y: -50 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 1 }}
+>
+  <span style={{ color: 'lightgreen' }}>Ship Smarter.</span> Save Big. Coast-to-Coast in Canada with ParcelPilot.
+</motion.h1>
+
+<motion.p 
+  className="hero-description"
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  transition={{ duration: 2 }}
+>
+  Stop overpaying for shipping. ParcelPilot helps Canadian sellers access <strong>deep discounts on every label</strong> — no contracts, no hidden fees, no minimums. Compare rates, buy labels, and fulfill orders <strong>faster and more efficiently than ever</strong>.
+</motion.p>
+
+
         <motion.button
           onClick={handleRegisterClick}
           className="cta-button"

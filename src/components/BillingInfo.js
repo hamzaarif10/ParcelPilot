@@ -110,8 +110,6 @@ export default function PricingPage() {
     "Print shipping labels with discounted rates",
     "Real-time tracking for all shipments",
     "Bulk shipping operations",
-    "Analytics and reporting dashboard",
-    "API access for custom integrations",
     "Email support"
   ];
 
@@ -129,7 +127,7 @@ export default function PricingPage() {
     {
       icon: <CustomDollarIcon boxSize={8} />,
       title: "Save Money",
-      description: "Get up to 30% off regular shipping rates with no markup - we pass savings to you."
+      description: "Get up to 70% off regular shipping rates with no markup - we pass savings to you."
     }
   ];
 
@@ -279,7 +277,7 @@ export default function PricingPage() {
             </Text>
             <Box bg="#fff" borderRadius="xl" p={4} border="1px solid #e2e8f0">
               <Text color="#2D3250" textAlign="center" fontWeight="semibold">
-                Example: Canada Post regular rate $15.00 → You pay only $12.50 (discounted rate)
+                Example: Canada Post regular rate $20.00 → You pay only $12.50 (discounted rate)
               </Text>
             </Box>
             <Text color="#64748b" textAlign="center" fontSize="sm">

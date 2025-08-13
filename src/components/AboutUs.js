@@ -73,7 +73,7 @@ const AboutUs = () => {
             mb="32px"
             fontFamily="'Open Sans', sans-serif"
           >
-            Parcel Pilot is Canada’s trusted shipping partner, serving businesses and individuals nationwide. Specializing in domestic and Canada-to-international shipping, we provide competitive rates and innovative technology to streamline logistics. Join us to experience efficient, reliable shipping tailored for Canada.
+            Parcel Pilot is Canada’s trusted shipping partner, serving businesses and individuals nationwide. Specializing in domestic shipping, we provide competitive rates and innovative technology to streamline logistics. Join us to experience efficient, reliable shipping tailored for Canada.
           </Text>
           <Button
             size="lg"
@@ -117,7 +117,7 @@ const AboutUs = () => {
             lineHeight="1.8"
             fontFamily="'Open Sans', sans-serif"
           >
-            Founded in Toronto in 2020, Parcel Pilot was created to address the shipping needs of Canadian businesses. We’re committed to connecting communities across Canada with affordable, reliable domestic shipping and empowering businesses to expand internationally. Our platform offers a seamless experience, from rate comparisons to tracking, backed by technology designed for efficiency. Our team, driven by Canadian values of trust and innovation, provides 24/7 support to ensure your shipments are delivered on time. With integrations for platforms like Shopify, we help small businesses and entrepreneurs thrive in a competitive market. At Parcel Pilot, we’re more than a shipping company—we’re your partner in building success across Canada and beyond.
+            Founded in Toronto in 2020, Parcel Pilot was created to address the shipping needs of Canadian businesses. We’re committed to connecting communities across Canada with affordable, reliable domestic shipping and empowering businesses to expand internationally. Our platform offers a seamless experience, from rate comparisons to tracking, backed by technology designed for efficiency. Our team, driven by Canadian values of trust and innovation, provides 24/7 support to ensure your shipments are delivered on time. With integrations for platforms like Shopify, we help small businesses and entrepreneurs thrive in a competitive market. At Parcel Pilot, we’re more than a shipping platform—we’re your partner in building success across Canada and beyond.
           </Text>
           <Button
             size="lg"
@@ -170,7 +170,9 @@ const AboutUs = () => {
               lineHeight="1.8"
               fontFamily="'Open Sans', sans-serif"
             >
-              Parcel Pilot is dedicated to empowering Canadian entrepreneurs with top-tier shipping solutions. Our mission is to make domestic shipping across Canada cost-effective and efficient, while enabling businesses to reach global markets seamlessly. We leverage advanced technology—offering AI-driven rate optimization, real-time tracking, and integrations with platforms like Etsy and WooCommerce—to simplify logistics. We’re committed to supporting local economies and promoting sustainable practices with eco-friendly shipping options. By delivering reliable service and unmatched support, we help Canadian businesses of all sizes grow and succeed. Parcel Pilot stands for trust and innovation, ensuring every shipment strengthens your operations and reflects the dependability Canada is known for.
+              Parcel Pilot helps Canadian Shopify sellers ship across Canada easily and affordably. Our mission is to make domestic shipping simple, fast, and cost-effective, so you can focus on growing your business.
+
+With real-time tracking and seamless Shopify integration, managing shipments has never been easier. We’re committed to providing reliable service and friendly support, helping Canadian businesses of all sizes succeed.
             </Text>
           </VStack>
         </Container>
@@ -196,7 +198,11 @@ const AboutUs = () => {
             lineHeight="1.8"
             fontFamily="'Open Sans', sans-serif"
           >
-            Parcel Pilot simplifies shipping for Canadian businesses, offering solutions for domestic and international deliveries. We provide discounted rates from trusted couriers for shipments across Canada and seamless tools for exporting goods worldwide. Our platform is designed with Canadian entrepreneurs in mind, featuring automated customs forms, bulk shipping capabilities for busy seasons, and integrations with Shopify to boost e-commerce efficiency. Whether you’re a small business sending products locally or a growing brand targeting international customers, we make logistics straightforward. Our Canada-based 24/7 support team ensures every shipment is handled with care, delivering reliability and peace of mind. With Parcel Pilot, shipping becomes a strategic advantage for your business.
+            Parcel Pilot makes shipping simple for Canadian Shopify businesses. We provide discounted rates from trusted couriers for shipments across Canada, along with tools to manage your orders efficiently.
+
+Our platform is built with Canadian entrepreneurs in mind, featuring seamless Shopify integration to save you time and effort.
+
+With our Canada-based support team, every shipment is handled with care, giving you reliability and peace of mind. With Parcel Pilot, shipping becomes easy, affordable, and stress-free for your business.
           </Text>
         </VStack>
       </Container>
@@ -360,7 +366,7 @@ const AboutUs = () => {
               {
                 year: '2025',
                 event: 'Leading the Industry',
-                details: 'Recognized as a top platform for domestic and international shipping in Canada.',
+                details: 'Recognized as a top platform for domestic shipping in Canada.',
               },
             ].map((milestone, index) => (
               <Flex
@@ -454,7 +460,7 @@ const AboutUs = () => {
             mx="auto"
             fontFamily="'Open Sans', sans-serif"
           >
-            Ready to optimize your shipping across Canada or globally? Join thousands of Canadian businesses trusting Parcel Pilot for affordable rates, innovative tools, and exceptional support.
+            Ready to optimize your shipping across Canada? Join thousands of Canadian businesses trusting Parcel Pilot for affordable rates, innovative tools, and exceptional support.
           </Text>
           <Button
             size="lg"

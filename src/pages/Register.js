@@ -134,47 +134,98 @@ const handleResendCode = async () => {
         <div className="container h-100">
           <div className="row d-flex justify-content-center align-items-center h-100">
             <div className="col-12 col-md-9 col-lg-7 col-xl-6">
-              <div className="card" style={{ borderRadius: "15px" }}>
+              <div className="card" style={{ borderRadius: "15px", border: "2px solid #dee2e6" }}>
                 <div className="card-body p-5">
                   {!isSubmitted ? (
                     <>
                       <h2 className="text-uppercase text-center mb-5">Create an account</h2>
                       <form onSubmit={handleSubmit}>
                         {/* Form Inputs */}
-                        <div data-mdb-input-init className="form-outline mb-4">
+                        <div className="mb-4">
+                          <label htmlFor="form3Example1cg" style={{ 
+                            fontWeight: "500", 
+                            display: "block", 
+                            marginBottom: "8px",
+                            color: "#333"
+                          }}>
+                            Your Name
+                          </label>
                           <input
                             onChange={(e) => setName(e.target.value)}
                             type="text"
                             id="form3Example1cg"
-                            className="form-control form-control-lg"
+                            placeholder="Enter your full name"
+                            style={{ 
+                              width: "100%",
+                              padding: "12px 16px",
+                              border: "2px solid #ced4da",
+                              borderRadius: "8px",
+                              transition: "border-color 0.2s",
+                              fontSize: "16px",
+                              outline: "none",
+                              backgroundColor: "#fff"
+                            }}
+                            onFocus={(e) => e.target.style.borderColor = "#0d6efd"}
+                            onBlur={(e) => e.target.style.borderColor = "#ced4da"}
                           />
-                          <label className="form-label" htmlFor="form3Example1cg">
-                            Your Name
-                          </label>
                         </div>
   
-                        <div data-mdb-input-init className="form-outline mb-4">
+                        <div className="mb-4">
+                          <label htmlFor="form3Example3cg" style={{ 
+                            fontWeight: "500", 
+                            display: "block", 
+                            marginBottom: "8px",
+                            color: "#333"
+                          }}>
+                            Your Email
+                          </label>
                           <input
                             onChange={(e) => setEmail(e.target.value)}
                             type="text"
                             id="form3Example3cg"
-                            className="form-control form-control-lg"
+                            placeholder="Enter your email address"
+                            style={{ 
+                              width: "100%",
+                              padding: "12px 16px",
+                              border: "2px solid #ced4da",
+                              borderRadius: "8px",
+                              transition: "border-color 0.2s",
+                              fontSize: "16px",
+                              outline: "none",
+                              backgroundColor: "#fff"
+                            }}
+                            onFocus={(e) => e.target.style.borderColor = "#0d6efd"}
+                            onBlur={(e) => e.target.style.borderColor = "#ced4da"}
                           />
-                          <label className="form-label" htmlFor="form3Example3cg">
-                            Your Email
-                          </label>
                         </div>
   
-                        <div data-mdb-input-init className="form-outline mb-4">
+                        <div className="mb-4">
+                          <label htmlFor="form3Example4cg" style={{ 
+                            fontWeight: "500", 
+                            display: "block", 
+                            marginBottom: "8px",
+                            color: "#333"
+                          }}>
+                            Password
+                          </label>
                           <input
                             onChange={(e) => setPassword(e.target.value)}
                             type="password"
                             id="form3Example4cg"
-                            className="form-control form-control-lg"
+                            placeholder="Enter your password"
+                            style={{ 
+                              width: "100%",
+                              padding: "12px 16px",
+                              border: "2px solid #ced4da",
+                              borderRadius: "8px",
+                              transition: "border-color 0.2s",
+                              fontSize: "16px",
+                              outline: "none",
+                              backgroundColor: "#fff"
+                            }}
+                            onFocus={(e) => e.target.style.borderColor = "#0d6efd"}
+                            onBlur={(e) => e.target.style.borderColor = "#ced4da"}
                           />
-                          <label className="form-label" htmlFor="form3Example4cg">
-                            Password
-                          </label>
                         </div>
   
                         <div id="passwordHelpBlock" className="form-text">
@@ -192,6 +243,19 @@ const handleResendCode = async () => {
                           type="submit"
                           disabled={registerDisabled}
                           className="btn btn-success btn-block btn-lg gradient-custom-4 text-body"
+                          style={{
+                            border: "2px solid #198754",
+                            borderRadius: "8px",
+                            transition: "all 0.2s"
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.borderColor = "#157347";
+                            e.target.style.transform = "translateY(-1px)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.borderColor = "#198754";
+                            e.target.style.transform = "translateY(0)";
+                          }}
                         >
                           {registerDisabled ? "Registering..." : "Register"}
                         </button>
@@ -199,7 +263,14 @@ const handleResendCode = async () => {
   
                         <p className="text-center text-muted mt-5 mb-0">
                           Already have an account?{" "}
-                          <a href="Login" className="fw-bold text-body">
+                          <a href="Login" className="fw-bold text-body" style={{ 
+                            border: "1px solid transparent",
+                            borderRadius: "4px",
+                            padding: "2px 4px",
+                            transition: "border-color 0.2s"
+                          }}
+                          onMouseEnter={(e) => e.target.style.borderColor = "#6c757d"}
+                          onMouseLeave={(e) => e.target.style.borderColor = "transparent"}>
                             <u>Login here</u>
                           </a>
                         </p>
@@ -208,33 +279,80 @@ const handleResendCode = async () => {
                   ) : (
                     <>
                       <h2 className="text-uppercase text-center mb-5">Email Verification</h2>
-                      <div data-mdb-input-init className="form-outline mb-4">
-                      <input
-                        type="text"
-                        placeholder="Enter verification code"
-                        value={code}
-                        onChange={(e) => setCode(e.target.value)}
-                        className="form-control form-control-lg"
-                      />
-                      <label className="form-label" htmlFor="form3Example1cg">
-                            Verification Code
-                          </label>
+                      <div className="mb-4">
+                        <label htmlFor="verificationCode" style={{ 
+                          fontWeight: "500", 
+                          display: "block", 
+                          marginBottom: "8px",
+                          color: "#333"
+                        }}>
+                          Verification Code
+                        </label>
+                        <input
+                          type="text"
+                          id="verificationCode"
+                          placeholder="Enter verification code"
+                          value={code}
+                          onChange={(e) => setCode(e.target.value)}
+                          style={{ 
+                            width: "100%",
+                            padding: "12px 16px",
+                            border: "2px solid #ced4da",
+                            borderRadius: "8px",
+                            transition: "border-color 0.2s",
+                            fontSize: "16px",
+                            outline: "none",
+                            backgroundColor: "#fff"
+                          }}
+                          onFocus={(e) => e.target.style.borderColor = "#0d6efd"}
+                          onBlur={(e) => e.target.style.borderColor = "#ced4da"}
+                        />
                       </div>
-                      <button 
-                        onClick={handleVerify} 
-                        disabled={verifyDisabled}
-                        className="btn btn-success btn-block btn-lg gradient-custom-4 text-body"
-                      >
-                        {verifyDisabled ? "Verifying..." : "Verify"}
-                      </button>
-                      <button 
-                        onClick={handleResendCode} 
-                        disabled={resendDisabled}
-                        className="btn btn-success btn-block btn-lg gradient-custom-4 text-body"
-                      >
-                        {resendDisabled ? `Resend Code (${resendTimer}s)` : "Resend Code"}
-                      </button>
-                      <p>{message}</p>
+                      <div className="d-flex flex-column gap-3">
+                        <button 
+                          onClick={handleVerify} 
+                          disabled={verifyDisabled}
+                          className="btn btn-success btn-block btn-lg gradient-custom-4 text-body"
+                          style={{
+                            border: "2px solid #198754",
+                            borderRadius: "8px",
+                            transition: "all 0.2s"
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.borderColor = "#157347";
+                            e.target.style.transform = "translateY(-1px)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.borderColor = "#198754";
+                            e.target.style.transform = "translateY(0)";
+                          }}
+                        >
+                          {verifyDisabled ? "Verifying..." : "Verify"}
+                        </button>
+                        <button 
+                          onClick={handleResendCode} 
+                          disabled={resendDisabled}
+                          className="btn btn-outline-success btn-block btn-lg"
+                          style={{
+                            border: "2px solid #198754",
+                            borderRadius: "8px",
+                            transition: "all 0.2s"
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.borderColor = "#157347";
+                            e.target.style.backgroundColor = "#198754";
+                            e.target.style.color = "white";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.borderColor = "#198754";
+                            e.target.style.backgroundColor = "transparent";
+                            e.target.style.color = "#198754";
+                          }}
+                        >
+                          {resendDisabled ? `Resend Code (${resendTimer}s)` : "Resend Code"}
+                        </button>
+                      </div>
+                      <p className="mt-3">{message}</p>
                     </>
                   )}
                 </div>

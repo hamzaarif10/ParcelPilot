@@ -238,7 +238,7 @@ const UserAddressModal = ({ isOpen, onClose, isFirstLogin, shouldReload }) => {
     >
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader textAlign="center">Please enter your address:</ModalHeader>
+        <ModalHeader textAlign="center">Please enter the address you will be shipping from (you can change this later)</ModalHeader>
         {/* Conditionally disable the close button */}
         {!shouldDisableClose && <ModalCloseButton />}
         <ModalBody>

@@ -69,6 +69,11 @@ function RateEstimateForm(props) {
 
     // Fix for the modal freezing issue
     useEffect(() => {
+      const authToken = localStorage.getItem("authToken");
+      if (!authToken)
+      {
+        return;
+      }
         if (isOpen) {
             // Modal is opening
             setModalWasOpen(true);
@@ -105,6 +110,11 @@ function RateEstimateForm(props) {
     
     // Check if it's the user's first login and open the modal if it is
     useEffect(() => {
+      const authToken = localStorage.getItem("authToken");
+      if (!authToken)
+      {
+        return;
+      }
         const checkFirstLogin = async () => {
             const token = localStorage.getItem("authToken");
             try {
@@ -124,6 +134,11 @@ function RateEstimateForm(props) {
     
     //set labels printed and sender postal code
     useEffect(() => {
+      const authToken = localStorage.getItem("authToken");
+      if (!authToken)
+      {
+        return;
+      }
         //labels printed
         const fetchLabelsPrintedCount = async () => {
             const token = localStorage.getItem("authToken");
