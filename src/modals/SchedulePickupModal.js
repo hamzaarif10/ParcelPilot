@@ -25,6 +25,7 @@ function SchedulePickupModal({ shipmentId, trackingNumber, courierId, isOpen, on
   const [pickupFee, setPickupFee] = useState(0);
 
   const [isLoading, setIsLoading] = useState(false);
+  
 
   //Get pickup fee based on the courier selected
   const getPickupFee = (courierId) => {
@@ -254,56 +255,146 @@ const getNextBusinessDays = (count) => {
   }
 }
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>Schedule Pickup</ModalHeader>
-        <ModalCloseButton />
-        <ModalBody>
-          <FormControl isRequired mt={4}>
-            <FormLabel>Pickup Time:</FormLabel>
-            <select
-              id="pickupTime"
-              value={pickupTime}
-              onChange={(e) => {
-                const selectedTime = e.target.value;
-                setPickupTime(selectedTime);
+  <Modal isOpen={isOpen} onClose={onClose}>
+    <ModalOverlay />
+    <ModalContent>
+      <ModalHeader>Schedule Pickup</ModalHeader>
+      <ModalCloseButton />
+      <ModalBody>
+        {/* Next Day Pickup Cutoff Times */}
+        <div style={{ 
+          marginBottom: '24px', 
+          padding: '16px', 
+          backgroundColor: '#f8fafc', 
+          borderRadius: '8px',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        }}>
+          <div style={{ 
+            fontSize: '16px', 
+            fontWeight: '600', 
+            marginBottom: '8px',
+            color: '#2d3748',
+            display: 'flex',
+            alignItems: 'center'
+          }}>
+            <span style={{ 
+              marginRight: '8px', 
+              fontSize: '18px' 
+            }}>⏰</span>
+            Next Day Pickup Cutoff Times
+          </div>
+          <div style={{
+            fontSize: '13px',
+            color: '#4a5568',
+            marginBottom: '12px',
+            fontStyle: 'italic'
+          }}>
+            Next-day pickup is unavailable after these cutoff times (EST)
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+            <div style={{ 
+              padding: '8px 12px', 
+              backgroundColor: 'white', 
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontWeight: '500',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              border: '1px solid #e2e8f0'
+            }}>
+              <span>Canada Post</span>
+              <span style={{ color: '#e53e3e', fontWeight: '600' }}>7:00 PM</span>
+            </div>
+            <div style={{ 
+              padding: '8px 12px', 
+              backgroundColor: 'white', 
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontWeight: '500',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              border: '1px solid #e2e8f0'
+            }}>
+              <span>Canpar</span>
+              <span style={{ color: '#dd6b20', fontWeight: '600' }}>8:00 PM</span>
+            </div>
+            <div style={{ 
+              padding: '8px 12px', 
+              backgroundColor: 'white', 
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontWeight: '500',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              border: '1px solid #e2e8f0'
+            }}>
+              <span>Purolator</span>
+              <span style={{ color: '#d69e2e', fontWeight: '600' }}>9:00 PM</span>
+            </div>
+            <div style={{ 
+              padding: '8px 12px', 
+              backgroundColor: 'white', 
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontWeight: '500',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              border: '1px solid #e2e8f0'
+            }}>
+              <span>GLS</span>
+              <span style={{ color: '#38a169', fontWeight: '600' }}>11:59 PM</span>
+            </div>
+          </div>
+        </div>
 
-                // Set pickupSlotId when time is selected
-                const [date, time] = selectedTime.split(": ");
-                const selectedSlot = formattedPickupTimes.find(slot => slot.date === date);
-                const selectedTimeSlotId = selectedSlot?.time_slot_ids.find((id, idx) => {
-                  return `${date}: ${selectedSlot.time.split(', ')[idx]}` === selectedTime;
-                });
-                setPickupSlotId(selectedTimeSlotId || "GLS_FIXED_SLOT");
-                setPickupDate(date);
-              }}
-            >
-              <option value="">Select a time</option>
-              {formattedPickupTimes.map((slot, index) => (
-                <optgroup key={index} label={slot.date}>
-                  {slot.time.split(', ').map((time, idx) => (
-                    <option key={idx} value={`${slot.date}: ${time}`}>
-                      {`${slot.date}: ${time}`}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-            {pickupFee != null && <label>Pickup Fee: ${pickupFee}</label>} 
-
-          </FormControl>
-        </ModalBody>
-
-        <ModalFooter>
+        <FormControl isRequired mt={4}>
+          <FormLabel>Pickup Time:</FormLabel>
+          <select
+            id="pickupTime"
+            value={pickupTime}
+            onChange={(e) => {
+              const selectedTime = e.target.value;
+              setPickupTime(selectedTime);
+              
+              // Set pickupSlotId when time is selected
+              const [date, time] = selectedTime.split(": ");
+              const selectedSlot = formattedPickupTimes.find(slot => slot.date === date);
+              const selectedTimeSlotId = selectedSlot?.time_slot_ids.find((id, idx) => {
+                return `${date}: ${selectedSlot.time.split(', ')[idx]}` === selectedTime;
+              });
+              setPickupSlotId(selectedTimeSlotId || "GLS_FIXED_SLOT");
+              setPickupDate(date);
+            }}
+          >
+            <option value="">Select a time</option>
+            {formattedPickupTimes.map((slot, index) => (
+              <optgroup key={index} label={slot.date}>
+                {slot.time.split(', ').map((time, idx) => (
+                  <option key={idx} value={`${slot.date}: ${time}`}>
+                    {`${slot.date}: ${time}`}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+          {pickupFee != null && <label>Pickup Fee: ${pickupFee}</label>}
+        </FormControl>
+      </ModalBody>
+      
+      <ModalFooter>
         <Button colorScheme="teal" mr={3} onClick={handleSchedule} isLoading={isLoading}>
-            Schedule
-          </Button>
-          <Button onClick={onClose}>Cancel</Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
-  );
+          Schedule
+        </Button>
+        <Button onClick={onClose}>Cancel</Button>
+      </ModalFooter>
+    </ModalContent>
+  </Modal>
+);
 }
 
 export default SchedulePickupModal;
