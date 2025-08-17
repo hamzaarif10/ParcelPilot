@@ -87,13 +87,11 @@ export default function WithSubnavigation() {
           />
         </Flex>
         <Flex flex={{ base: 1 }} justify={{ base: 'center', md: 'start' }}>
-          <img src="/logo.png" alt="Logo" className="logo" /> {/* Replace with your logo */}
-
+          <img src="/logo.png" alt="Logo" className="logo" />  
           <Flex display={{ base: 'none', md: 'flex' }} ml={10}>
             <DesktopNav />
           </Flex>
         </Flex>
-
         <Stack
           flex={{ base: 1, md: 0 }}
           justify={'flex-end'}
@@ -116,11 +114,9 @@ export default function WithSubnavigation() {
           </Button>
         </Stack>
       </Flex>
-
       <Collapse in={isOpen} animateOpacity>
         <MobileNav />
       </Collapse>
-
       {/* Add margin-top to offset the fixed navbar */}
       <Box mt="97px">
         {/* Your content goes here */}

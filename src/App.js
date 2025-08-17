@@ -5,7 +5,7 @@ import HeroSection from './components/HeroSection';
 import BenefitsSection from './components/BenefitsSection';
 import HowItWorks from './components/HowItWorks.js';
 import AboutUs from './components/AboutUs.js';
-import PricingPage from './components/BillingInfo.js';
+import LandingPageRateEstimate from './components/LandingPageRateEstimate.js';
 import RateEstimateForm from './components/RateEstimateForm';
 import Footer from './components/Footer';
 import Register from './pages/Register';
@@ -69,11 +69,9 @@ const HomePage = () => {
   // Only render homepage for regular visitors (no Shopify params)
   return (
     <>
-      <Navbar />
+      <Navbar/>
       <HeroSection />
-      <RateEstimateForm />
-      <BenefitsSection />
-      <Footer />
+      <Footer/>
     </>
   );
 };
@@ -86,7 +84,7 @@ function App() {
           <Route index element={<HomePage />} />
           <Route path="/shopify-verify" element={<ShopifyVerification />} />
           <Route path="/how-it-works" element={<div><Navbar/><HowItWorks/><Footer/></div>}/>
-          <Route path="/billing-info" element={<div><Navbar/><PricingPage/><Footer/></div>}/>
+          <Route path="/rate-estimate" element={<div><Navbar/><LandingPageRateEstimate/><Footer/></div>}/>
           <Route path="/about-us" element={<div><Navbar/><AboutUs/><Footer/></div>}/>
           <Route path="/register" element={<div><Navbar/><Register/></div>}/>
           <Route path="/login" element={<div><Navbar/><Login/></div>}/>

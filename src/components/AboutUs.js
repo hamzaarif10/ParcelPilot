@@ -13,9 +13,8 @@ import {
   Icon,
 } from '@chakra-ui/react';
 import { FaRocket, FaHeadset, FaLeaf } from 'react-icons/fa';
-
 const AboutUs = () => {
-  // Colors for light/dark mode backgrounds
+   // Colors for light/dark mode backgrounds
   const bgColor = useColorModeValue('#f7fafc', '#1a202c');
   const cardBg = useColorModeValue('#ffffff', '#2d3748');
   const textColor = useColorModeValue('#4a5568', '#e2e8f0');
@@ -35,68 +34,33 @@ const AboutUs = () => {
   const blueToPurple = 'linear-gradient(to right, #007bff, #6b46c1)';
   const purpleToOrange = 'linear-gradient(to right, #6b46c1, #ff6200)';
   const orangeToBlue = 'linear-gradient(to right, #ff6200, #007bff)';
-
   return (
-    <Box bg={bgColor} minH="100vh">
-      {/* Hero Section */}
-      <Box
-        bgGradient={heroGradient}
-        color="#ffffff"
-        py={{ base: '80px', md: '120px' }}
-        textAlign="center"
-        position="relative"
-        _before={{
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          bg: 'rgba(0, 0, 0, 0.3)',
-          zIndex: 1,
-        }}
+    <div>
+      {/* Breadcrumb */}
+      <div 
+        className="pp-breadcrumb-wrapper fix bg-cover" 
+        style={{ backgroundImage: "url(assets/img/inner-page/breadcrumb.png)" }}
       >
-        <Container maxW="container.lg" position="relative" zIndex={2}>
-          <Heading
-            as="h1"
-            fontSize={{ base: '4xl', md: '5xl' }}
-            mb="24px"
-            fontWeight="bold"
-            fontFamily="'Poppins', sans-serif"
-          >
-            About Parcel Pilot
-          </Heading>
-          <Text
-            fontSize={{ base: 'lg', md: 'xl' }}
-            maxW="700px"
-            mx="auto"
-            mb="32px"
-            fontFamily="'Open Sans', sans-serif"
-          >
-            Parcel Pilot is Canada’s trusted shipping partner, serving businesses and individuals nationwide. Specializing in domestic shipping, we provide competitive rates and innovative technology to streamline logistics. Join us to experience efficient, reliable shipping tailored for Canada.
-          </Text>
-          <Button
-            size="lg"
-            bg={vibrantOrange}
-            color="#ffffff"
-            fontWeight="bold"
-            borderRadius="md"
-            px="32px"
-            py="12px"
-            _hover={{
-              bg: '#cc4e00',
-              transform: 'scale(1.05)',
-              transition: 'all 0.2s',
-            }}
-            as="a"
-            href="/register"
-            fontFamily="'Poppins', sans-serif"
-          >
-            Start Shipping Now
-          </Button>
-        </Container>
-      </Box>
+        <div className="container">
+          <div className="pp-page-heading">
+            <div className="pp-breadcrumb-sub-title">
+              <h1 className="wow fadeInUp" data-wow-delay=".3s">About Parcel Pilot</h1>
+            </div>
+            <ul className="pp-breadcrumb-items wow fadeInUp" data-wow-delay=".5s">
+              <li>
+                <a href="/">Home</a>
+              </li>
+              <li>
+                <i className="fa-solid fa-chevron-right"></i>
+              </li>
+              <li>About Us</li>
+            </ul>
+          </div>
+        </div>
+      </div>
 
+      {/* About Section */}
+      <Box bg={bgColor} minH="100vh">
       {/* Who We Are Section */}
       <Container maxW="container.xl" py={{ base: '64px', md: '96px' }}>
         <VStack spacing="40px" textAlign="center">
@@ -118,91 +82,6 @@ const AboutUs = () => {
             fontFamily="'Open Sans', sans-serif"
           >
             Founded in Toronto in 2020, Parcel Pilot was created to address the shipping needs of Canadian businesses. We’re committed to connecting communities across Canada with affordable, reliable domestic shipping and empowering businesses to expand internationally. Our platform offers a seamless experience, from rate comparisons to tracking, backed by technology designed for efficiency. Our team, driven by Canadian values of trust and innovation, provides 24/7 support to ensure your shipments are delivered on time. With integrations for platforms like Shopify, we help small businesses and entrepreneurs thrive in a competitive market. At Parcel Pilot, we’re more than a shipping platform—we’re your partner in building success across Canada and beyond.
-          </Text>
-          <Button
-            size="lg"
-            border="2px solid"
-            borderColor={vibrantOrange}
-            color={vibrantOrange}
-            bg="transparent"
-            fontWeight="bold"
-            borderRadius="md"
-            px="32px"
-            py="12px"
-            _hover={{
-              bg: vibrantOrange,
-              color: '#ffffff',
-              transform: 'scale(1.05)',
-              transition: 'all 0.2s',
-            }}
-            as="a"
-            href="/how-it-works"
-            fontFamily="'Poppins', sans-serif"
-          >
-            See How It Works
-          </Button>
-        </VStack>
-      </Container>
-
-      {/* Our Mission Section */}
-      <Box
-        bg={cardBg}
-        py={{ base: '64px', md: '96px' }}
-        borderTop="4px solid"
-        borderColor={richPurple}
-      >
-        <Container maxW="container.xl">
-          <VStack spacing="40px" textAlign="center">
-            <Heading
-              as="h2"
-              fontSize={{ base: '3xl', md: '4xl' }}
-              fontWeight="bold"
-              bgGradient={purpleToOrange}
-              bgClip="text"
-              fontFamily="'Poppins', sans-serif"
-            >
-              Our Mission
-            </Heading>
-            <Text
-              fontSize={{ base: 'md', md: 'lg' }}
-              color={textColor}
-              maxW="900px"
-              lineHeight="1.8"
-              fontFamily="'Open Sans', sans-serif"
-            >
-              Parcel Pilot helps Canadian Shopify sellers ship across Canada easily and affordably. Our mission is to make domestic shipping simple, fast, and cost-effective, so you can focus on growing your business.
-
-With real-time tracking and seamless Shopify integration, managing shipments has never been easier. We’re committed to providing reliable service and friendly support, helping Canadian businesses of all sizes succeed.
-            </Text>
-          </VStack>
-        </Container>
-      </Box>
-
-      {/* What We Do Section */}
-      <Container maxW="container.xl" py={{ base: '64px', md: '96px' }}>
-        <VStack spacing="40px" textAlign="center">
-          <Heading
-            as="h2"
-            fontSize={{ base: '3xl', md: '4xl' }}
-            fontWeight="bold"
-            bgGradient={orangeToBlue}
-            bgClip="text"
-            fontFamily="'Poppins', sans-serif"
-          >
-            What We Do
-          </Heading>
-          <Text
-            fontSize={{ base: 'md', md: 'lg' }}
-            color={textColor}
-            maxW="900px"
-            lineHeight="1.8"
-            fontFamily="'Open Sans', sans-serif"
-          >
-            Parcel Pilot makes shipping simple for Canadian Shopify businesses. We provide discounted rates from trusted couriers for shipments across Canada, along with tools to manage your orders efficiently.
-
-Our platform is built with Canadian entrepreneurs in mind, featuring seamless Shopify integration to save you time and effort.
-
-With our Canada-based support team, every shipment is handled with care, giving you reliability and peace of mind. With Parcel Pilot, shipping becomes easy, affordable, and stress-free for your business.
           </Text>
         </VStack>
       </Container>
@@ -484,6 +363,10 @@ With our Canada-based support team, every shipment is handled with care, giving 
         </Container>
       </Box>
     </Box>
+    <div style={{height: '230px', position: 'relative', zIndex: 999}}>
+    {/* empty */}
+</div>
+    </div>
   );
 };
 

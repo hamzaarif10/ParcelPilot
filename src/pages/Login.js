@@ -82,7 +82,10 @@ const Login = () => {
               status: "success",
               duration: 3000,
               isClosable: true,
-              position: "top"
+              position: "top",
+              containerStyle: {
+                marginTop: "100px", // adjust how far from top
+              }
             });
 
             window.location.href = "/create-shipment";
@@ -108,7 +111,10 @@ const Login = () => {
         status: "error",
         duration: 5000,
         isClosable: true,
-        position: "top"
+        position: "top", // keep top
+        containerStyle: {
+          marginTop: "100px", // adjust how far from top
+        },
       });
 
       setLoginDisabled(false);
@@ -140,6 +146,10 @@ const Login = () => {
   const showShopifyMessage = sessionStorage.getItem('pendingShopifyShop') !== null;
 
   return (
+    <div>
+    <div style={{height: '100px', position: 'relative', zIndex: 999}}>
+    {/* empty */}
+</div>
     <section className="h-100 gradient-form" style={{ backgroundColor: '#eee' }}>
       <div className="container py-5 h-100">
         <div className="row d-flex justify-content-center align-items-center h-100">
@@ -313,6 +323,7 @@ const Login = () => {
         </div>
       </div>
     </section>
+    </div>
   );
 };
 
