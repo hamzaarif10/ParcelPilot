@@ -1,56 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import "./assets/css/bootstrap.min.css";
-import "./assets/css/all.min.css";
-import "./assets/css/animate.css";
-import "./assets/css/magnific-popup.css";
-import "./assets/css/meanmenu.css";
-import "./assets/css/swiper-bundle.min.css";
-import "./assets/css/nice-select.css";
-import "./assets/css/main.css";
+
 function Navbar() {
-  const navigate = useNavigate();
-  const [isOpen, setIsOpen] = useState(false);
-
-   useEffect(() => {
-    const scripts = [
-      "./assets/js/jquery-3.7.1.min.js",
-      "./assets/js/bootstrap.bundle.min.js",
-      "./assets/js/jquery.nice-select.min.js",
-      "./assets/js/jquery.waypoints.js",
-      "./assets/js/jquery.counterup.min.js",
-      "./assets/js/swiper-bundle.min.js",
-      "./assets/js/jquery.meanmenu.min.js",
-      "./assets/js/jquery.magnific-popup.min.js",
-      "./assets/js/wow.min.js",
-      "./assets/js/main.js",
-    ];
-
-    const addedScripts = [];
-
-    const loadScript = (src) =>
-      new Promise((resolve, reject) => {
-        const script = document.createElement("script");
-        script.src = src;
-        script.async = false;
-        script.onload = resolve;
-        script.onerror = reject;
-        document.body.appendChild(script);
-        addedScripts.push(script);
-      });
-
-    (async () => {
-      for (const src of scripts) await loadScript(src);
-    })();
-
-    return () => {
-      // Cleanup: remove scripts when leaving landing page
-      addedScripts.forEach((s) => s.remove());
-    };
-  }, []);
-
-
-
   return (
    <div>
     
