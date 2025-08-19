@@ -1,149 +1,157 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
 
 function Navbar() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Inline styles for mobile menu
+  const offcanvasStyle = {
+    position: "fixed",
+    top: 0,
+    right: menuOpen ? 0 : "-300px", // slide in/out
+    width: "280px",
+    height: "100%",
+    background: "#fff",
+    boxShadow: "-3px 0 10px rgba(0,0,0,0.2)",
+    transition: "right 0.3s ease",
+    zIndex: 1000,
+    overflowY: "auto",
+    padding: "30px 20px",
+    display: "flex",
+    flexDirection: "column",
+  };
+
+  const overlayStyle = {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    background: "rgba(0,0,0,0.5)",
+    opacity: menuOpen ? 1 : 0,
+    visibility: menuOpen ? "visible" : "hidden",
+    transition: "opacity 0.3s ease",
+    zIndex: 900,
+  };
+
+  const hamburgerStyle = {
+    cursor: "pointer",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    zIndex: 1100,
+  };
+
+  const barStyle = {
+    width: "25px",
+    height: "3px",
+    backgroundColor: "#000",
+    margin: "4px 0",
+    borderRadius: "2px",
+  };
+
+  const mobileLinkStyle = {
+    marginBottom: "20px",
+    fontSize: "16px",
+    fontWeight: 500,
+    color: "#000",
+    textDecoration: "none",
+  };
+
+  const mobileButtonStyle = {
+    display: "block",
+    padding: "10px 20px",
+    marginBottom: "15px",
+    background: "#007bff",
+    color: "#fff",
+    borderRadius: "6px",
+    textAlign: "center",
+    textDecoration: "none",
+    fontWeight: 600,
+  };
+
   return (
-   <div>
-    
-        {/* pp Back To Top Start */}
-        <button id="pp-back-top" class="pp-back-to-top show">
-           <i class="fa-solid fa-arrow-up"></i>
-        </button>
-
-        {/* pp MouseCursor Start */}
-        <div class="mouseCursor cursor-outer"></div>
-        <div class="mouseCursor cursor-inner"></div>
-
-        {/* Offcanvas Area Start */}
-         <div class="fix-area">
-            <div class="offcanvas__info">
-                <div class="offcanvas__wrapper">
-                    <div class="offcanvas__content">
-                        <div class="offcanvas__top mb-5 d-flex justify-content-between align-items-center">
-                            <div class="offcanvas__logo">
-                                <a href="/">
-                                    <img src="assets/img/logo/black-logo.png" alt="logo-img" />
-
-                                </a>
-                            </div>
-                            <div class="offcanvas__close">
-                                <button>
-                                <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <p class="text d-none d-xl-block">
-                            Nullam dignissim, ante scelerisque the  is euismod fermentum odio sem semper the is erat, a feugiat leo urna eget eros. Duis Aenean a imperdiet risus.
-                        </p>
-                        <div class="mobile-menu fix mb-3"></div>
-                         <a href="/register" class="pp-theme-btn">
-                                <span class="pp-icon-btn"><i class="icon-icon-1"></i></span>
-                                <span class="pp-text-btn">
-                                    <span class="pp-text-2">Get Started</span>
-                                </span>
-                            </a>
-                            <a href="/login" class="pp-theme-btn">
-                                <span class="pp-icon-btn"><i class="icon-icon-1"></i></span>
-                                <span class="pp-text-btn">
-                                    <span class="pp-text-2">Login</span>
-                                </span>
-                            </a>
-                        <div class="offcanvas__contact">
-                            <h4>Contact Info</h4>
-                            <ul>
-                                
-                                <li class="d-flex align-items-center">
-                                    <div class="offcanvas__contact-icon mr-15">
-                                        <i class="fal fa-envelope"></i>
-                                    </div>
-                                    <div class="offcanvas__contact-text">
-                                        <a href="mailto:info@example.com"><span class="mailto:info@example.com">support@parcelpilot.ca</span></a>
-                                    </div>
-                                </li>
-                                <li class="d-flex align-items-center">
-                                    <div class="offcanvas__contact-icon mr-15">
-                                        <i class="fal fa-clock"></i>
-                                    </div>
-                                    <div class="offcanvas__contact-text">
-                                        <a target="_blank" href="#">Monday-friday, 09am - 05pm</a>
-                                    </div>
-                                </li>
-                            </ul>
-                            <div class="header-button mt-4">
-                                
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <div>
+      {/* Offcanvas Mobile Menu */}
+      <div style={offcanvasStyle}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Link to="/">
+            <img src="assets/img/logo/black-logo.png" alt="logo-img" style={{ maxWidth: "120px" }} />
+          </Link>
+          <button
+            onClick={() => setMenuOpen(false)}
+            style={{ background: "none", border: "none", fontSize: "24px", cursor: "pointer" }}
+          >
+            &times;
+          </button>
         </div>
-        <div class="offcanvas__overlay"></div>
 
-        {/* Header Section Start */}
-         <header id="header-sticky" class="header-1">
-            <div class="container-fluid">
-                <div class="mega-menu-wrapper">
-                    <div class="header-main style-1">
-                        <div class="logo">
-                            <a href="/" class="header-logo">
-                                <img src="assets/img/logo/black-logo.png" alt="logo-img" />
+        <nav style={{ marginTop: "40px", display: "flex", flexDirection: "column" }}>
+          <Link to="/" style={mobileLinkStyle} onClick={() => setMenuOpen(false)}>Home</Link>
+          <Link to="/about-us" style={mobileLinkStyle} onClick={() => setMenuOpen(false)}>About Us</Link>
+          <Link to="/rate-estimate" style={mobileLinkStyle} onClick={() => setMenuOpen(false)}>Quick Quote</Link>
+        </nav>
 
-                            </a>
-                            <a href="/" class="header-logo-2">
-                                <img src="assets/img/logo/black-logo.png" alt="logo-img" />
+        <Link to="/register" style={mobileButtonStyle} onClick={() => setMenuOpen(false)}>Get Started</Link>
+        <Link to="/login" style={mobileButtonStyle} onClick={() => setMenuOpen(false)}>Login</Link>
+      </div>
 
-                            </a>
-                        </div>
-                        <div class="mean__menu-wrapper">
-                            <div class="main-menu">
-                                <nav id="mobile-menu">
-                                    <ul>
-                                        <li class="has-dropdown active menu-thumb">
-                                            <a href="/">
-                                                Home 
-                                            </a>
-                                            
-                                        </li>
-                                        <li class="has-dropdown active d-xl-none">
-                                            <a href="/" class="border-none">
-                                            Home
-                                            </a>
-                                        </li>
-                                        
-                                       <li>
-                                            <a href="/about-us">
-                                                About Us
-                                            </a>
-                                           
-                                        </li>
-                                        <li>
-                                            <a href="/rate-estimate">Quick Quote</a>
-                                        </li>
-                                    </ul>
-                                </nav>
-                            </div>
-                        </div>
-                        <div class="header-right d-flex justify-content-end align-items-center">
-                          <a href="/register" class="pp-theme-btn">
-                                Get Started <i class="fa-solid fa-arrow-right-long"></i>
-                            </a>
-                            <a href="/login" class="pp-theme-btn">
-                                Login <i class="fa-solid fa-arrow-right-long"></i>
-                            </a>
-                            <div class="header__hamburger d-xl-none my-auto">
-                                <div class="sidebar__toggle">
-                                    <div class="header-bar style-1">
-                                        <span></span>
-                                        <span></span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+      {/* Overlay */}
+      <div style={overlayStyle} onClick={() => setMenuOpen(false)}></div>
+
+      {/* Header - DESKTOP VERSION UNCHANGED */}
+      <header id="header-sticky" className="header-1">
+        <div className="container-fluid">
+          <div className="mega-menu-wrapper">
+            <div className="header-main style-1 d-flex justify-content-between align-items-center">
+              <div className="logo">
+                <Link to="/" className="header-logo">
+                  <img src="assets/img/logo/black-logo.png" alt="logo-img" />
+                </Link>
+              </div>
+
+              <div className="mean__menu-wrapper d-none d-xl-block">
+                <div className="main-menu">
+                  <nav>
+                    <ul>
+                      <li className="has-dropdown active menu-thumb">
+                        <Link to="/">Home</Link>
+                      </li>
+                      <li>
+                        <Link to="/about-us">About Us</Link>
+                      </li>
+                      <li>
+                        <Link to="/rate-estimate">Quick Quote</Link>
+                      </li>
+                    </ul>
+                  </nav>
                 </div>
+              </div>
+
+              <div className="header-right d-flex align-items-center">
+                <Link to="/register" className="pp-theme-btn d-none d-xl-inline-block mr-2">
+                  Get Started <i className="fa-solid fa-arrow-right-long"></i>
+                </Link>
+                <Link to="/login" className="pp-theme-btn d-none d-xl-inline-block">
+                  Login <i className="fa-solid fa-arrow-right-long"></i>
+                </Link>
+
+                {/* Mobile Hamburger */}
+                <div
+                  className="header__hamburger d-xl-none ml-3"
+                  onClick={() => setMenuOpen(!menuOpen)}
+                  style={hamburgerStyle}
+                >
+                  <span style={barStyle}></span>
+                  <span style={barStyle}></span>
+                  <span style={barStyle}></span>
+                </div>
+              </div>
             </div>
-        </header> 
-   </div>
+          </div>
+        </div>
+      </header>
+    </div>
   );
 }
 
