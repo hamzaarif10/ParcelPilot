@@ -215,6 +215,9 @@ function HeroSection() {
                                     <li>
                                         Compare Rates
                                     </li>
+                                    <li>
+                                        Print Labels
+                                    </li>
                                 </ul>
         
                             </div>
