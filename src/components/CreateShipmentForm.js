@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import ShipmentDetailsModal from '../modals/ShipmentDetailsModal';
 import UserAddressModal from '../modals/UserAddressModal';
-import AddPaymentMethodModal from '../modals/AddPaymentMethodModal';
 import { getCreateShipmentData } from '../data/esdata';
 import { getGlsCreateShipmentData } from '../data/glsData';
 import { canadianProvinces, usStates, ukCountries, australianStates, newZealandRegions, germanStates, frenchRegions, 
@@ -61,6 +60,8 @@ function CreateShipmentForm({courierId, courierUrl, courierCost, senderCountry, 
   const [labelState, setLabelState] = useState("");
 
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+
+  const [userBalance, setUserBalance] = useState(0);
 
   const toast = useToast();
   const showToast = (title, description, status = 'error') => {
@@ -142,6 +143,26 @@ useEffect(() => {
     setSenderCity, setSenderPostalCode, setSenderCompanyName, setSenderContactName, setSenderPhone, setSenderEmail});
 }, [userAddressDetails]); // List the dependencies that trigger fetching address when they change.
 
+useEffect(() => {
+    const fetchBalance = async () => {
+      try {
+        const token = localStorage.getItem("authToken"); // Assuming you store JWT here
+        const res = await axios.get(
+          `${process.env.REACT_APP_BACKEND_URL}/payment/balance`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        if (res.data.success) {
+          setUserBalance(res.data.balance);
+        }
+      } catch (error) {
+        console.error("Error fetching balance:", error);
+      }
+    };
+    fetchBalance();
+  }, []);
+
 const handleSubmit = async (e) => {
   e.preventDefault();
   setIsLoading(true);
@@ -150,215 +171,315 @@ const handleSubmit = async (e) => {
   let newShipmentId = "";
   let newCourierName = "";
   let newLabelState = "";
+  let paymentId = "";
+  let balanceDeductAmount = 0; //this is to do balance refund in case of shipment creation failure
+
   try {
-   // Clear previous errors
-   setErrors({
-    receiverAddressLine1: '',
-    receiverCity: '',
-    receiverProvince: '',
-    receiverContactName: '',
-    receiverPhone: '',
-    receiverEmail: '',
+    // Clear previous errors
+    setErrors({
+      receiverAddressLine1: '',
+      receiverCity: '',
+      receiverProvince: '',
+      receiverContactName: '',
+      receiverPhone: '',
+      receiverEmail: '',
+    });
+
+    // Basic validations
+    let formIsValid = true;
+    if (!receiverAddressLine1) {
+      setErrors(prev => ({ ...prev, receiverAddressLine1: 'Address Line 1 is required.' }));
+      formIsValid = false;
+    }
+    if (!receiverCity) {
+      setErrors(prev => ({ ...prev, receiverCity: 'City is required.' }));
+      formIsValid = false;
+    }
+    if (!receiverProvince) {
+      setErrors(prev => ({ ...prev, receiverProvince: 'Province is required.' }));
+      formIsValid = false;
+    }
+    if (!receiverContactName) {
+      setErrors(prev => ({ ...prev, receiverContactName: 'Contact Name is required.' }));
+      formIsValid = false;
+    }
+    if (!receiverPhone || !/^\+?\d{10,}$/.test(receiverPhone)) {
+      setErrors(prev => ({ ...prev, receiverPhone: 'Phone Number must be at least 10 digits.' }));
+      formIsValid = false;
+    }
+    if (receiverEmail && !/\S+@\S+\.\S+/.test(receiverEmail)) {
+      setErrors(prev => ({ ...prev, receiverEmail: 'Email is invalid.' }));
+      formIsValid = false;
+    }
+
+    if (!formIsValid) {
+      showToast('Validation Error', 'Please check all required fields', 'warning');
+      setIsLoading(false);
+      return; // ✅ stop here
+    }
+
+    setReceiverCountryCode(receiverCountry);
+
+  
+
+// 🔑 PAYMENT / BALANCE CHECK - Fixed Version
+try {
+  const token = localStorage.getItem("authToken");
+  const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/payment/doesPaymentMethodExist`, {
+    headers: { Authorization: `Bearer ${token}` },
   });
 
-  let formIsValid = true;
+  // ✅ Convert to numbers at the start
+  const numericUserBalance = parseFloat(userBalance) || 0;
+  const numericCourierCost = parseFloat(courierCost) || 0;
 
-  // Validate receiver address line 1
-  if (!receiverAddressLine1) {
-    setErrors(prev => ({ ...prev, receiverAddressLine1: 'Address Line 1 is required.' }));
-    formIsValid = false;
-  }
+  console.log('Payment debug:', {
+    numericUserBalance,
+    numericCourierCost,
+    doesPaymentMethodExist: response.data.doesPaymentMethodExist,
+  });
 
-  // Validate city
-  if (!receiverCity) {
-    setErrors(prev => ({ ...prev, receiverCity: 'City is required.' }));
-    formIsValid = false;
-  }
+  const hasPaymentMethod = response.data.doesPaymentMethodExist == 1; // Use == instead of === to handle string/number
 
-  // Validate province
-  if (!receiverProvince) {
-    setErrors(prev => ({ ...prev, receiverProvince: 'Province is required.' }));
-    formIsValid = false;
-  }
+  console.log('Payment method check:', {
+    rawValue: response.data.doesPaymentMethodExist,
+    type: typeof response.data.doesPaymentMethodExist,
+    hasPaymentMethod
+  });
 
-  // Validate contact name
-  if (!receiverContactName) {
-    setErrors(prev => ({ ...prev, receiverContactName: 'Contact Name is required.' }));
-    formIsValid = false;
-  }
-
-  // Validate phone number (must be 10 digits)
-  if (!receiverPhone || !/^\+?\d{10,}$/.test(receiverPhone)) {
-    setErrors(prev => ({ ...prev, receiverPhone: 'Phone Number must be at least 10 digits.' }));
-    formIsValid = false;
-}
-
-
-  // Validate email (proper email format)
-  if (receiverEmail && !/\S+@\S+\.\S+/.test(receiverEmail)) {
-  setErrors(prev => ({ ...prev, receiverEmail: 'Email is invalid.' }));
-  formIsValid = false;
-}
-
-  // If form is valid, proceed with the rest of the logic
-  if (!formIsValid) {
-    showToast('Validation Error', 'Please check all required fields', 'warning');
-    return;
-  }
-  //ACTUAL LOGIC!!!
-  setReceiverCountryCode(receiverCountry);
-  // Check to see if there is a payment method on file, if not open add payment method modal
-  try {
-    const token = localStorage.getItem("authToken");
-    const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/payment/doesPaymentMethodExist`, {
-      headers: {
-        Authorization: `Bearer ${token}`, 
-      },
-    });
-    if (!response.data.doesPaymentMethodExist) {
-      setModalType("paymentMethod");
-      onOpen();
-      return; // Exit the function if stripe_customer_id is null
-    }
-    // Proceed with further logic if needed
-  } catch (error) {
-    console.error("Error checking payment method:", error.response?.data || error.message);
-  }
-  //continue with payment
-  let paymentId = "";
-  try {
-    // Step 1: Authorize payment
-    const { success: isAuthorized, paymentIntentId, error } = await authorizePayment(courierCost);
-
-    if (!isAuthorized) {
-      showToast('Payment Failed', `Payment authorization failed: ${error}`, 'error');
+  // ✅ ONLY fail if NO payment method AND insufficient balance
+  if (response.data.doesPaymentMethodExist != 1) {
+    // No payment method on file - can only use balance
+    if (numericUserBalance < numericCourierCost) {
+      console.log('❌ FAILING: No payment method AND insufficient balance');
+      showToast(
+        'Payment Required', 
+        'You do not have enough balance to cover the shipping cost and no payment method is on file. Please add funds or a payment method.', 
+        'error'
+      );
+      setIsLoading(false);
       return;
     }
-    paymentId = paymentIntentId; // Assign paymentIntentId here
-    if (!paymentId) {
-      throw new Error('PaymentIntent ID is missing');
+    
+    // Balance covers the cost - deduct from balance
+    const res = await axios.post(
+      `${process.env.REACT_APP_BACKEND_URL}/payment/balance/deduct`,
+      { courierCost: numericCourierCost },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    
+    if (!res.data.success) {
+      showToast('Payment Error', 'Failed to deduct from balance', 'error');
+      setIsLoading(false);
+      return;
     }
-    // Step 2: Proceed to create the shipment
-    //CORE LOGIC TO CREATE LABEL BASED ON THE COURIER SELECTED 
-    if (courierId == "GlsDicomExpressGround")
-    {
-      const glsShipmentData = getGlsCreateShipmentData({
-        senderAddressLine1, senderAddressLine2, senderProvince, senderCity, senderPostalCode,
-        senderCompanyName, senderContactName, senderPhone, senderEmail,
-        receiverAddressLine1, receiverAddressLine2, receiverProvince, receiverCity, receiverPostalCode,
-        receiverContactName, receiverPhone, receiverEmail, receiverCountryCode,
-        dimensions, weight, courierId
-      });
-      const response = await axios.post(
-        `${process.env.REACT_APP_BACKEND_URL}/api/get-gls-label`,
-        glsShipmentData
+    balanceDeductAmount = numericCourierCost;
+    setUserBalance(res.data.balance);
+    
+  } else {
+    // ✅ HAS payment method - handle all scenarios without failing on balance check
+    console.log('✅ Has payment method - processing payment...');
+    
+    if (numericUserBalance >= numericCourierCost) {
+      // Balance fully covers - use balance only
+      const res = await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/payment/balance/deduct`,
+        { courierCost: numericCourierCost },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      newShipmentId = response.data.trackingNumber;
-      newCourierName="GLS Canada";
-      newTrackingNumber = response.data.carrierTrackingNos[0];
-      newLabelState = "ready";
-    }else{
-      //state of the label (pending / generated)
-      const shipmentData = getCreateShipmentData({
-        senderAddressLine1, senderAddressLine2, senderProvince, senderCity, senderPostalCode,
-        senderCompanyName, senderContactName, senderPhone, senderEmail,
-        receiverAddressLine1, receiverAddressLine2, receiverProvince, receiverCity, receiverPostalCode,
-        receiverContactName, receiverPhone, receiverEmail, receiverCountryCode,
-        dimensions, weight, courierId
-      });
-      const response = await axios.post(
-        `${process.env.REACT_APP_BACKEND_URL}/api/get-label`,
-        shipmentData
+      
+      if (!res.data.success) {
+        showToast('Payment Error', 'Failed to deduct from balance', 'error');
+        setIsLoading(false);
+        return;
+      }
+      balanceDeductAmount = numericCourierCost;
+      setUserBalance(res.data.balance);
+      
+    } else if (numericUserBalance > 0) {
+      // Partial balance + card charge
+      const remainingAmount = numericCourierCost - numericUserBalance;
+
+      // First deduct available balance
+      const balanceRes = await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/payment/balance/deduct`,
+        { courierCost: numericUserBalance },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      // Extract shipment details
-      newShipmentId = response.data.shipment.easyship_shipment_id;
-      newCourierName = response.data.shipment.courier_service.name;
-      newLabelState="pending";
+      
+      if (!balanceRes.data.success) {
+        showToast('Payment Error', 'Failed to deduct from balance', 'error');
+        setIsLoading(false);
+        return;
+      }
+      balanceDeductAmount = numericUserBalance;
+      setUserBalance(balanceRes.data.balance);
+
+      // Then authorize card for remainder
+      const { success: isAuthorized, paymentIntentId, error } = await authorizePayment(remainingAmount);
+      if (!isAuthorized || !paymentIntentId) {
+        showToast('Payment Failed', `Payment authorization failed: ${error || 'Unknown error'}`, 'error');
+        setIsLoading(false);
+        return;
+      }
+      paymentId = paymentIntentId;
+      
+    } else {
+      // No balance - charge full amount to card
+      const { success: isAuthorized, paymentIntentId, error } = await authorizePayment(numericCourierCost);
+      if (!isAuthorized || !paymentIntentId) {
+        showToast('Payment Failed', `Payment authorization failed: ${error || 'Unknown error'}`, 'error');
+        setIsLoading(false);
+        return;
+      }
+      paymentId = paymentIntentId;
     }
-    if (newShipmentId) {
-        //DOWNLOAD SHIPPING LABELS AND OPEN SHIPMENT DETAILS MODAL
-        if (courierId == "GlsDicomExpressGround"){
-        try {
-          const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/download-gls-label`, {
-            params: { shipment_id: newShipmentId, documentSize: 'Thermal', payment_id: paymentId}
-          });
-          setPdfLink(await generatePdfLink(response.data.base64String, newTrackingNumber));
-          //setting label values in state
+  }
+  
+} catch (error) {
+  console.error("Error in payment processing:", error.response?.data || error.message);
+  
+  // ✅ FIXED: Don't show generic insufficient funds message here
+  // Only show this if it's actually a server/network error
+  if (error.response?.status >= 500 || !error.response) {
+    showToast('Payment Error', 'Server error occurred. Please try again.', 'error');
+  } else {
+    showToast('Payment Error', 'Payment processing failed. Please check your payment details.', 'error');
+  }
+  
+  setIsLoading(false);
+  return;
+}
+
+    // 🔑 CREATE SHIPMENT (only reached if payment succeeded / balance was deducted)
+    try {
+      if (courierId === "GlsDicomExpressGround") {
+        const glsShipmentData = getGlsCreateShipmentData({
+          senderAddressLine1, senderAddressLine2, senderProvince, senderCity, senderPostalCode,
+          senderCompanyName, senderContactName, senderPhone, senderEmail,
+          receiverAddressLine1, receiverAddressLine2, receiverProvince, receiverCity, receiverPostalCode,
+          receiverContactName, receiverPhone, receiverEmail, receiverCountryCode,
+          dimensions, weight, courierId
+        });
+
+        const response = await axios.post(
+          `${process.env.REACT_APP_BACKEND_URL}/api/get-gls-label`,
+          glsShipmentData
+        );
+        newShipmentId = response.data.trackingNumber;
+        newCourierName = "GLS Canada";
+        newTrackingNumber = response.data.carrierTrackingNos[0];
+        newLabelState = "ready";
+      } else {
+        const shipmentData = getCreateShipmentData({
+          senderAddressLine1, senderAddressLine2, senderProvince, senderCity, senderPostalCode,
+          senderCompanyName, senderContactName, senderPhone, senderEmail,
+          receiverAddressLine1, receiverAddressLine2, receiverProvince, receiverCity, receiverPostalCode,
+          receiverContactName, receiverPhone, receiverEmail, receiverCountryCode,
+          dimensions, weight, courierId
+        });
+
+        const response = await axios.post(
+          `${process.env.REACT_APP_BACKEND_URL}/api/get-label`,
+          shipmentData
+        );
+        newShipmentId = response.data.shipment.easyship_shipment_id;
+        newCourierName = response.data.shipment.courier_service.name;
+        newLabelState = "pending";
+      }
+
+      if (newShipmentId) {
+        if (courierId === "GlsDicomExpressGround") {
+          try {
+            const response = await axios.get(
+              `${process.env.REACT_APP_BACKEND_URL}/api/download-gls-label`,
+              {
+                params: {
+                  shipment_id: newShipmentId,
+                  documentSize: 'Thermal',
+                  ...(paymentId && { payment_id: paymentId }),
+                },
+              }
+            );
+            setPdfLink(await generatePdfLink(response.data.base64String, newTrackingNumber));
+            setShipmentId(newShipmentId);
+            setCourierName(newCourierName);
+            setTrackingNumber(newTrackingNumber);
+            setLabelState(newLabelState);
+            setModalType("shipmentDetails");
+            onOpen();
+          } catch (error) {
+            console.error("Error fetching GLS label:", error);
+            showToast('Error', 'Failed to fetch GLS label. Please try again.', 'error');
+          }
+        } else {
           setShipmentId(newShipmentId);
           setCourierName(newCourierName);
-          setTrackingNumber(newTrackingNumber);
           setLabelState(newLabelState);
           setIsLoading(false);
-          // set modal type
           setModalType("shipmentDetails");
-          // Open the modal
           onOpen();
-        } catch (error) {
-          console.error("Error fetching GLS label:", error);
-          showToast('Error', 'Failed to fetch GLS label. Please try again.', 'error');
+
+          try {
+            const authToken = localStorage.getItem("authToken");
+            await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/download-label`, {
+              params: {
+                shipment_id: newShipmentId,
+                format: 'PDF',
+                label: 'A4',
+                commercial_invoice: 'A4',
+                packing_slip: 'none',
+                shopify_order_id: orderId,
+                shopify_line_item_id: lineItemId,
+                auth_token: authToken,
+                courier_name: newCourierName,
+                ...(paymentId && { payment_id: paymentId }),
+                balance_deduct_amount: balanceDeductAmount
+              },
+            });
+          } catch (error) {
+            console.error("Error fetching label:", error);
+            showToast('Error', 'Failed to fetch label. Please try again.', 'error');
+          }
         }
+      } else {
+        showToast('Error', 'Shipment label generation failed. Please try again.', 'error');
       }
-      else {
-        // POLL the NON gls label route until there is a response and update label in db with tracking and pdf url
-        // setting label values in state
-        setShipmentId(newShipmentId);
-        setCourierName(newCourierName);
-        setLabelState(newLabelState); 
-        setIsLoading(false);
-        // set modal type
-        setModalType("shipmentDetails");
-        // Open the modal
-        onOpen();
-        
+    } catch (error) {
+      console.error("Error in shipment creation:", error);
+      if (paymentId) {
         try {
-          // Get auth token from localStorage
-          const authToken = localStorage.getItem("authToken");
-          
-          await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/download-label`, {
-            params: {
-              shipment_id: newShipmentId,
-              format: 'PDF',
-              label: 'A4',
-              commercial_invoice: 'A4',
-              packing_slip: 'none',
-              shopify_order_id: orderId,
-              shopify_line_item_id: lineItemId,
-              auth_token: authToken, 
-              courier_name: newCourierName,
-              payment_id: paymentId
-            }
-          });
-          // You can handle the response here if needed
-        } catch (error) {
-          console.error("Error fetching label:", error);
-          showToast('Error', 'Failed to fetch label. Please try again.', 'error');
+          await voidPayment(paymentId);
+        } catch (voidError) {
+          console.error("Failed to void payment:", voidError.message);
         }
       }
-    } else {
-      console.error("Base64 encoded string for label not found.");
-      showToast('Error', 'Shipment label generation failed. Please try again.', 'error');
-    }
-  } catch (error) {
-    console.error("Error in shipment creation:", error);
-    // Step 4: Void the payment if shipment creation fails
-    if (paymentId) {
-      try {
-        await voidPayment(paymentId);
-      } catch (voidError) {
-        console.error("Failed to void payment:", voidError.message);
+      // ✅ REFUND BALANCE if any was deducted
+      if (balanceDeductAmount > 0) {
+        try {
+          const token = localStorage.getItem("authToken");
+          const refundRes = await axios.post(
+            `${process.env.REACT_APP_BACKEND_URL}/payment/balance/add`, // You'll need this endpoint
+            { amount: balanceDeductAmount },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          
+          if (refundRes.data.success) {
+            setUserBalance(refundRes.data.balance);
+          }
+        } catch (refundError) {
+          console.error("Failed to refund balance:", refundError.message);
+        }
       }
+      showToast('Shipment Error', 'Failed to create shipment. Please try again or contact support.', 'error');
+      setIsLoading(false);
+      return; // ✅ stop after failure
     }
-    showToast('Shipment Error', 'Failed to create shipment. Please try again or reach out to support.', 'error');
-  } 
-}finally {
-  //Mark the order as fulfilled in shopify if this is a shopify store order, only do so here for gls shipments, rest will be marked when label is generated in the backend
-    if(newShipmentId && orderId && courierId === 'GlsDicomExpressGround')
-    {
-      // Get auth token from localStorage
+  } finally {
+    if (newShipmentId && orderId && courierId === 'GlsDicomExpressGround') {
       const authToken = localStorage.getItem("authToken");
       fulfillShopifyOrder(orderId, lineItemId, newTrackingNumber, newCourierName, authToken);
     }
-    // Ensure loading state is turned off
     setIsLoading(false);
   }
 };
@@ -1128,17 +1249,6 @@ return (
           }
         }}
       />
-    )}
-    {modalType === 'paymentMethod' && (
-      <Elements stripe={stripePromise}>
-        <AddPaymentMethodModal
-          isOpen={isOpen}
-          onClose={() => {
-            onClose();
-            setModalType(null);
-          }}
-        />
-      </Elements>
     )}
     {isLoading && (
       <Box

@@ -25,7 +25,32 @@ function SchedulePickupModal({ shipmentId, trackingNumber, courierId, isOpen, on
   const [pickupFee, setPickupFee] = useState(0);
 
   const [isLoading, setIsLoading] = useState(false);
+
+  const [userBalance, setUserBalance] = useState(0);
+
+  // Add this useEffect to fetch balance
+useEffect(() => {
+  const fetchBalance = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const res = await axios.get(
+        `${process.env.REACT_APP_BACKEND_URL}/payment/balance`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (res.data.success) {
+        setUserBalance(res.data.balance);
+      }
+    } catch (error) {
+      console.error("Error fetching balance:", error);
+    }
+  };
   
+  if (isOpen) { // Only fetch when modal opens
+    fetchBalance();
+  }
+}, [isOpen]);
 
   //Get pickup fee based on the courier selected
   const getPickupFee = (courierId) => {
@@ -105,14 +130,175 @@ const getNextBusinessDays = (count) => {
 
 
   const handleSchedule = async () => {
-    setIsLoading(true);
-    let pickupId = '';
+  setIsLoading(true);
+  let pickupId = '';
+  let paymentId = "";
+  let balanceDeductAmount = 0; // Track balance deduction for potential refund
 
-    try{
-        if (courierId === 'GlsDicomExpressGround') {
+  try {
+    // 🔑 PAYMENT / BALANCE CHECK - Only for non-GLS couriers with pickup fees
+    if (courierId !== 'GlsDicomExpressGround' && pickupFee > 0) {
+      try {
+        const token = localStorage.getItem("authToken");
+        const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/payment/doesPaymentMethodExist`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        // ✅ Convert to numbers at the start
+        const numericUserBalance = parseFloat(userBalance) || 0;
+        const numericPickupFee = parseFloat(pickupFee) || 0;
+
+        console.log('Pickup Payment debug:', {
+          numericUserBalance,
+          numericPickupFee,
+          doesPaymentMethodExist: response.data.doesPaymentMethodExist,
+        });
+
+        const hasPaymentMethod = response.data.doesPaymentMethodExist == 1;
+
+        // ✅ ONLY fail if NO payment method AND insufficient balance
+        if (!hasPaymentMethod) {
+          // No payment method on file - can only use balance
+          if (numericUserBalance < numericPickupFee) {
+            Swal.fire({
+              title: 'Payment Required',
+              text: 'You do not have enough balance to cover the pickup fee and no payment method is on file. Please add funds or a payment method.',
+              icon: 'error',
+              confirmButtonText: 'OK'
+            });
+            setIsLoading(false);
+            return;
+          }
+          
+          // Balance covers the cost - deduct from balance
+          const res = await axios.post(
+            `${process.env.REACT_APP_BACKEND_URL}/payment/balance/deduct`,
+            { courierCost: numericPickupFee },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          
+          if (!res.data.success) {
+            Swal.fire({
+              title: 'Payment Error',
+              text: 'Failed to deduct from balance',
+              icon: 'error',
+              confirmButtonText: 'OK'
+            });
+            setIsLoading(false);
+            return;
+          }
+          balanceDeductAmount = numericPickupFee;
+          setUserBalance(res.data.balance);
+          
+        } else {
+          // ✅ HAS payment method - handle all scenarios
+          console.log('✅ Has payment method - processing payment...');
+          
+          if (numericUserBalance >= numericPickupFee) {
+            // Balance fully covers - use balance only
+            const res = await axios.post(
+              `${process.env.REACT_APP_BACKEND_URL}/payment/balance/deduct`,
+              { courierCost: numericPickupFee },
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            
+            if (!res.data.success) {
+              Swal.fire({
+                title: 'Payment Error',
+                text: 'Failed to deduct from balance',
+                icon: 'error',
+                confirmButtonText: 'OK'
+              });
+              setIsLoading(false);
+              return;
+            }
+            balanceDeductAmount = numericPickupFee;
+            setUserBalance(res.data.balance);
+            
+          } else if (numericUserBalance > 0) {
+            // Partial balance + card charge
+            const remainingAmount = numericPickupFee - numericUserBalance;
+
+            // First deduct available balance
+            const balanceRes = await axios.post(
+              `${process.env.REACT_APP_BACKEND_URL}/payment/balance/deduct`,
+              { courierCost: numericUserBalance },
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            
+            if (!balanceRes.data.success) {
+              Swal.fire({
+                title: 'Payment Error',
+                text: 'Failed to deduct from balance',
+                icon: 'error',
+                confirmButtonText: 'OK'
+              });
+              setIsLoading(false);
+              return;
+            }
+            balanceDeductAmount = numericUserBalance;
+            setUserBalance(balanceRes.data.balance);
+
+            // Then authorize card for remainder
+            const { success: isAuthorized, paymentIntentId, error } = await authorizePayment(remainingAmount);
+            if (!isAuthorized || !paymentIntentId) {
+              Swal.fire({
+                title: 'Payment Failed',
+                text: `Payment authorization failed: ${error || 'Unknown error'}`,
+                icon: 'error',
+                confirmButtonText: 'OK'
+              });
+              setIsLoading(false);
+              return;
+            }
+            paymentId = paymentIntentId;
+            
+          } else {
+            // No balance - charge full amount to card
+            const { success: isAuthorized, paymentIntentId, error } = await authorizePayment(numericPickupFee);
+            if (!isAuthorized || !paymentIntentId) {
+              Swal.fire({
+                title: 'Payment Failed',
+                text: `Payment authorization failed: ${error || 'Unknown error'}`,
+                icon: 'error',
+                confirmButtonText: 'OK'
+              });
+              setIsLoading(false);
+              return;
+            }
+            paymentId = paymentIntentId;
+          }
+        }
+        
+      } catch (error) {
+        console.error("Error in pickup payment processing:", error.response?.data || error.message);
+        
+        if (error.response?.status >= 500 || !error.response) {
+          Swal.fire({
+            title: 'Payment Error',
+            text: 'Server error occurred. Please try again.',
+            icon: 'error',
+            confirmButtonText: 'OK'
+          });
+        } else {
+          Swal.fire({
+            title: 'Payment Error',
+            text: 'Payment processing failed. Please check your payment details.',
+            icon: 'error',
+            confirmButtonText: 'OK'
+          });
+        }
+        
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    // 🔑 SCHEDULE PICKUP (only reached if payment succeeded or no payment needed)
+    if (courierId === 'GlsDicomExpressGround') {
       const localPickupDate = DateTime.fromISO(pickupDate).set({ hour: 12, minute: 0 });
-      const readyDateTime = localPickupDate.toISO({ suppressMilliseconds: true }); // local time
-      const closedDateTime = localPickupDate.plus({ hours: 4 }).toISO({ suppressMilliseconds: true }); // local + 4h
+      const readyDateTime = localPickupDate.toISO({ suppressMilliseconds: true });
+      const closedDateTime = localPickupDate.plus({ hours: 4 }).toISO({ suppressMilliseconds: true });
 
       const pickupData = {
         trackingNumbers: [shipmentId],
@@ -131,20 +317,13 @@ const getNextBusinessDays = (count) => {
           confirmButtonText: "OK",
         });
       } catch (error) {
-        Swal.fire({
-          title: "Pickup Not Scheduled",
-          text: "Could not schedule the pickup. Please try again.",
-          icon: "error",
-          confirmButtonText: "OK",
-        });
+        throw new Error("Failed to schedule GLS pickup");
       }
-    }
-    else     //SCHEDULE PICK UP
-    {
-    
-    // Regular expression to capture the from and to times and date
-    const [, date, fromTime, toTime] = pickupTime.match(/(\d{4}-\d{2}-\d{2}): (\d{2}:\d{2}) - (\d{2}:\d{2})/);
-    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    } else {
+      // Regular pickup scheduling
+      const [, date, fromTime, toTime] = pickupTime.match(/(\d{4}-\d{2}-\d{2}): (\d{2}:\d{2}) - (\d{2}:\d{2})/);
+      const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      
       const pickupData = {
         user_time_zone: userTimeZone,
         courier_service_id: courierId,
@@ -153,54 +332,27 @@ const getNextBusinessDays = (count) => {
         selected_date: date,
         easyship_shipment_ids: [shipmentId]
       };
-      console.log("from time: " + fromTime);
-      console.log("to time: " + toTime);
-      //continue with payment
-      let paymentId = "";
+
       try {
-        if (pickupFee > 0) 
-        {
-        const { success: isAuthorized, paymentIntentId, error } = await authorizePayment(pickupFee);
-        
-            if (!isAuthorized) {
-              alert(`Payment authorization failed: ${error}`);
-              return;
-            }
-            paymentId = paymentIntentId; // Assign paymentIntentId here
-            if (!paymentId) {
-              throw new Error('PaymentIntent ID is missing');
-            }
-        }
         const response = await axios.post(
           `${process.env.REACT_APP_BACKEND_URL}/pickups/schedule-pickup`,
           pickupData
         );
         pickupId = response.data.pickup.easyship_pickup_id;
-        if (pickupFee > 0 && pickupId) // If pickup was successfully scheduled
-        {
-          let isCaptured = false;
-              try {
-                isCaptured = await capturePayment(paymentId);
-              } catch (e) {
-                console.error("capturePayment threw an error:", e.message || e);
-                Swal.fire({
-                  title: "Payment Capture Failed",
-                  text: "Payment was authorized, but capturing failed. Contact support.",
-                  icon: "error",
-                  confirmButtonText: "OK",
-                })
-                return;
-              }
 
-              if (!isCaptured) {
-                Swal.fire({
-                  title: "Payment Capture Failed",
-                  text: "Could not capture the payment. Please try again.",
-                  icon: "error",
-                  confirmButtonText: "OK",
-                })
-                return;
-              }
+        // Capture payment only if we have a paymentId (card payment)
+        if (paymentId && pickupId) {
+          let isCaptured = false;
+          try {
+            isCaptured = await capturePayment(paymentId);
+          } catch (e) {
+            console.error("capturePayment threw an error:", e.message || e);
+            throw new Error("Payment capture failed");
+          }
+
+          if (!isCaptured) {
+            throw new Error("Payment capture failed");
+          }
         }
 
         Swal.fire({
@@ -208,52 +360,67 @@ const getNextBusinessDays = (count) => {
           text: "Your pickup has been successfully scheduled.",
           icon: "success",
           confirmButtonText: "OK",
-        }).then(() => {
-          
         });
       } catch (error) {
-        // Step 4: Void the payment if shipment creation fails
-            if (paymentId) {
-              try {
-                await voidPayment(paymentId);
-              } catch (voidError) {
-                console.error("Failed to void payment:", voidError.message);
-              }
-            }
-        Swal.fire({
-          title: "Pickup Not Scheduled",
-          text: "Could not schedule the pickup. Please try again.",
-          icon: "error",
-          confirmButtonText: "OK",
-        });
-      } 
+        throw new Error("Failed to schedule pickup");
+      }
     }
-  }catch (e) { //Handle any unexpected failure
+
+  } catch (error) {
+    console.error("Error in pickup scheduling:", error);
+    
+    // Handle payment rollback on failure
+    if (paymentId) {
+      try {
+        await voidPayment(paymentId);
+      } catch (voidError) {
+        console.error("Failed to void payment:", voidError.message);
+      }
+    }
+    
+    // ✅ REFUND BALANCE if any was deducted
+    if (balanceDeductAmount > 0) {
+      try {
+        const token = localStorage.getItem("authToken");
+        const refundRes = await axios.post(
+          `${process.env.REACT_APP_BACKEND_URL}/payment/balance/add`,
+          { amount: balanceDeductAmount },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        
+        if (refundRes.data.success) {
+          setUserBalance(refundRes.data.balance);
+        }
+      } catch (refundError) {
+        console.error("Failed to refund balance:", refundError.message);
+      }
+    }
+
     Swal.fire({
-      title: "An unexpected error occurred. Please try again",
+      title: "Pickup Not Scheduled",
       text: "Could not schedule the pickup. Please try again.",
       icon: "error",
       confirmButtonText: "OK",
     });
-  }finally {
-    //Update the db
-    if (pickupId)
-    {
+  } finally {
+    // Update the database
+    if (pickupId) {
       const token = localStorage.getItem("authToken");
-      try{
+      try {
         const timeRange = pickupTime.split(": ")[1];
-              await axios.post(
-                `${process.env.REACT_APP_BACKEND_URL}/pickups/updatePickupDetails`,
-                { shipment_id: shipmentId, pickup_date: pickupDate, time_slot: timeRange, pickup_id: pickupId },
-                { headers: { Authorization: `Bearer ${token}` } }
-              );
-         } catch (cancelError) {
+        await axios.post(
+          `${process.env.REACT_APP_BACKEND_URL}/pickups/updatePickupDetails`,
+          { shipment_id: shipmentId, pickup_date: pickupDate, time_slot: timeRange, pickup_id: pickupId },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } catch (cancelError) {
         console.error("Failed to update shipment status:", cancelError);
-        }
-     }
+      }
+    }
+    setIsLoading(false);
     onClose();
   }
-}
+};
   return (
   <Modal isOpen={isOpen} onClose={onClose}>
     <ModalOverlay />
@@ -382,7 +549,12 @@ const getNextBusinessDays = (count) => {
               </optgroup>
             ))}
           </select>
-          {pickupFee != null && <label>Pickup Fee: ${pickupFee}</label>}
+            <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#f7fafc', borderRadius: '6px' }}>
+              <div style={{ fontSize: '14px', marginBottom: '4px' }}>
+                <strong>Pickup Fee: ${pickupFee.toFixed(2)}</strong>
+              </div>
+            </div>
+          
         </FormControl>
       </ModalBody>
       

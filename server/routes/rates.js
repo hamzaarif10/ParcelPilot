@@ -45,6 +45,19 @@ const rateLimitMiddleware = async (req, res, next) => {
   next();
 };
 
+// On any label failure
+const refundUserBalance = async (balance_deduct_amount, auth_token) => {
+    try {
+        await axios.post(
+          `${process.env.REACT_APP_BACKEND_URL}/payment/balance/add`,
+          { amount: balance_deduct_amount },
+          { headers: { Authorization: `Bearer ${auth_token}` } }
+        );
+        console.log(`💰 Refunded ${balance_deduct_amount} to user balance`);
+    } catch (refundError) {
+      console.error('Failed to refund balance:', refundError.message);
+    }
+};
 //Fetch gls rate
 router.post('/get-gls-rate', rateLimitMiddleware, async (req, res) => {
   try {
@@ -82,46 +95,36 @@ router.post('/get-gls-label', async (req, res) => {
   }
 });
 router.get('/download-gls-label', async (req, res) => {
+  const { shipment_id, documentSize, payment_id } = req.query;
   try {
-    const { shipment_id, documentSize, payment_id } = req.query;
-    
-
-    if (!shipment_id) {
-      return res.status(400).json({ error: 'shipment_id is required' });
+     // Only capture payment if payment_id is a real value
+    if (payment_id) {
+      // Skip dummy placeholders like 'BALANCE_ONLY'
+      if (payment_id !== 'BALANCE_ONLY') {
+        const isCaptured = await capturePayment(payment_id);
+        if (!isCaptured) {
+          console.error('Payment capture failed for payment ID:', payment_id);
+          return res.status(402).json({ error: 'Payment capture failed. Please contact support.' });
+        }
+      }
     }
-
-    //Capture the payment
-    if (!payment_id) {
-      return res.status(400).json({ error: "Missing payment_id for payment capture." });
-    }
-
-    const isCaptured = await capturePayment(payment_id);
-    
-    if (!isCaptured) {
-      console.error('Payment capture failed for payment ID:', payment_id);
-      return res.status(402).json({ error: 'Payment capture failed. Please contact support.' });
-    }
-    //Proceed to fetch the label
+    // Fetch the label
     const url = `https://secureship.ca/ship/api/v1/carriers/download/documents/${shipment_id}`;
     const response = await axios.get(url, {
-      headers: {
-        'X-API-KEY': `${process.env.SS_KEY}`
-      },
-      params: {
-        documentSize 
-      },
-      responseType: 'arraybuffer' // Expect binary data
+      headers: { 'X-API-KEY': process.env.SS_KEY },
+      params: { documentSize },
+      responseType: 'arraybuffer'
     });
 
-    // Convert binary data to base64
     const base64String = Buffer.from(response.data, 'binary').toString('base64');
-
     res.json({ base64String });
   } catch (error) {
     console.error('Error fetching the shipping label:', error);
     res.status(500).json({ error: 'Failed to fetch shipping label' });
   }
 });
+
+
 // Fetch rate from API
 router.post('/get-rate', rateLimitMiddleware, async (req, res) => {
   try {
@@ -170,16 +173,16 @@ router.get('/download-label', async (req, res) => {
   console.log("Query Params:", req.query);
  
   try {
-    const { shipment_id, format, label, commercial_invoice, packing_slip, shopify_order_id, shopify_line_item_id, auth_token, courier_name, payment_id } = req.query;
+    const { shipment_id, format, label, commercial_invoice, packing_slip, shopify_order_id, shopify_line_item_id, auth_token, courier_name, payment_id, balance_deduct_amount } = req.query;
     const url = `https://public-api.easyship.com/2024-09/shipments/${shipment_id}`;
    
-    // UPDATED POLLING CONFIGURATION FOR 3+ MINUTE WAITS
-    // Strategy: Start with shorter intervals, then increase to reduce API calls for long waits
-    const TOTAL_TIMEOUT_MS = 240000; // 4 minutes total (240 seconds)
+    // IMPROVED POLLING CONFIGURATION WITH EXPLICIT TIMEOUT HANDLING
+    const TOTAL_TIMEOUT_MS = 240000; // 4 minutes total 
     const startTime = Date.now();
     let attempts = 0;
     let success = false;
     let response;
+    let timeoutReached = false; // Add explicit timeout flag
     
     console.log(`Starting polling for shipment ${shipment_id} with ${TOTAL_TIMEOUT_MS/1000}s total timeout`);
    
@@ -189,9 +192,16 @@ router.get('/download-label', async (req, res) => {
       return 15000;                              // After that: check every 15s
     };
    
-    while (!success && (Date.now() - startTime) < TOTAL_TIMEOUT_MS) {
+    while (!success && !timeoutReached) {
       attempts++;
       const elapsedTime = Math.round((Date.now() - startTime) / 1000);
+      
+      // Check timeout at the start of each iteration
+      if ((Date.now() - startTime) >= TOTAL_TIMEOUT_MS) {
+        console.log(`⏰ Total timeout reached before attempt ${attempts}`);
+        timeoutReached = true;
+        break;
+      }
       
       try {
         console.log(`Polling attempt ${attempts} (${elapsedTime}s elapsed)`);
@@ -216,78 +226,92 @@ router.get('/download-label', async (req, res) => {
             response.data?.shipment?.shipping_documents?.[0]?.base64_encoded_strings?.[0]) {
           success = true;
           console.log(`✅ Label data received after ${elapsedTime}s (${attempts} attempts)`);
+          break; // Explicit break on success
         } else {
           // Calculate wait time for next attempt
           const waitTime = getWaitTime(attempts);
           const remainingTime = TOTAL_TIMEOUT_MS - (Date.now() - startTime);
           
-          if (remainingTime > waitTime) {
+          // More conservative timeout check - ensure we have enough time for wait + next request
+          const minimumTimeNeeded = waitTime + 20000; // Wait time + buffer for next request
+          
+          if (remainingTime > minimumTimeNeeded) {
             console.log(`⏳ Label not ready, waiting ${waitTime/1000}s before next attempt (${Math.round(remainingTime/1000)}s remaining)`);
             await new Promise(resolve => setTimeout(resolve, waitTime));
           } else {
-            console.log(`⏰ Timeout approaching, no more attempts`);
+            console.log(`⏰ Insufficient time remaining (${Math.round(remainingTime/1000)}s) for another cycle`);
+            timeoutReached = true;
             break;
           }
         }
       } catch (error) {
         const waitTime = getWaitTime(attempts);
         const remainingTime = TOTAL_TIMEOUT_MS - (Date.now() - startTime);
+        const minimumTimeNeeded = waitTime + 20000;
         
         console.error(`❌ Polling attempt ${attempts} failed:`, error.message);
         
-        if (remainingTime > waitTime) {
+        if (remainingTime > minimumTimeNeeded) {
           console.log(`Retrying in ${waitTime/1000}s...`);
           await new Promise(resolve => setTimeout(resolve, waitTime));
         } else {
-          console.log(`⏰ Timeout approaching, stopping attempts`);
+          console.log(`⏰ Insufficient time remaining for retry, stopping attempts`);
+          timeoutReached = true;
           break;
         }
       }
     }
    
-    // Check final timeout
+    // Final timeout check with explicit flags
     const totalElapsed = Math.round((Date.now() - startTime) / 1000);
     
     if (!success) {
-        console.error(`❌ Timeout after ${totalElapsed}s waiting for label.`);
-        
-        try {
-          const pool = getPool();
-          const updateResult = await pool.request()
-            .input('shipment_id', sql.NVarChar(255), shipment_id)
-            .input('status', sql.VarChar(20), "failed")
-            .query(`
-              UPDATE Labels
-              SET status = @status
-              WHERE shipment_id = @shipment_id
-            `);
-          
-          console.log(`Updated label status to 'failed' for shipment_id: ${shipment_id}`);
-          
-        } catch (error) {
-          console.error('SQL update label error:', error);
-        }
-        
-        return res.status(408).json({
-          error: 'Timeout waiting for label data.',
-          elapsed_time: `${totalElapsed}s`,
-          attempts: attempts
-        });
+      console.error(`❌ Polling completed unsuccessfully after ${totalElapsed}s (${attempts} attempts). Success: ${success}, TimeoutReached: ${timeoutReached}`);
+      
+      // Refund balance if it was used
+      if (balance_deduct_amount > 0) {
+        await refundUserBalance(balance_deduct_amount, auth_token);
       }
-    //Proceed if successfully fetched label
-    //Capture the payment
-    if (!payment_id) {
-      return res.status(400).json({ error: "Missing payment_id for payment capture." });
+      
+      try {
+        const pool = getPool();
+        const updateResult = await pool.request()
+          .input('shipment_id', sql.NVarChar(255), shipment_id)
+          .input('status', sql.VarChar(20), "failed")
+          .query(`
+            UPDATE Labels
+            SET status = @status
+            WHERE shipment_id = @shipment_id
+          `);
+        
+        console.log(`Updated label status to 'failed' for shipment_id: ${shipment_id}`);
+        
+      } catch (error) {
+        console.error('SQL update label error:', error);
+      }
+      
+      return res.status(408).json({
+        error: 'Timeout waiting for label data.',
+        elapsed_time: `${totalElapsed}s`,
+        attempts: attempts
+      });
     }
 
-    const isCaptured = await capturePayment(payment_id);
-    
-    if (!isCaptured) {
-      console.error('Payment capture failed for payment ID:', payment_id);
-      return res.status(402).json({ error: 'Payment capture failed. Please contact support.' });
+    // Proceed if successfully fetched label
+    // Capture the payment
+    // Only capture payment if payment_id is a real value
+    if (payment_id) {
+      // Skip dummy placeholders like 'BALANCE_ONLY'
+      if (payment_id !== 'BALANCE_ONLY') {
+        const isCaptured = await capturePayment(payment_id);
+        if (!isCaptured) {
+          console.error('Payment capture failed for payment ID:', payment_id);
+          return res.status(402).json({ error: 'Payment capture failed. Please contact support.' });
+        }
+      }
     }
 
-    //Proceed with fulfillment and updating db once payment captured
+    // Proceed with fulfillment and updating db once payment captured
     const trackingNumber = response.data.shipment.trackings[0].tracking_number;
     const labelBase64 = response.data.shipment.shipping_documents[0].base64_encoded_strings[0];
     const labelUrl = await generatePdfLink(labelBase64, trackingNumber);
