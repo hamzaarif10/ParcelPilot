@@ -19,7 +19,11 @@ router.post('/schedule-pickup', async (req, res) => {
       courier_service_id,
       easyship_shipment_ids
     } = req.body;
-
+     
+    //testing
+    console.log("Selected date: " + selected_date);
+    console.log("Selected from time: " + selected_from_time);
+    console.log("Selected to time: " + selected_to_time);
     const easyshipRequestData = {
       courier_service_id,
       selected_date,                 // e.g. "2025-06-20"

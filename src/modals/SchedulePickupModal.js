@@ -61,7 +61,11 @@ useEffect(() => {
       "a7b95023-2ebf-4481-85e9-be838e33c5b5":4.25,
       "510d9128-a506-4050-8cbe-14757490be24":4.00,
       "94690a4a-9a7d-40e4-863e-3bf4fb274a3c":4.00,
-      "2ad740a4-79e1-4841-8f2d-a2a2e086c210":4.00
+      "2ad740a4-79e1-4841-8f2d-a2a2e086c210":4.00,
+      "b3cad4ee-9b30-4120-8f47-1c56bff02290":3.00, //UPS
+      "94690a4a-9a7d-40e4-863e-3bf4fb274a3c":3.00, //UPS
+      "2ad740a4-79e1-4841-8f2d-a2a2e086c210":3.00, //UPS
+      "510d9128-a506-4050-8cbe-14757490be24":3.00, //UPS
     }
     if (courierId in courierPickUpFees) {
       setPickupFee(courierPickUpFees[courierId]);
@@ -97,31 +101,70 @@ const getNextBusinessDays = (count) => {
       time_slot_ids: ["GLS_FIXED_SLOT"]
     }));
     
-    console.log("GLS slots created:", slots); // Add this log
     setFormattedPickupTimes(slots);
   } 
-  else {
-      // Other couriers – Fetch from API
-      try {
-        const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/pickups/get-time-slots`, {
-          params: { courier_service_id: courierId }
-        });
+else {
+  // Other couriers – Fetch from API
+  try {
+    const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/pickups/get-time-slots`, {
+      params: { courier_service_id: courierId }
+    });
 
-        const pickupSlots = response.data.courier_service_handover_option.pickup_slots;
-        const formattedTimes = pickupSlots
-          .filter(slot => slot.time_slots.length > 0)
-          .map(slot => ({
-            date: slot.date,
-            time: slot.time_slots.map(timeSlot => `${timeSlot.from_time} - ${timeSlot.to_time}`).join(', '),
-            time_slot_ids: slot.time_slots.map(timeSlot => timeSlot.time_slot_id)
-          }));
-
-        setFormattedPickupTimes(formattedTimes);
-      } catch (error) {
-        console.error('Error fetching pickup slots:', error.response?.data || error.message);
-      }
-    }
-  };
+    const pickupSlots = response.data.courier_service_handover_option.pickup_slots;
+    
+    // Check if this is UPS, if so we want to only show two specific times slots
+    const specificCourierIds = [
+      'b3cad4ee-9b30-4120-8f47-1c56bff02290',
+      '94690a4a-9a7d-40e4-863e-3bf4fb274a3c', 
+      '2ad740a4-79e1-4841-8f2d-a2a2e086c210',
+      '510d9128-a506-4050-8cbe-14757490be24'
+    ];
+    const isSpecificCourier = specificCourierIds.includes(courierId);
+    
+    const formattedTimes = pickupSlots
+      .filter(slot => slot.time_slots.length > 0)
+      .map(slot => ({
+        date: slot.date,
+        time: slot.time_slots
+          .filter(timeSlot => {
+            // If it's UPS, only include 12:00-14:00 and 14:00-16:00
+            if (isSpecificCourier) {
+              // Normalize time format to handle potential variations like '12:00:00'
+              const fromTime = timeSlot.from_time.substring(0, 5); // Get first 5 chars (HH:MM)
+              const toTime = timeSlot.to_time.substring(0, 5);
+              
+              const shouldInclude = (fromTime === '12:00' && toTime === '14:00') ||
+                                   (fromTime === '14:00' && toTime === '16:00');
+              return shouldInclude;
+            }
+            // For all other couriers, include all time slots
+            return true;
+          })
+          .map(timeSlot => `${timeSlot.from_time} - ${timeSlot.to_time}`)
+          .join(', '),
+        time_slot_ids: slot.time_slots
+          .filter(timeSlot => {
+            // Same filtering logic for time_slot_ids
+            if (isSpecificCourier) {
+              // Normalize time format to handle potential variations like '12:00:00'
+              const fromTime = timeSlot.from_time.substring(0, 5); // Get first 5 chars (HH:MM)
+              const toTime = timeSlot.to_time.substring(0, 5);
+              
+              return (fromTime === '12:00' && toTime === '14:00') ||
+                     (fromTime === '14:00' && toTime === '16:00');
+            }
+            return true;
+          })
+          .map(timeSlot => timeSlot.time_slot_id)
+      }))
+      .filter(slot => slot.time !== ''); // Remove slots with no valid time slots after filtering
+      
+    setFormattedPickupTimes(formattedTimes);
+  } catch (error) {
+    console.error('Error fetching pickup slots:', error.response?.data || error.message);
+  }
+}
+};
 
   useEffect(() => {
     getPickupTime();
@@ -147,12 +190,6 @@ const getNextBusinessDays = (count) => {
         // ✅ Convert to numbers at the start
         const numericUserBalance = parseFloat(userBalance) || 0;
         const numericPickupFee = parseFloat(pickupFee) || 0;
-
-        console.log('Pickup Payment debug:', {
-          numericUserBalance,
-          numericPickupFee,
-          doesPaymentMethodExist: response.data.doesPaymentMethodExist,
-        });
 
         const hasPaymentMethod = response.data.doesPaymentMethodExist == 1;
 
@@ -192,7 +229,6 @@ const getNextBusinessDays = (count) => {
           
         } else {
           // ✅ HAS payment method - handle all scenarios
-          console.log('✅ Has payment method - processing payment...');
           
           if (numericUserBalance >= numericPickupFee) {
             // Balance fully covers - use balance only
