@@ -280,7 +280,7 @@ const handlePurchaseCredits = async (e) => {
   };
 
   return (
-    <Flex direction={{ base: "column", md: "row" }} h="100vh" bg="gray.100">
+    <Flex direction={{ base: "column", md: "row" }} h="140vh" bg="gray.100">
       {/* Sidebar */}
       <Box 
         w={{ base: "80px", md: "250px" }} 
@@ -509,7 +509,8 @@ const handlePurchaseCredits = async (e) => {
             </>
           )}
           <Text mt="6" fontSize="sm" color="gray.500" textAlign="center" as="span">
-            Your payment information is securely handled with Stripe.
+            All payments are securely processed through Stripe.
+When you add a payment method, your card will be charged automatically for each label purchase. Manual credit top-ups will no longer be available, but any existing credits will be automatically applied to your next shipment(s).
             <HStack as="span" spacing="5" align="center" mt="25">
               <Image
                 src={`https://scanlonspharmacy.com/wp-content/uploads/2018/04/secure-stripe-payment-logo.png`}
