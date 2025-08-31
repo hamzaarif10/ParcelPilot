@@ -11,7 +11,7 @@ export const calculateRateWithMargin = (
 
   // Apply tiered margin before Stripe fees
   if (labelsPrinted <= 7) {
-    baseCharge -= 2.50;  // stronger hook
+    baseCharge -= 3.00;  // stronger hook
   } else if (labelsPrinted <= 15) {
     baseCharge -= 0.50;  // small profit but still attractive
   } else {
