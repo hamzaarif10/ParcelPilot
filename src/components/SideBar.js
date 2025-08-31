@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Button, VStack, Text, Icon, IconButton, useBreakpointValue } from '@chakra-ui/react';
+import { Box, Button, VStack, Text, Icon, IconButton } from '@chakra-ui/react';
 import { FaExchangeAlt, FaShippingFast, FaBox, FaUserCog, FaSignOutAlt, FaCreditCard, FaPlug, FaHeadset } from 'react-icons/fa';
 import { HamburgerIcon, CloseIcon } from '@chakra-ui/icons';
 import { useNavigate } from 'react-router-dom';
@@ -10,9 +10,6 @@ const SideBar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
-  
-  // Check if we're on mobile
-  const isMobile = useBreakpointValue({ base: true, md: false });
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
@@ -23,7 +20,7 @@ const SideBar = () => {
   };
 
   const handleMobileNavClick = () => {
-    setIsMobileMenuOpen(false); // Close mobile menu when item is clicked
+    setIsMobileMenuOpen(false);
   };
 
   // Function to handle logout
@@ -70,97 +67,65 @@ const SideBar = () => {
     { id: 8, label: 'Support', icon: FaHeadset, route: '/support' }
   ];
 
-  // Mobile hamburger menu
-  if (isMobile) {
-    return (
-      <>
-        {/* Mobile Hamburger Button */}
-        <IconButton
-          icon={isMobileMenuOpen ? <CloseIcon /> : <HamburgerIcon />}
-          onClick={toggleMobileMenu}
-          position="fixed"
-          top="4"
-          left="4"
-          zIndex="modal"
-          bg="teal.500"
-          color="white"
-          _hover={{ bg: 'teal.600' }}
-          size="md"
-        />
+  return (
+    <>
+      {/* Mobile Hamburger Button */}
+      <IconButton
+        icon={isMobileMenuOpen ? <CloseIcon /> : <HamburgerIcon />}
+        onClick={toggleMobileMenu}
+        position="fixed"
+        top="4"
+        left="4"
+        zIndex="modal"
+        bg="teal.500"
+        color="white"
+        _hover={{ bg: 'teal.600' }}
+        size="md"
+        display={{ base: 'flex', md: 'none' }}
+      />
 
-        {/* Mobile Menu Overlay */}
-        {isMobileMenuOpen && (
-          <Box
-            position="fixed"
-            top="0"
-            left="0"
-            right="0"
-            bottom="0"
-            bg="rgba(0,0,0,0.5)"
-            zIndex="overlay"
-            onClick={handleMobileNavClick}
-          />
-        )}
-
-        {/* Mobile Sidebar */}
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
         <Box
-          w="250px"
-          h="100vh"
-          bgGradient="linear(to-b,rgb(0, 77, 77),rgb(102, 204, 204))"
-          color="white"
-          boxShadow="lg"
-          display="flex"
-          flexDirection="column"
-          justifyContent="space-between"
           position="fixed"
-          left={isMobileMenuOpen ? "0" : "-250px"}
           top="0"
-          zIndex="modal"
-          transition="left 0.3s ease-in-out"
-          p={4}
-          pt="60px" // Add top padding to account for hamburger button
-        >
-          <VStack spacing={4} align="start" flex="1" width="full">
-            {menuItems.map((item) => (
-              <Button
-                key={item.id}
-                variant="ghost"
-                colorScheme="white"
-                width="full"
-                justifyContent="flex-start"
-                leftIcon={<Icon as={item.icon} boxSize={5} />}
-                onClick={() => {
-                  navigate(item.route);
-                  handleMobileNavClick(); // Close menu after navigation
-                }}
-                _hover={{
-                  bg: 'teal.600',
-                  textDecor: 'none',
-                  transform: 'scale(1.05)',
-                }}
-                _focus={{
-                  boxShadow: 'none',
-                }}
-                borderRadius="8px"
-                p={3}
-              >
-                <Text ml={2} fontWeight="semibold">{item.label}</Text>
-              </Button>
-            ))}
+          left="0"
+          right="0"
+          bottom="0"
+          bg="rgba(0,0,0,0.5)"
+          zIndex="overlay"
+          onClick={handleMobileNavClick}
+          display={{ base: 'block', md: 'none' }}
+        />
+      )}
 
-            {/* Mobile Logout Button */}
+      {/* Your Original Desktop Sidebar - exactly as you had it */}
+      <Box
+        w={isCollapsed ? '80px' : '250px'}
+        h="100vh"
+        bgGradient="linear(to-b,rgb(0, 77, 77),rgb(102, 204, 204))"
+        color="white"
+        transition="width 0.3s"
+        boxShadow="lg"
+        display={{ base: 'none', md: 'flex' }} // Hide on mobile, show on desktop
+        flexDirection="column"
+        justifyContent="space-between"
+        position={'fixed'}
+        p={4}
+      >
+        {/* Sidebar Menu */}
+        <VStack spacing={4} align="start" flex="1" width="full">
+          {menuItems.map((item) => (
             <Button
+              key={item.id}
               variant="ghost"
               colorScheme="white"
               width="full"
-              justifyContent="flex-start"
-              leftIcon={<Icon as={FaSignOutAlt} boxSize={5} />}
-              onClick={() => {
-                handleLogout();
-                handleMobileNavClick();
-              }}
+              justifyContent={isCollapsed ? 'center' : 'flex-start'}
+              leftIcon={<Icon as={item.icon} boxSize={5} />}
+              onClick={() => navigate(item.route)}
               _hover={{
-                bg: 'red.500',
+                bg: 'teal.600',
                 textDecor: 'none',
                 transform: 'scale(1.05)',
               }}
@@ -170,42 +135,20 @@ const SideBar = () => {
               borderRadius="8px"
               p={3}
             >
-              <Text ml={2} fontWeight="semibold">Logout</Text>
+              {!isCollapsed && <Text ml={2} fontWeight="semibold">{item.label}</Text>}
             </Button>
-          </VStack>
-        </Box>
-      </>
-    );
-  }
+          ))}
 
-  // Desktop sidebar (your original design)
-  return (
-    <Box
-      w={isCollapsed ? '80px' : '250px'}
-      h="100vh"
-      bgGradient="linear(to-b,rgb(0, 77, 77),rgb(102, 204, 204))"
-      color="white"
-      transition="width 0.3s"
-      boxShadow="lg"
-      display="flex"
-      flexDirection="column"
-      justifyContent="space-between"
-      position={'fixed'}
-      p={4}
-    >
-      {/* Sidebar Menu */}
-      <VStack spacing={4} align="start" flex="1" width="full">
-        {menuItems.map((item) => (
+          {/* Logout Button */}
           <Button
-            key={item.id}
             variant="ghost"
             colorScheme="white"
             width="full"
             justifyContent={isCollapsed ? 'center' : 'flex-start'}
-            leftIcon={<Icon as={item.icon} boxSize={5} />}
-            onClick={() => navigate(item.route)}
+            leftIcon={<Icon as={FaSignOutAlt} boxSize={5} />}
+            onClick={handleLogout}
             _hover={{
-              bg: 'teal.600',
+              bg: 'red.500',
               textDecor: 'none',
               transform: 'scale(1.05)',
             }}
@@ -215,69 +158,104 @@ const SideBar = () => {
             borderRadius="8px"
             p={3}
           >
-            {!isCollapsed && <Text ml={2} fontWeight="semibold">{item.label}</Text>}
+            {!isCollapsed && <Text ml={2} fontWeight="semibold">Logout</Text>}
           </Button>
-        ))}
+        </VStack>
 
-        {/* Logout Button */}
+        {/* Collapse Button */}
         <Button
           variant="ghost"
-          colorScheme="white"
-          width="full"
-          justifyContent={isCollapsed ? 'center' : 'flex-start'}
-          leftIcon={<Icon as={FaSignOutAlt} boxSize={5} />}
-          onClick={handleLogout}
+          colorScheme="whiteAlpha"
+          onClick={toggleSidebar}
+          position="absolute"
+          bottom="4"
+          left={isCollapsed ? '30%' : 'calc(100% - 40px)'}
+          transition="left 0.3s"
           _hover={{
-            bg: 'red.500',
-            textDecor: 'none',
-            transform: 'scale(1.05)',
+            bg: 'teal.500',
+            transform: 'rotate(180deg)',
           }}
-          _focus={{
-            boxShadow: 'none',
-          }}
-          borderRadius="8px"
-          p={3}
+          borderRadius="50%"
+          boxSize="40px"
         >
-          {!isCollapsed && <Text ml={2} fontWeight="semibold">Logout</Text>}
+          {isCollapsed ? '>' : '<'}
         </Button>
-      </VStack>
+      </Box>
 
-      {/* Collapse Button - Desktop only */}
-      <Button
-        variant="ghost"
-        colorScheme="whiteAlpha"
-        onClick={toggleSidebar}
-        position="absolute"
-        bottom="4"
-        left={isCollapsed ? '30%' : 'calc(100% - 40px)'}
-        transition="left 0.3s"
-        _hover={{
-          bg: 'teal.500',
-          transform: 'rotate(180deg)',
-        }}
-        borderRadius="50%"
-        boxSize="40px"
+      {/* Mobile Sidebar */}
+      <Box
+        w="250px"
+        h="100vh"
+        bgGradient="linear(to-b,rgb(0, 77, 77),rgb(102, 204, 204))"
+        color="white"
+        boxShadow="lg"
+        display={{ base: 'flex', md: 'none' }} // Show on mobile, hide on desktop
+        flexDirection="column"
+        justifyContent="space-between"
+        position="fixed"
+        left={isMobileMenuOpen ? "0" : "-250px"}
+        top="0"
+        zIndex="modal"
+        transition="left 0.3s ease-in-out"
+        p={4}
+        pt="60px"
       >
-        {isCollapsed ? '>' : '<'}
-      </Button>
-    </Box>
+        <VStack spacing={4} align="start" flex="1" width="full">
+          {menuItems.map((item) => (
+            <Button
+              key={item.id}
+              variant="ghost"
+              colorScheme="white"
+              width="full"
+              justifyContent="flex-start"
+              leftIcon={<Icon as={item.icon} boxSize={5} />}
+              onClick={() => {
+                navigate(item.route);
+                handleMobileNavClick();
+              }}
+              _hover={{
+                bg: 'teal.600',
+                textDecor: 'none',
+                transform: 'scale(1.05)',
+              }}
+              _focus={{
+                boxShadow: 'none',
+              }}
+              borderRadius="8px"
+              p={3}
+            >
+              <Text ml={2} fontWeight="semibold">{item.label}</Text>
+            </Button>
+          ))}
+
+          {/* Mobile Logout Button */}
+          <Button
+            variant="ghost"
+            colorScheme="white"
+            width="full"
+            justifyContent="flex-start"
+            leftIcon={<Icon as={FaSignOutAlt} boxSize={5} />}
+            onClick={() => {
+              handleLogout();
+              handleMobileNavClick();
+            }}
+            _hover={{
+              bg: 'red.500',
+              textDecor: 'none',
+              transform: 'scale(1.05)',
+            }}
+            _focus={{
+              boxShadow: 'none',
+            }}
+            borderRadius="8px"
+            p={3}
+          >
+            <Text ml={2} fontWeight="semibold">Logout</Text>
+          </Button>
+        </VStack>
+      </Box>
+    </>
   );
 };
 
 export default SideBar;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
