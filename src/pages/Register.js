@@ -64,6 +64,12 @@ function Register() {
       try {
         const data = { firstName: name, email: email, password: password };
         await axios.post(`${process.env.REACT_APP_BACKEND_URL}/auth/register`, data);
+
+        // Fire Google conversion after successful signup
+    gtag('event', 'conversion', {
+      'send_to': 'AW-576188796/Lc2XCLP8jcUbEPzi35IC'
+    });
+
         setIsSubmitted(true);
       } catch (error) {
         console.error(error);
@@ -73,8 +79,9 @@ function Register() {
     };
   
     registerUser();
+
   };
-  
+
   //Handle email verification
   const handleVerify = async () => {
     setVerifyDisabled(true);
