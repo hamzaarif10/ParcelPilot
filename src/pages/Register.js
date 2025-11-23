@@ -66,9 +66,12 @@ function Register() {
         await axios.post(`${process.env.REACT_APP_BACKEND_URL}/auth/register`, data);
 
         // Fire Google conversion after successful signup
-    gtag('event', 'conversion', {
-      'send_to': 'AW-576188796/Lc2XCLP8jcUbEPzi35IC'
-    });
+    if (window.gtag) {
+  window.gtag('event', 'conversion', {
+    'send_to': 'AW-576188796/Lc2XCLP8jcUbEPzi35IC'
+  });
+}
+
 
         setIsSubmitted(true);
       } catch (error) {
