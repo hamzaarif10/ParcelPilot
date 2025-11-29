@@ -466,4 +466,28 @@ router.post("/bulkPrintLabels", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Failed to merge PDFs", details: error.message });
   }
 });
+//Submit rate estimate to the database
+router.post("/submitRate", async (req, res) => {
+  const { senderPostalCode, receiverPostalCode, length, width, height, weight  } = req.body; // Expect description & amount from the request body
+
+  try {
+    const pool = getPool();
+    await pool.request()
+      .input('senderPostalCode', sql.NVarChar(10), senderPostalCode)
+      .input('receiverPostalCode', sql.NVarChar(10), receiverPostalCode) // Generate a unique reference number
+      .input('length', sql.Decimal(10,2), length)
+      .input('width', sql.Decimal(10,2), width)
+      .input('height', sql.Decimal(10,2), height)
+      .input('weight', sql.Decimal(10,2), weight)
+      .query(`
+        INSERT INTO Rates (senderPostalCode, receiverPostalCode, length, width, height, weight)
+        VALUES (@senderPostalCode, @receiverPostalCode, @length, @width, @height, @weight)
+      `);
+
+    res.status(201).json({ message: 'Rate submitted successfully to database!' });
+  } catch (error) {
+    console.error('SQL error:', error);
+    res.status(500).json({ message: 'Failed to submit Rate.' });
+  }
+});
 module.exports = router;

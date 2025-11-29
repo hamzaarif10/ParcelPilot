@@ -185,7 +185,6 @@ function RateEstimateForm(props) {
         fetchSenderPostalCode();
         fetchLabelsPrintedCount();
       }, []);
-
     // Handle form submission
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -214,7 +213,7 @@ function RateEstimateForm(props) {
             setIsSubmitting(false); // Reset submitting state
             return;
         }
-    
+        submitRate();
         setLoading(true);
         try {
             const senderRegion = await getRegionFromPostalCode(senderPostalCode, senderCountryCode);
@@ -250,6 +249,28 @@ function RateEstimateForm(props) {
             setIsSubmitting(false);
         }
     };
+
+    const submitRate = async () => {
+  try {
+    const response = await axios.post(
+      `${process.env.REACT_APP_BACKEND_URL}/user/submitRate`,
+      {
+        senderPostalCode: senderPostalCode,
+        receiverPostalCode: receiverPostalCode,
+        length: dimensions.length,
+        width: dimensions.width,
+        height: dimensions.depth,
+        weight: weight
+      }
+    );
+    
+    console.log(response.data.message);
+    return response.data;
+  } catch (error) {
+    console.error('Error submitting rate:', error.response?.data || error.message);
+    // Don't throw - just log the error and continue
+  }
+};
     
     const handleGoBack = () => {
         setIsSubmitted(false); // Reset form visibility
