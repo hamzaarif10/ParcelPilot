@@ -107,6 +107,8 @@ function RateEstimate({
         },
         items: [
           {
+            description: "Package contents",
+            category: "general",
             contains_battery_pi966: false,
             contains_battery_pi967: false,
             contains_liquids: false,
@@ -310,7 +312,6 @@ const fetchRates = async () => {
         fetchRates();
         fetchGlsRate();
     }, []);
-
     return (
       <div style={{ marginTop: isMobile ? "25px" : "-6px", backgroundColor: "#005160" }}>
         {(rate2 || rate3 || rate4 || rate5 || rate6 || rate7 || rate8) ? (
