@@ -78,7 +78,8 @@ export const getCreateShipmentData = ({
         },
         items: [
           {
-            description: "na",
+            description: "Package contents",
+            category: "general",
             quantity: 1,
             declared_currency: "CAD",
             declared_customs_value: 0.1,
