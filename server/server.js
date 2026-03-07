@@ -185,10 +185,9 @@ const PORT = process.env.PORT || 3002;
 const isProd = process.env.NODE_ENV === 'production';
 
 app.use(cors({
-  origin: process.env.REACT_APP_FRONTEND_URL,
+  origin: ['http://localhost:3003', 'https://localhost:3003'],
   credentials: true
 }));
-
 const webHooksRoute = require('./routes/webhooks');
 // ✨ Add raw body parser BEFORE webhooks
 app.use('/webhooks', express.raw({ type: 'application/json' }));
