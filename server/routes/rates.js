@@ -80,6 +80,18 @@ router.post('/get-gls-rate', rateLimitMiddleware, async (req, res) => {
 });
 //Fetch tracking number and shipping label etc from gls api
 router.post('/get-gls-label', async (req, res) => {
+  const logToDb = async (responseData, statusCode, status) => {
+    const pool = getPool();
+    await pool.request()
+      .input('carrier', sql.NVarChar, 'GLS')
+      .input('request', sql.NVarChar, JSON.stringify(req.body))
+      .input('response', sql.NVarChar, JSON.stringify(responseData))
+      .input('statusCode', sql.Int, statusCode)
+      .input('status', sql.NVarChar, status)
+      .query(`INSERT INTO ShipmentResponse (Carrier, RequestBody, ResponseBody, StatusCode, Status, CreatedAt)
+              VALUES (@carrier, @request, @response, @statusCode, @status, GETDATE())`);
+  };
+
   try {
     const url = 'https://secureship.ca/ship/api/v1/carriers/create-label';
     const response = await axios.post(url, req.body, {
@@ -88,8 +100,27 @@ router.post('/get-gls-label', async (req, res) => {
         'X-API-KEY': `${process.env.SS_KEY}`
       }
     });
+
+    try {
+      //log success result to db
+      await logToDb(response.data, response.status, 'success');
+    } catch (dbErr) {
+      console.error('Failed to log success to ShipmentResponse:', dbErr);
+    }
+
     res.json(response.data);
-  }catch(error){
+  } catch (error) {
+    try {
+      //log failure result to db
+      await logToDb(
+        error.response?.data ?? { message: error.message },
+        error.response?.status ?? 500,
+        'error'
+      );
+    } catch (dbErr) {
+      console.error('Failed to log error to ShipmentResponse:', dbErr);
+    }
+
     console.error('Error making the api call to GLS and creating shipping label:', error);
     res.status(500).json({ error: 'Failed to create shipping label from GLS api' });
   }
@@ -153,6 +184,18 @@ router.post('/get-rate', rateLimitMiddleware, async (req, res) => {
 
 //Fetch tracking number and shipping label etc from api
 router.post('/get-label', async (req, res) => {
+  const logToDb = async (responseData, statusCode, status) => {
+  const pool = getPool();
+  await pool.request()
+    .input('carrier', sql.NVarChar, 'Easyship')
+    .input('request', sql.NVarChar, JSON.stringify(req.body))
+    .input('response', sql.NVarChar, JSON.stringify(responseData))
+    .input('statusCode', sql.Int, statusCode)
+    .input('status', sql.NVarChar, status)
+    .query(`INSERT INTO ShipmentResponse (Carrier, RequestBody, ResponseBody, StatusCode, Status, CreatedAt)
+            VALUES (@carrier, @request, @response, @statusCode, @status, GETDATE())`);
+};
+
   try {
     const url = 'https://public-api.easyship.com/2024-09/shipments';
     const response = await axios.post(url, req.body, {
@@ -162,10 +205,27 @@ router.post('/get-label', async (req, res) => {
         authorization: `${process.env.ES_KEY}`
       }
     });
+
+    try {
+      await logToDb(response.data, response.status, 'success');
+    } catch (dbErr) {
+      console.error('Failed to log success to ShipmentResponse:', dbErr);
+    }
+
     res.json(response.data);
-  }catch(error){
+  } catch (error) {
+    try {
+      await logToDb(
+        error.response?.data ?? { message: error.message },
+        error.response?.status ?? 500,
+        'error'
+      );
+    } catch (dbErr) {
+      console.error('Failed to log error to ShipmentResponse:', dbErr);
+    }
+
     console.error('Error making the api call and creating shipping label:', error);
-    res.status(500).json({ error: 'Failed to create shipping label from eashyship api' });
+    res.status(500).json({ error: 'Failed to create shipping label from easyship api' });
   }
 });
 
