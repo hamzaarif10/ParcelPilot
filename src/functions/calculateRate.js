@@ -15,7 +15,7 @@ export const calculateRateWithMargin = (
  // } else if (labelsPrinted <= 15) {
    // baseCharge += 0;  // small profit but still attractive
  // } else {
-    //baseCharge += 1.75;  // steady profit
+    //baseCharge += 1.50;  // steady profit
   //}
 
   // Add Stripe fees last so they don’t eat into your margin
