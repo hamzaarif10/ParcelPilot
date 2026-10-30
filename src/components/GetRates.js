@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import '../styles/RenderRates.css';
 import CreateShipmentForm from './CreateShipmentForm';
 import upsLogo from './assets/couriers/ups.png';
-import unuUniLogo from './assets/couriers/uniuni.png';
+import uniUniLogo from './assets/couriers/uniuni.png';
 
 function GetRates({ senderCountryCode, receiverAddressLine1, receiverAddressLine2, receiverCity, receiverCountryCode, receiverPostalCode, receiverProvince, receiverName, 
   receiverPhoneNumber, receiverEmail, dimensions, weight, rate1, rate2, rate3, rate4, rate5, rate6, rate7, rate8, url1, url2, url3, url4, url5, url6, url7, url8,
